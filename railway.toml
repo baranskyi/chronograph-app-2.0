@@ -7,5 +7,3 @@ startCommand = "npm start"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 
-[service]
-internalPort = 3000
