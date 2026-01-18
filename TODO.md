@@ -1,6 +1,8 @@
-# Chronograph App — План разработки
+# Chronograph.pro — План разработки
 
 > Professional countdown timer for conferences and presentations
+>
+> **Website:** https://chronograph.pro
 
 ---
 

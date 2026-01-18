@@ -1,6 +1,8 @@
-# Chronograph App
+# Chronograph.pro
 
 Professional countdown timer for conferences and presentations.
+
+**Website:** https://chronograph.pro
 
 ## Features
 

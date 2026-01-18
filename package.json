@@ -1,6 +1,6 @@
 {
   "name": "chronograph-app",
-  "description": "Chronograph App - Professional countdown timer for conferences and presentations",
+  "description": "Chronograph.pro - Professional countdown timer for conferences and presentations",
   "private": true,
   "version": "1.0.0",
   "type": "module",

@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Chronograph App',
+        name: 'Chronograph.pro',
         short_name: 'Chronograph',
         description: 'Professional countdown timer for conferences and presentations',
         theme_color: '#0a0a0f',
