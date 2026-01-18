@@ -1,6 +1,6 @@
 import type { Server, Socket } from 'socket.io'
 import { roomManager } from '../services/roomManager.js'
-import type { TimerState } from '../types/room.js'
+import type { TimerState, MessagePriority } from '../types/room.js'
 
 interface CreateRoomCallback {
   (response: { roomId: string } | { error: string }): void
@@ -67,6 +67,27 @@ export function setupHandlers(io: Server, socket: Socket): void {
     roomManager.updateTimerState(roomId, state)
     // Broadcast to all viewers in the room (except sender)
     socket.to(roomId.toUpperCase()).emit('timer:sync', state)
+  })
+
+  // Controller sends message to viewers (speaker)
+  socket.on('message:send', ({
+    roomId,
+    text,
+    duration = 5000,
+    priority = 'normal'
+  }: {
+    roomId: string
+    text: string
+    duration?: number
+    priority?: MessagePriority
+  }) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      return // Only controller can send messages
+    }
+
+    console.log(`Message sent to room ${roomId}: "${text}"`)
+    // Broadcast to all viewers in the room (except sender)
+    socket.to(roomId.toUpperCase()).emit('message:show', { text, duration, priority })
   })
 
   // Handle disconnection

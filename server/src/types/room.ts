@@ -24,3 +24,11 @@ export interface RoomState {
   timerState: TimerState | null
   controllerSocketId: string | null
 }
+
+export type MessagePriority = 'normal' | 'urgent'
+
+export interface SpeakerMessage {
+  text: string
+  duration: number  // ms, default 5000
+  priority: MessagePriority
+}

@@ -5,6 +5,7 @@ import { useFullscreen } from '@vueuse/core'
 import { useRoomStore } from '../stores/roomStore'
 import TimerDisplay from '../components/TimerDisplay.vue'
 import ConnectionStatus from '../components/ConnectionStatus.vue'
+import MessageOverlay from '../components/MessageOverlay.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -83,6 +84,9 @@ function handleKeydown(e: KeyboardEvent) {
 
       <!-- Timer Display -->
       <TimerDisplay />
+
+      <!-- Message Overlay -->
+      <MessageOverlay v-if="roomStore.currentMessage" :message="roomStore.currentMessage" />
 
       <!-- Minimal controls for viewer -->
       <div v-if="!isFullscreen" class="px-4 py-6 flex justify-center">

@@ -11,6 +11,14 @@ interface TimerState {
   status: TimerStatus
 }
 
+export type MessagePriority = 'normal' | 'urgent'
+
+export interface SpeakerMessage {
+  text: string
+  duration: number
+  priority: MessagePriority
+}
+
 export const useRoomStore = defineStore('room', () => {
   const socket = ref<Socket | null>(null)
   const roomId = ref<string | null>(null)
@@ -18,6 +26,10 @@ export const useRoomStore = defineStore('room', () => {
   const isController = ref(false)
   const error = ref<string | null>(null)
   const isConnecting = ref(false)
+
+  // Speaker messages
+  const currentMessage = ref<SpeakerMessage | null>(null)
+  let messageTimeout: ReturnType<typeof setTimeout> | null = null
 
   const shareUrl = computed(() => {
     if (!roomId.value) return null
@@ -120,6 +132,15 @@ export const useRoomStore = defineStore('room', () => {
               timerStore.applyRemoteState(state)
             })
 
+            // Listen for speaker messages
+            socket.value!.on('message:show', (msg: SpeakerMessage) => {
+              currentMessage.value = msg
+              if (messageTimeout) clearTimeout(messageTimeout)
+              messageTimeout = setTimeout(() => {
+                currentMessage.value = null
+              }, msg.duration)
+            })
+
             console.log('Joined room as viewer:', id)
             resolve()
           }
@@ -146,6 +167,24 @@ export const useRoomStore = defineStore('room', () => {
     })
   }
 
+  function sendMessage(text: string, duration = 5000, priority: MessagePriority = 'normal') {
+    if (!isController.value || !roomId.value || !socket.value?.connected) {
+      return
+    }
+
+    socket.value.emit('message:send', {
+      roomId: roomId.value,
+      text,
+      duration,
+      priority
+    })
+  }
+
+  function clearMessage() {
+    if (messageTimeout) clearTimeout(messageTimeout)
+    currentMessage.value = null
+  }
+
   function disconnect() {
     if (socket.value) {
       socket.value.removeAllListeners()
@@ -166,6 +205,7 @@ export const useRoomStore = defineStore('room', () => {
     isController,
     error,
     isConnecting,
+    currentMessage,
 
     // Computed
     shareUrl,
@@ -175,6 +215,8 @@ export const useRoomStore = defineStore('room', () => {
     createRoom,
     joinAsViewer,
     broadcastState,
+    sendMessage,
+    clearMessage,
     disconnect
   }
 })

@@ -16,6 +16,27 @@ const showShare = ref(false)
 const isInitializing = ref(true)
 const initError = ref<string | null>(null)
 
+// Message to speaker
+const customMessage = ref('')
+const messagePresets = [
+  { text: 'Speak louder', icon: '🔊' },
+  { text: 'Speak slower', icon: '🐢' },
+  { text: 'Speed up', icon: '⚡' },
+  { text: 'Wrap up', icon: '⏱️' },
+  { text: 'Next slide', icon: '➡️' }
+]
+
+function sendPreset(text: string, urgent = false) {
+  roomStore.sendMessage(text, 5000, urgent ? 'urgent' : 'normal')
+}
+
+function sendCustomMessage() {
+  if (customMessage.value.trim()) {
+    roomStore.sendMessage(customMessage.value.trim())
+    customMessage.value = ''
+  }
+}
+
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
 // Create room on mount
@@ -136,6 +157,51 @@ function handleKeydown(e: KeyboardEvent) {
           </button>
         </template>
       </TimerControls>
+
+      <!-- Message to Speaker -->
+      <div v-if="!isFullscreen" class="px-4 pb-4">
+        <div class="max-w-2xl mx-auto bg-zinc-800/50 rounded-xl p-4">
+          <div class="text-xs text-gray-400 mb-3 uppercase tracking-wide">Message to Speaker</div>
+
+          <!-- Preset buttons -->
+          <div class="flex flex-wrap gap-2 mb-3">
+            <button
+              v-for="preset in messagePresets"
+              :key="preset.text"
+              class="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm transition-colors flex items-center gap-1.5"
+              @click="sendPreset(preset.text)"
+            >
+              <span>{{ preset.icon }}</span>
+              <span>{{ preset.text }}</span>
+            </button>
+            <button
+              class="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 rounded-lg text-sm transition-colors"
+              @click="sendPreset('Time is up!', true)"
+              title="Urgent message"
+            >
+              ⚠️ Time's up!
+            </button>
+          </div>
+
+          <!-- Custom message input -->
+          <div class="flex gap-2">
+            <input
+              v-model="customMessage"
+              type="text"
+              placeholder="Custom message..."
+              class="flex-1 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+              @keydown.enter="sendCustomMessage"
+            />
+            <button
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm transition-colors"
+              :disabled="!customMessage.trim()"
+              @click="sendCustomMessage"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Modals -->
       <SettingsPanel v-if="showSettings" @close="showSettings = false" />
