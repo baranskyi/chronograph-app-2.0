@@ -82,14 +82,15 @@ function handlePlayPause() {
       </button>
     </div>
 
-    <!-- Settings link -->
-    <div class="mt-4 flex justify-center">
+    <!-- Settings link and extra slot -->
+    <div class="mt-4 flex items-center justify-center gap-4">
       <button
         class="text-sm text-gray-500 hover:text-gray-300 transition-colors"
         @click="emit('openSettings')"
       >
         Settings
       </button>
+      <slot name="extra"></slot>
     </div>
   </div>
 </template>

@@ -133,6 +133,29 @@ export const useTimerStore = defineStore('timer', () => {
     settings.value = { ...settings.value, ...newSettings }
   }
 
+  // Get serializable state for sync (controller sends this)
+  function getStateForSync() {
+    return {
+      settings: { ...settings.value },
+      remainingSeconds: remainingSeconds.value,
+      elapsedSeconds: elapsedSeconds.value,
+      status: status.value
+    }
+  }
+
+  // Apply state from remote (viewer receives this)
+  function applyRemoteState(state: {
+    settings: TimerSettings
+    remainingSeconds: number
+    elapsedSeconds: number
+    status: TimerStatus
+  }) {
+    settings.value = { ...state.settings }
+    remainingSeconds.value = state.remainingSeconds
+    elapsedSeconds.value = state.elapsedSeconds
+    status.value = state.status
+  }
+
   // Watch for duration changes and reset if stopped
   watch(() => settings.value.duration, (newDuration) => {
     if (status.value === 'stopped') {
@@ -165,5 +188,9 @@ export const useTimerStore = defineStore('timer', () => {
     setMode,
     adjustTime,
     updateSettings,
+
+    // Sync methods
+    getStateForSync,
+    applyRemoteState,
   }
 })
