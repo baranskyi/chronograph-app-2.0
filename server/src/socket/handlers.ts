@@ -90,6 +90,23 @@ export function setupHandlers(io: Server, socket: Socket): void {
     socket.to(roomId.toUpperCase()).emit('message:show', { text, duration, priority })
   })
 
+  // Controller toggles blackout mode
+  socket.on('blackout:set', ({
+    roomId,
+    enabled
+  }: {
+    roomId: string
+    enabled: boolean
+  }) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      return // Only controller can toggle blackout
+    }
+
+    console.log(`Blackout ${enabled ? 'enabled' : 'disabled'} in room ${roomId}`)
+    // Broadcast to all viewers in the room (except sender)
+    socket.to(roomId.toUpperCase()).emit('blackout:sync', enabled)
+  })
+
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`)

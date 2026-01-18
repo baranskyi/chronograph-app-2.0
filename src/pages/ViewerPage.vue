@@ -88,6 +88,18 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Message Overlay -->
       <MessageOverlay v-if="roomStore.currentMessage" :message="roomStore.currentMessage" />
 
+      <!-- Blackout Overlay -->
+      <Transition name="blackout">
+        <div
+          v-if="roomStore.isBlackout"
+          class="fixed inset-0 z-40 bg-black flex items-center justify-center"
+        >
+          <div class="text-zinc-800 text-2xl font-medium select-none">
+            Paused
+          </div>
+        </div>
+      </Transition>
+
       <!-- Minimal controls for viewer -->
       <div v-if="!isFullscreen" class="px-4 py-6 flex justify-center">
         <button
@@ -112,3 +124,15 @@ function handleKeydown(e: KeyboardEvent) {
     </template>
   </div>
 </template>
+
+<style scoped>
+.blackout-enter-active,
+.blackout-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.blackout-enter-from,
+.blackout-leave-to {
+  opacity: 0;
+}
+</style>

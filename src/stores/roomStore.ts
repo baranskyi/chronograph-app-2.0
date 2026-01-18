@@ -31,6 +31,9 @@ export const useRoomStore = defineStore('room', () => {
   const currentMessage = ref<SpeakerMessage | null>(null)
   let messageTimeout: ReturnType<typeof setTimeout> | null = null
 
+  // Blackout mode
+  const isBlackout = ref(false)
+
   const shareUrl = computed(() => {
     if (!roomId.value) return null
     return `${window.location.origin}/viewer/${roomId.value}`
@@ -141,6 +144,11 @@ export const useRoomStore = defineStore('room', () => {
               }, msg.duration)
             })
 
+            // Listen for blackout mode
+            socket.value!.on('blackout:sync', (enabled: boolean) => {
+              isBlackout.value = enabled
+            })
+
             console.log('Joined room as viewer:', id)
             resolve()
           }
@@ -185,6 +193,22 @@ export const useRoomStore = defineStore('room', () => {
     currentMessage.value = null
   }
 
+  function setBlackout(enabled: boolean) {
+    if (!isController.value || !roomId.value || !socket.value?.connected) {
+      return
+    }
+
+    isBlackout.value = enabled
+    socket.value.emit('blackout:set', {
+      roomId: roomId.value,
+      enabled
+    })
+  }
+
+  function toggleBlackout() {
+    setBlackout(!isBlackout.value)
+  }
+
   function disconnect() {
     if (socket.value) {
       socket.value.removeAllListeners()
@@ -206,6 +230,7 @@ export const useRoomStore = defineStore('room', () => {
     error,
     isConnecting,
     currentMessage,
+    isBlackout,
 
     // Computed
     shareUrl,
@@ -217,6 +242,8 @@ export const useRoomStore = defineStore('room', () => {
     broadcastState,
     sendMessage,
     clearMessage,
+    setBlackout,
+    toggleBlackout,
     disconnect
   }
 })
