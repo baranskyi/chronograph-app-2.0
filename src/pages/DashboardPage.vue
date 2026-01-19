@@ -426,7 +426,7 @@ const totalRemaining = computed(() => {
                   <Play v-else class="w-4 h-4" />
                 </button>
                 <button
-                  class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95"
+                  class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click="showDeleteConfirm(timer.id, $event)"
                   title="Delete timer"
                 >
