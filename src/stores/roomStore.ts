@@ -30,6 +30,9 @@ export const useRoomStore = defineStore('room', () => {
   // Viewer mode: which timer to follow
   const viewerTimerId = ref<string | null>(null) // null = follow active timer
 
+  // Live connections count
+  const viewerCount = ref(0)
+
   const shareUrl = computed(() => {
     if (!roomId.value) return null
     return `${window.location.origin}/viewer/${roomId.value}`
@@ -397,6 +400,7 @@ export const useRoomStore = defineStore('room', () => {
     currentMessage,
     isBlackout,
     viewerTimerId,
+    viewerCount,
 
     // Computed
     shareUrl,

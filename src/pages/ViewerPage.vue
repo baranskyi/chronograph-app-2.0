@@ -6,6 +6,7 @@ import { useRoomStore } from '../stores/roomStore'
 import { useTimerStore } from '../stores/timerStore'
 import ConnectionStatus from '../components/ConnectionStatus.vue'
 import MessageOverlay from '../components/MessageOverlay.vue'
+import ProgressBar from '../components/ProgressBar.vue'
 import { useAudio } from '../composables/useAudio'
 
 const route = useRoute()
@@ -103,7 +104,7 @@ function handleKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="h-full flex flex-col" :class="{ 'fullscreen-mode': isFullscreen }">
+  <div class="h-full min-h-screen bg-[#0f0f0f] text-white flex flex-col" :class="{ 'fullscreen-mode': isFullscreen }">
     <!-- Loading state -->
     <div v-if="loading" class="flex-1 flex flex-col items-center justify-center gap-4">
       <div class="text-gray-400 text-xl">Connecting to room...</div>
@@ -130,7 +131,7 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Room/Timer badge -->
       <div
         v-if="!isFullscreen"
-        class="fixed top-4 right-4 text-xs text-gray-400 bg-gray-800/80 px-3 py-1.5 rounded-full z-10 flex items-center gap-2"
+        class="fixed top-4 right-4 text-xs text-gray-400 bg-[#1a1a1a]/80 px-3 py-1.5 rounded-full z-10 flex items-center gap-2"
       >
         <span>Viewing: {{ roomId }}</span>
         <span v-if="displayTimer" class="text-gray-500">|</span>
@@ -152,7 +153,7 @@ function handleKeydown(e: KeyboardEvent) {
       </div>
 
       <!-- Timer Display -->
-      <div v-else class="timer-display flex flex-1 items-center justify-center">
+      <div v-else class="flex-1 flex items-center justify-center">
         <div
           class="timer-font text-center select-none transition-colors duration-300"
           :class="`timer-${colorState}`"
@@ -178,10 +179,21 @@ function handleKeydown(e: KeyboardEvent) {
         </div>
       </Transition>
 
-      <!-- Minimal controls for viewer -->
-      <div v-if="!isFullscreen" class="px-4 py-6 flex justify-center">
+      <!-- Progress Bar at Bottom -->
+      <div v-if="displayTimer" class="w-full px-4 pb-4" :class="isFullscreen ? 'px-0 pb-0' : ''">
+        <ProgressBar
+          :total-seconds="displayTimer.settings.duration"
+          :remaining-seconds="displayTimer.remainingSeconds"
+          :yellow-threshold="30"
+          :red-threshold="10"
+          :class="isFullscreen ? 'h-6 rounded-none' : 'h-5'"
+        />
+      </div>
+
+      <!-- Minimal controls for viewer (only when not fullscreen) -->
+      <div v-if="!isFullscreen" class="px-4 py-4 flex justify-center">
         <button
-          class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-[#2a2a2a] hover:bg-[#333] rounded-lg text-sm transition-colors flex items-center gap-2 min-h-10 touch-manipulation active:scale-95"
           @click="toggleFullscreen"
           title="Fullscreen (F)"
         >
@@ -195,7 +207,7 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Fullscreen hint -->
       <div
         v-if="isFullscreen"
-        class="fixed bottom-4 left-1/2 -translate-x-1/2 text-gray-600 text-sm opacity-0 hover:opacity-100 transition-opacity"
+        class="fixed bottom-8 left-1/2 -translate-x-1/2 text-gray-600 text-sm opacity-0 hover:opacity-100 transition-opacity"
       >
         Press ESC to exit fullscreen
       </div>
@@ -204,22 +216,24 @@ function handleKeydown(e: KeyboardEvent) {
 </template>
 
 <style scoped>
-.timer-display {
-  min-height: 200px;
+.timer-font {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .timer-green {
-  color: var(--color-green);
-  text-shadow: 0 0 60px rgba(34, 197, 94, 0.5);
+  color: #ffffff;
+  text-shadow: none;
 }
 
 .timer-yellow {
-  color: var(--color-yellow);
+  color: #eab308;
   text-shadow: 0 0 60px rgba(234, 179, 8, 0.5);
 }
 
 .timer-red {
-  color: var(--color-red);
+  color: #ef4444;
   text-shadow: 0 0 60px rgba(239, 68, 68, 0.5);
   animation: pulse-red 1s ease-in-out infinite;
 }
