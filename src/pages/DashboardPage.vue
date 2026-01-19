@@ -6,7 +6,7 @@ import { useRoomStore } from '../stores/roomStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import SharePanel from '../components/SharePanel.vue'
-import { Play, Pause, SkipBack, SkipForward, Settings, MoreHorizontal, Plus } from 'lucide-vue-next'
+import { Play, Pause, SkipBack, SkipForward, Settings, MoreHorizontal, Plus, Trash2 } from 'lucide-vue-next'
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
@@ -19,6 +19,8 @@ const isInitializing = ref(true)
 const initError = ref<string | null>(null)
 const customMessage = ref('')
 const pingMs = ref<number | null>(null)
+const editingTimerId = ref<string | null>(null)
+const editingTimerName = ref('')
 
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
