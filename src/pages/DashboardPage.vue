@@ -333,8 +333,11 @@ const totalRemaining = computed(() => {
             <!-- ON AIR Badge -->
             <div class="mt-4 flex items-center gap-3">
               <span
-                v-if="timerStore.selectedTimer?.isOnAir"
-                class="px-2 py-1 text-xs font-bold bg-red-600 text-white rounded"
+                v-if="timerStore.selectedTimer"
+                class="px-3 py-1 text-xs font-bold rounded-md transition-colors"
+                :class="timerStore.selectedTimer.status === 'running'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-transparent border border-gray-500 text-gray-500'"
               >ON AIR</span>
               <span class="text-sm text-gray-400 font-mono">
                 {{ timerStore.selectedTimer ? formatDuration(timerStore.selectedTimer.elapsedSeconds) : '0:00:00' }}.0
