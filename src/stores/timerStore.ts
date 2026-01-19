@@ -303,24 +303,47 @@ export const useTimerStore = defineStore('timer', () => {
     if (selectedTimerId.value) resetTimer(selectedTimerId.value)
   }
 
+  // Timer order tracking
+  const timerOrder = ref<string[]>([])
+
+  // Computed: All timers as array (sorted by order)
+  const orderedTimerList = computed(() => {
+    if (timerOrder.value.length === 0) {
+      return Array.from(timers.values())
+    }
+    return timerOrder.value
+      .map(id => timers.get(id))
+      .filter((t): t is Timer => t !== undefined)
+  })
+
+  // Update order when timers change
+  function syncTimerOrder() {
+    const currentIds = Array.from(timers.keys())
+    // Add new timers to order
+    for (const id of currentIds) {
+      if (!timerOrder.value.includes(id)) {
+        timerOrder.value.push(id)
+      }
+    }
+    // Remove deleted timers from order
+    timerOrder.value = timerOrder.value.filter(id => timers.has(id))
+  }
+
   // Reorder timers by moving sourceId to targetId's position
   function reorderTimers(sourceId: string, targetId: string) {
-    const timerArray = Array.from(timers.entries())
-    const sourceIndex = timerArray.findIndex(([id]) => id === sourceId)
-    const targetIndex = timerArray.findIndex(([id]) => id === targetId)
+    syncTimerOrder()
+    const sourceIndex = timerOrder.value.indexOf(sourceId)
+    const targetIndex = timerOrder.value.indexOf(targetId)
 
     if (sourceIndex === -1 || targetIndex === -1) return
 
     // Remove source from array
-    const [removed] = timerArray.splice(sourceIndex, 1)
+    const newOrder = [...timerOrder.value]
+    newOrder.splice(sourceIndex, 1)
     // Insert at target position
-    timerArray.splice(targetIndex, 0, removed)
+    newOrder.splice(targetIndex, 0, sourceId)
 
-    // Rebuild the Map with new order
-    timers.clear()
-    for (const [id, timer] of timerArray) {
-      timers.set(id, timer)
-    }
+    timerOrder.value = newOrder
   }
 
   return {
