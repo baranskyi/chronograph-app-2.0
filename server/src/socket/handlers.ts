@@ -109,7 +109,16 @@ export function setupHandlers(io: Server, socket: Socket): void {
       socket.join(`${room.roomId}:${timerId}`)
     }
 
-    console.log(`Viewer joined room: ${roomId}${timerId ? ` (timer: ${timerId})` : ''}`)
+    // Track viewer and notify controller
+    addViewer(room.roomId, socket.id)
+    const viewerCount = getViewerCount(room.roomId)
+
+    // Notify controller about viewer count change
+    if (room.controllerSocketId) {
+      io.to(room.controllerSocketId).emit('room:viewer-count', { count: viewerCount })
+    }
+
+    console.log(`Viewer joined room: ${roomId}${timerId ? ` (timer: ${timerId})` : ''} (viewers: ${viewerCount})`)
 
     const timers = roomManager.getTimers(roomId)
     callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId })
