@@ -11,7 +11,8 @@ import { Play, Pause, SkipBack, SkipForward, Settings, MoreHorizontal, Plus, Min
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
 
-const APP_VERSION = '0.1.0'
+declare const __APP_VERSION__: string
+const APP_VERSION = __APP_VERSION__
 
 const showSettings = ref(false)
 const showShare = ref(false)
