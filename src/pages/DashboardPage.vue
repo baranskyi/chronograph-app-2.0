@@ -21,6 +21,7 @@ const customMessage = ref('')
 const pingMs = ref<number | null>(null)
 const editingTimerId = ref<string | null>(null)
 const editingTimerName = ref('')
+const deleteConfirmTimerId = ref<string | null>(null)
 
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
@@ -132,9 +133,20 @@ function cancelEditingTimer() {
   editingTimerName.value = ''
 }
 
-async function deleteTimer(timerId: string, event: Event) {
+function showDeleteConfirm(timerId: string, event: Event) {
   event.stopPropagation()
-  await roomStore.deleteTimer(timerId)
+  deleteConfirmTimerId.value = timerId
+}
+
+async function confirmDeleteTimer() {
+  if (deleteConfirmTimerId.value) {
+    await roomStore.deleteTimer(deleteConfirmTimerId.value)
+    deleteConfirmTimerId.value = null
+  }
+}
+
+function cancelDelete() {
+  deleteConfirmTimerId.value = null
 }
 
 function sendMessage(text: string, urgent = false) {
