@@ -151,6 +151,40 @@ function cancelDelete() {
   deleteConfirmTimerId.value = null
 }
 
+function handleDragStart(timerId: string, event: DragEvent) {
+  draggedTimerId.value = timerId
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', timerId)
+  }
+}
+
+function handleDragOver(timerId: string, event: DragEvent) {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragOverTimerId.value = timerId
+}
+
+function handleDragLeave() {
+  dragOverTimerId.value = null
+}
+
+function handleDrop(targetTimerId: string, event: DragEvent) {
+  event.preventDefault()
+  if (draggedTimerId.value && draggedTimerId.value !== targetTimerId) {
+    timerStore.reorderTimers(draggedTimerId.value, targetTimerId)
+  }
+  draggedTimerId.value = null
+  dragOverTimerId.value = null
+}
+
+function handleDragEnd() {
+  draggedTimerId.value = null
+  dragOverTimerId.value = null
+}
+
 function sendMessage(text: string, urgent = false) {
   roomStore.sendMessage(text, 5000, urgent ? 'urgent' : 'normal')
 }
