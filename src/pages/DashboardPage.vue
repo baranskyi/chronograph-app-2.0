@@ -376,7 +376,7 @@ const totalRemaining = computed(() => {
               @click="timerStore.selectTimer(timer.id)"
             >
               <!-- Timer Name (Editable) -->
-              <div class="text-sm font-medium">
+              <div class="text-sm font-medium ml-2">
                 <input
                   v-if="editingTimerId === timer.id"
                   v-model="editingTimerName"
