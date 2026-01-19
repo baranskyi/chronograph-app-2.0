@@ -503,9 +503,8 @@ const totalRemaining = computed(() => {
                   <MoreHorizontal class="w-4 h-4" />
                 </button>
               </div>
+              </div>
             </div>
-
-
           </div>
         </div>
 
