@@ -385,11 +385,11 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Timer List -->
-          <div class="flex-1 overflow-y-auto">
+          <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
             <div
               v-for="(timer, index) in timerStore.timerList"
               :key="timer.id"
-              class="flex items-center px-4 py-3 border-b border-[#2a2a2a] cursor-pointer transition-colors"
+              class="flex items-center px-4 py-3 rounded-lg bg-[#1a1a1a] cursor-pointer transition-colors"
               :class="timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'hover:bg-[#1a1a1a]'"
               @click="timerStore.selectTimer(timer.id)"
             >
