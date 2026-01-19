@@ -409,11 +409,11 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Timer List -->
-          <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+          <div class="flex-1 overflow-y-auto flex flex-col gap-2">
             <div
               v-for="(timer, index) in timerStore.orderedTimerList"
               :key="timer.id"
-              class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200"
+              class="flex items-center px-3 py-3 rounded-lg cursor-pointer transition-all duration-200"
               :class="[
                 timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'bg-[#1a1a1a] hover:bg-[#252525]',
                 draggedTimerId === timer.id ? 'opacity-50 scale-[0.98]' : '',
