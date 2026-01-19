@@ -334,34 +334,38 @@ const totalRemaining = computed(() => {
 
             <!-- Progress Bar with Time Labels -->
             <div class="w-full mt-4" v-if="timerStore.selectedTimer">
-              <ProgressBar
-                :total-seconds="timerStore.selectedTimer.settings.duration"
-                :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
-                :yellow-threshold="timerStore.selectedTimer.settings.yellowThreshold"
-                :red-threshold="timerStore.selectedTimer.settings.redThreshold"
-              />
-              <!-- Time Labels -->
-              <div class="relative w-full mt-1" style="height: 16px;">
-                <!-- Start: 00:00 -->
-                <span class="absolute left-0 text-[10px] text-gray-500">00:00</span>
-                <!-- Yellow boundary -->
-                <span
-                  class="absolute text-[10px] text-yellow-500 -translate-x-1/2"
-                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%` }"
+              <div class="relative">
+                <ProgressBar
+                  :total-seconds="timerStore.selectedTimer.settings.duration"
+                  :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
+                  :yellow-threshold="timerStore.selectedTimer.settings.yellowThreshold"
+                  :red-threshold="timerStore.selectedTimer.settings.redThreshold"
+                />
+                <!-- Yellow boundary marker with leader line -->
+                <div
+                  class="absolute top-full flex flex-col items-center"
+                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
                 >
-                  {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
-                </span>
-                <!-- Red boundary -->
-                <span
-                  class="absolute text-[10px] text-red-500 -translate-x-1/2"
-                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%` }"
+                  <div class="w-px h-3 bg-amber-500"></div>
+                  <span class="text-[10px] text-amber-500 whitespace-nowrap">
+                    {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
+                  </span>
+                </div>
+                <!-- Red boundary marker with leader line -->
+                <div
+                  class="absolute top-full flex flex-col items-center"
+                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
                 >
-                  {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
-                </span>
-                <!-- End: Total duration -->
-                <span class="absolute right-0 text-[10px] text-gray-500">
-                  {{ formatDuration(timerStore.selectedTimer.settings.duration) }}
-                </span>
+                  <div class="w-px h-5 bg-red-500"></div>
+                  <span class="text-[10px] text-red-500 whitespace-nowrap">
+                    {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
+                  </span>
+                </div>
+              </div>
+              <!-- Start and End labels -->
+              <div class="flex justify-between mt-6 text-[10px] text-gray-500">
+                <span>00:00</span>
+                <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
               </div>
             </div>
           </div>
