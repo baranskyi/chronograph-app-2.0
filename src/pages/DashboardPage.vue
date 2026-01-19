@@ -574,5 +574,36 @@ const totalRemaining = computed(() => {
     <!-- Modals -->
     <SettingsPanel v-model:open="showSettings" />
     <SharePanel v-model:open="showShare" />
+
+    <!-- Delete Confirmation Dialog -->
+    <Teleport to="body">
+      <div
+        v-if="deleteConfirmTimerId"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click="cancelDelete"
+      >
+        <div
+          class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 max-w-sm mx-4"
+          @click.stop
+        >
+          <h3 class="text-lg font-semibold mb-2">Delete Timer</h3>
+          <p class="text-gray-400 mb-6">Are you sure you want to delete this timer?</p>
+          <div class="flex justify-end gap-3">
+            <button
+              class="px-4 py-2 text-sm bg-[#2a2a2a] rounded hover:bg-[#333] transition-colors"
+              @click="cancelDelete"
+            >
+              Cancel
+            </button>
+            <button
+              class="px-4 py-2 text-sm bg-red-600 rounded hover:bg-red-700 transition-colors"
+              @click="confirmDeleteTimer"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
