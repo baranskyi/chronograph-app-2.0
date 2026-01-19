@@ -503,7 +503,7 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Message Input -->
-          <div class="p-4 border-b border-[#2a2a2a]">
+          <div class="py-4 border-b border-[#2a2a2a]">
             <input
               v-model="customMessage"
               type="text"
