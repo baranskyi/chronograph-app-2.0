@@ -351,7 +351,7 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Transport Controls -->
-          <div class="py-3 border-t border-[#2a2a2a] mt-2">
+          <div class="py-3 border-t border-[#2a2a2a] mt-2 mx-4">
             <div class="flex items-center justify-center gap-2" v-if="timerStore.selectedTimerId">
               <button
                 class="px-3 py-2 text-sm bg-[#2a2a2a] rounded hover:bg-[#333] min-h-10 min-w-10 touch-manipulation active:scale-95"
