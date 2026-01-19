@@ -113,6 +113,30 @@ async function handleAddTimer() {
   await roomStore.createTimer(`Timer ${timerStore.timerList.length + 1}`)
 }
 
+function startEditingTimer(timerId: string, currentName: string, event: Event) {
+  event.stopPropagation()
+  editingTimerId.value = timerId
+  editingTimerName.value = currentName
+}
+
+function saveTimerName(timerId: string) {
+  if (editingTimerName.value.trim()) {
+    timerStore.renameTimer(timerId, editingTimerName.value.trim())
+  }
+  editingTimerId.value = null
+  editingTimerName.value = ''
+}
+
+function cancelEditingTimer() {
+  editingTimerId.value = null
+  editingTimerName.value = ''
+}
+
+async function deleteTimer(timerId: string, event: Event) {
+  event.stopPropagation()
+  await roomStore.deleteTimer(timerId)
+}
+
 function sendMessage(text: string, urgent = false) {
   roomStore.sendMessage(text, 5000, urgent ? 'urgent' : 'normal')
 }
