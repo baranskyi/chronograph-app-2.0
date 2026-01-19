@@ -394,7 +394,7 @@ const totalRemaining = computed(() => {
         </div>
 
         <!-- CENTER: Timers Panel -->
-        <div class="flex-1 flex flex-col bg-[#0f0f0f] p-2">
+        <div class="flex-1 flex flex-col bg-[#0f0f0f] p-3 gap-2">
           <!-- Timers Header -->
           <div class="h-12 px-4 border-b border-[#2a2a2a] flex items-center gap-4">
             <span class="font-medium">Timers</span>
@@ -495,7 +495,7 @@ const totalRemaining = computed(() => {
         </div>
 
         <!-- RIGHT: Messages Panel -->
-        <div class="w-[280px] bg-[#1a1a1a] border-l border-[#2a2a2a] flex flex-col p-2">
+        <div class="w-[280px] bg-[#1a1a1a] border-l border-[#2a2a2a] flex flex-col p-3 gap-2">
           <!-- Messages Header -->
           <div class="h-12 px-4 border-b border-[#2a2a2a] flex items-center">
             <span class="font-medium">Messages</span>
