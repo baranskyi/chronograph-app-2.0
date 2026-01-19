@@ -530,7 +530,7 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Quick Messages -->
-          <div class="flex-1 py-4 overflow-y-auto mx-2">
+          <div class="flex-1 py-4 overflow-y-auto mx-4">
             <div class="grid grid-cols-2 gap-2">
               <button
                 class="px-3 py-2 text-xs text-left bg-[#0f0f0f] border border-[#2a2a2a] rounded hover:bg-[#1a1a1a] min-h-10 touch-manipulation active:scale-95"
