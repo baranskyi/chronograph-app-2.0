@@ -399,7 +399,7 @@ const totalRemaining = computed(() => {
           <div class="h-12 border-b border-[#2a2a2a] flex items-center gap-4 mb-2">
             <span class="font-medium">Timers</span>
             <button
-              class="flex items-center gap-2 text-sm text-gray-300 hover:text-white border border-gray-500 hover:border-gray-400 rounded-md transition-colors"
+              class="flex items-center gap-2 text-sm text-gray-300 hover:text-white border border-gray-500 hover:border-gray-400 rounded-md transition-colors cursor-pointer"
               style="padding: 6px 12px;"
               @click="handleAddTimer"
             >
