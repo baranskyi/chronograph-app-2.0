@@ -408,18 +408,6 @@ const totalRemaining = computed(() => {
               <!-- Row Number -->
               <div class="w-8 text-sm text-gray-500">{{ index + 1 }}</div>
 
-              <!-- Delete Button -->
-              <button
-                class="p-1.5 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 mr-3 touch-manipulation active:scale-95"
-                @click="deleteTimer(timer.id, $event)"
-                title="Delete timer"
-              >
-                <Trash2 class="w-4 h-4" />
-              </button>
-
-              <!-- Start Time -->
-              <div class="w-24 text-sm text-gray-400">{{ getScheduledStart(index) }}</div>
-
               <!-- Duration -->
               <div class="w-16 text-sm font-mono font-bold">{{ formatDuration(timer.settings.duration) }}</div>
 
@@ -469,7 +457,8 @@ const totalRemaining = computed(() => {
                 </button>
                 <button
                   class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95"
-                  @click.stop
+                  @click="showDeleteConfirm(timer.id, $event)"
+                  title="Delete timer"
                 >
                   <MoreHorizontal class="w-4 h-4" />
                 </button>
