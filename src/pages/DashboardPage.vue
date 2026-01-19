@@ -401,7 +401,7 @@ const totalRemaining = computed(() => {
               <div class="flex-1" />
 
               <!-- Duration -->
-              <div class="text-sm font-mono font-bold mr-4">{{ formatDuration(timer.settings.duration) }}</div>
+              <div class="text-sm font-mono font-bold mr-2">{{ formatDuration(timer.settings.duration) }}</div>
 
               <!-- Controls -->
               <div class="flex items-center gap-1">
