@@ -406,19 +406,19 @@ const totalRemaining = computed(() => {
               <!-- Controls -->
               <div class="flex items-center gap-1">
                 <button
-                  class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95"
+                  class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click.stop="reset(timer.id)"
                 >
                   <SkipBack class="w-4 h-4" />
                 </button>
                 <button
-                  class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95"
+                  class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click.stop="handleOpenSettings(timer.id)"
                 >
                   <Settings class="w-4 h-4" />
                 </button>
                 <button
-                  class="p-1.5 rounded touch-manipulation active:scale-95 transition-colors flex items-center justify-center"
+                  class="p-2 rounded min-h-10 min-w-10 touch-manipulation active:scale-95 transition-colors flex items-center justify-center"
                   :class="timer.status === 'running' ? 'bg-amber-500 text-black hover:bg-amber-400' : 'bg-emerald-600 hover:bg-emerald-700'"
                   @click.stop="timer.status === 'running' ? pause(timer.id) : play(timer.id)"
                 >
