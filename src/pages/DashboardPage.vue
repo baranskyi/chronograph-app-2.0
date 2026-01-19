@@ -407,12 +407,30 @@ const totalRemaining = computed(() => {
             <div
               v-for="(timer, index) in timerStore.timerList"
               :key="timer.id"
-              class="flex items-center px-4 py-3 rounded-lg bg-[#1a1a1a] cursor-pointer transition-colors"
-              :class="timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'hover:bg-[#1a1a1a]'"
+              class="flex items-center px-4 py-3 rounded-lg bg-[#1a1a1a] cursor-pointer transition-all"
+              :class="[
+                timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'hover:bg-[#1a1a1a]',
+                draggedTimerId === timer.id ? 'opacity-50' : '',
+                dragOverTimerId === timer.id && draggedTimerId !== timer.id ? 'border-t-2 border-blue-400' : ''
+              ]"
               @click="timerStore.selectTimer(timer.id)"
+              @dragover="handleDragOver(timer.id, $event)"
+              @dragleave="handleDragLeave"
+              @drop="handleDrop(timer.id, $event)"
             >
+              <!-- Drag Handle -->
+              <div
+                class="p-1 mr-2 cursor-grab active:cursor-grabbing text-gray-500 hover:text-white"
+                draggable="true"
+                @dragstart="handleDragStart(timer.id, $event)"
+                @dragend="handleDragEnd"
+                @click.stop
+              >
+                <GripVertical class="w-4 h-4" />
+              </div>
+
               <!-- Timer Name (Editable) -->
-              <div class="text-sm font-medium ml-2">
+              <div class="text-sm font-medium">
                 <input
                   v-if="editingTimerId === timer.id"
                   v-model="editingTimerName"
