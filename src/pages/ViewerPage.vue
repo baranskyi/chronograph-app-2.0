@@ -128,20 +128,24 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Connection status -->
       <ConnectionStatus v-if="!isFullscreen" />
 
+      <!-- ON AIR Badge - Top Right -->
+      <div
+        v-if="displayTimer?.status === 'running'"
+        class="fixed top-4 right-4 z-20"
+      >
+        <span class="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-md shadow-lg animate-pulse">
+          ON AIR
+        </span>
+      </div>
+
       <!-- Room/Timer badge -->
       <div
         v-if="!isFullscreen"
-        class="fixed top-4 right-4 text-xs text-gray-400 bg-[#1a1a1a]/80 px-3 py-1.5 rounded-full z-10 flex items-center gap-2"
+        class="fixed top-4 left-4 text-xs text-gray-400 bg-[#1a1a1a]/80 px-3 py-1.5 rounded-full z-10 flex items-center gap-2"
       >
-        <span>Viewing: {{ roomId }}</span>
+        <span>{{ roomId }}</span>
         <span v-if="displayTimer" class="text-gray-500">|</span>
         <span v-if="displayTimer">{{ timerName }}</span>
-        <span
-          v-if="displayTimer?.isOnAir"
-          class="px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-medium rounded"
-        >
-          LIVE
-        </span>
       </div>
 
       <!-- No timer to display -->
