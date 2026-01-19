@@ -146,6 +146,12 @@ export const useRoomStore = defineStore('room', () => {
     socket.value.on('timer:on-air-changed', ({ timerId }: { timerId: string }) => {
       timerStore.setOnAir(timerId)
     })
+
+    // Listen for viewer count changes
+    socket.value.on('room:viewer-count', ({ count }: { count: number }) => {
+      viewerCount.value = count
+      console.log('Viewer count updated:', count)
+    })
   }
 
   async function joinAsViewer(id: string, timerId?: string): Promise<void> {
