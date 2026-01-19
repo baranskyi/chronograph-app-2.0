@@ -507,11 +507,11 @@ const totalRemaining = computed(() => {
               v-model="customMessage"
               placeholder="Enter message for speaker..."
               rows="4"
-              class="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 resize-none"
+              class="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 resize-none"
             ></textarea>
 
             <button
-              class="w-full mt-3 px-4 py-2 text-sm bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+              class="w-full mt-4 px-4 py-3 text-base font-medium bg-blue-600 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all touch-manipulation"
               @click="sendCustomMessage"
             >
               Send
