@@ -383,17 +383,6 @@ const totalRemaining = computed(() => {
               <span>Add Timer</span>
             </button>
             <div class="flex-1" />
-            <label class="flex items-center gap-2 text-sm text-gray-400">
-              <input type="checkbox" class="rounded bg-[#2a2a2a] border-[#333]" />
-              Follow
-            </label>
-            <button
-              class="px-3 py-1.5 text-sm rounded transition-colors"
-              :class="roomStore.isBlackout ? 'bg-amber-500 text-black' : 'bg-[#2a2a2a] hover:bg-[#333]'"
-              @click="roomStore.toggleBlackout()"
-            >
-              Blackout
-            </button>
           </div>
 
           <!-- Timer List -->
