@@ -119,9 +119,9 @@ function startEditingTimer(timerId: string, currentName: string, event: Event) {
   editingTimerName.value = currentName
 }
 
-function saveTimerName(timerId: string) {
+async function saveTimerName(timerId: string) {
   if (editingTimerName.value.trim()) {
-    timerStore.renameTimer(timerId, editingTimerName.value.trim())
+    await roomStore.renameTimer(timerId, editingTimerName.value.trim())
   }
   editingTimerId.value = null
   editingTimerName.value = ''
