@@ -74,6 +74,11 @@ watch(() => timerStore.selectedTimer, () => {
   }
 }, { deep: true })
 
+// Sync timer order when timers change
+watch(() => timerStore.timerList.length, () => {
+  timerStore.syncTimerOrder()
+})
+
 // Format current time as HH:MM:SS AM/PM
 const formattedClock = computed(() => {
   return currentTime.value.toLocaleTimeString('en-US', {
