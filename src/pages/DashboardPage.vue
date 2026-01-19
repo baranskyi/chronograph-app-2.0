@@ -301,7 +301,7 @@ const totalRemaining = computed(() => {
       <!-- 3-Column Layout -->
       <div class="flex h-[calc(100vh-3rem-3rem)]">
         <!-- LEFT: Preview Panel -->
-        <div class="w-[280px] bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col">
+        <div class="w-[280px] bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col p-2">
           <!-- Timer Preview Header -->
           <div class="px-3 py-2 border-b border-[#2a2a2a] flex items-center gap-2">
             <span class="text-xs text-cyan-400 font-medium">
@@ -394,7 +394,7 @@ const totalRemaining = computed(() => {
         </div>
 
         <!-- CENTER: Timers Panel -->
-        <div class="flex-1 flex flex-col bg-[#0f0f0f]">
+        <div class="flex-1 flex flex-col bg-[#0f0f0f] p-2">
           <!-- Timers Header -->
           <div class="h-12 px-4 border-b border-[#2a2a2a] flex items-center gap-4">
             <span class="font-medium">Timers</span>
