@@ -8,6 +8,8 @@ import TimerControls from '../components/TimerControls.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import SharePanel from '../components/SharePanel.vue'
 import ConnectionStatus from '../components/ConnectionStatus.vue'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
@@ -118,12 +120,9 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Error state -->
     <div v-else-if="initError" class="flex-1 flex flex-col items-center justify-center gap-4">
       <div class="text-red-500 text-xl">{{ initError }}</div>
-      <button
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
-        @click="$router.push('/')"
-      >
+      <Button @click="$router.push('/')">
         Go Home
-      </button>
+      </Button>
     </div>
 
     <!-- Main content -->
@@ -184,40 +183,41 @@ function handleKeydown(e: KeyboardEvent) {
 
           <!-- Preset buttons -->
           <div class="flex flex-wrap gap-2 mb-3">
-            <button
+            <Button
               v-for="preset in messagePresets"
               :key="preset.text"
-              class="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-sm transition-colors flex items-center gap-1.5"
+              variant="secondary"
+              size="sm"
               @click="sendPreset(preset.text)"
             >
-              <span>{{ preset.icon }}</span>
+              <span class="mr-1.5">{{ preset.icon }}</span>
               <span>{{ preset.text }}</span>
-            </button>
-            <button
-              class="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 rounded-lg text-sm transition-colors"
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
               @click="sendPreset('Time is up!', true)"
               title="Urgent message"
             >
               ⚠️ Time's up!
-            </button>
+            </Button>
           </div>
 
           <!-- Custom message input -->
           <div class="flex gap-2">
-            <input
+            <Input
               v-model="customMessage"
               type="text"
               placeholder="Custom message..."
-              class="flex-1 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+              class="flex-1"
               @keydown.enter="sendCustomMessage"
             />
-            <button
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm transition-colors"
+            <Button
               :disabled="!customMessage.trim()"
               @click="sendCustomMessage"
             >
               Send
-            </button>
+            </Button>
           </div>
         </div>
       </div>

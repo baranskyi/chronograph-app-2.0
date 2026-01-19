@@ -8,6 +8,8 @@ import TimerCard from '../components/TimerCard.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import SharePanel from '../components/SharePanel.vue'
 import ConnectionStatus from '../components/ConnectionStatus.vue'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
@@ -158,12 +160,9 @@ function handleKeydown(e: KeyboardEvent) {
     <!-- Error state -->
     <div v-else-if="initError" class="flex-1 flex flex-col items-center justify-center gap-4">
       <div class="text-red-500 text-xl">{{ initError }}</div>
-      <button
-        class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
-        @click="$router.push('/')"
-      >
+      <Button @click="$router.push('/')">
         Go Home
-      </button>
+      </Button>
     </div>
 
     <!-- Main Dashboard -->
@@ -180,36 +179,40 @@ function handleKeydown(e: KeyboardEvent) {
           </span>
         </div>
         <div class="flex items-center gap-2">
-          <button
-            class="px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded text-sm transition-colors flex items-center gap-1.5"
+          <Button
+            variant="default"
+            size="sm"
+            class="bg-green-600 hover:bg-green-500"
             @click="showShare = true"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
               <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
             </svg>
             Share
-          </button>
-          <button
-            class="px-3 py-1.5 rounded text-sm transition-colors flex items-center gap-1.5"
-            :class="roomStore.isBlackout ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-zinc-700 hover:bg-zinc-600'"
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            :class="roomStore.isBlackout ? 'bg-yellow-600 hover:bg-yellow-500' : ''"
             @click="roomStore.toggleBlackout()"
             title="Blackout mode (B)"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd" />
               <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
             </svg>
             {{ roomStore.isBlackout ? 'Show' : 'Blackout' }}
-          </button>
-          <button
-            class="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded text-sm transition-colors"
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
             @click="toggleFullscreen"
             title="Fullscreen (F)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z" clip-rule="evenodd" />
             </svg>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -225,16 +228,16 @@ function handleKeydown(e: KeyboardEvent) {
           <!-- List header -->
           <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
             <div class="text-sm font-medium text-gray-300">Timers ({{ timerStore.timerList.length }})</div>
-            <button
-              class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs transition-colors flex items-center gap-1"
+            <Button
+              size="sm"
               @click="handleAddTimer"
               title="Add timer (Ctrl+N)"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
               </svg>
               Add Timer
-            </button>
+            </Button>
           </div>
 
           <!-- Timer list -->
@@ -260,42 +263,43 @@ function handleKeydown(e: KeyboardEvent) {
           <div class="flex-1 p-4 flex flex-col gap-4">
             <!-- Custom message input -->
             <div class="flex gap-2">
-              <input
+              <Input
                 v-model="customMessage"
                 type="text"
                 placeholder="Type message..."
-                class="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded text-sm focus:outline-none focus:border-blue-500"
+                class="flex-1"
                 @keydown.enter="sendCustomMessage"
               />
-              <button
-                class="px-3 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded text-sm transition-colors"
+              <Button
                 :disabled="!customMessage.trim()"
                 @click="sendCustomMessage"
               >
                 Send
-              </button>
+              </Button>
             </div>
 
             <!-- Preset buttons -->
             <div class="space-y-2">
               <div class="text-xs text-gray-500 uppercase tracking-wide">Presets</div>
               <div class="flex flex-wrap gap-2">
-                <button
+                <Button
                   v-for="preset in messagePresets"
                   :key="preset.text"
-                  class="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded text-xs transition-colors flex items-center gap-1"
+                  variant="secondary"
+                  size="sm"
                   @click="sendPreset(preset.text)"
                 >
-                  <span>{{ preset.icon }}</span>
+                  <span class="mr-1">{{ preset.icon }}</span>
                   <span>{{ preset.text }}</span>
-                </button>
+                </Button>
               </div>
-              <button
-                class="w-full px-3 py-2 bg-red-600/80 hover:bg-red-500 rounded text-sm transition-colors"
+              <Button
+                variant="destructive"
+                class="w-full"
                 @click="sendPreset('Time is up!', true)"
               >
                 ⚠️ Time's up!
-              </button>
+              </Button>
             </div>
 
             <!-- Share links -->
