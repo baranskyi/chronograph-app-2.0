@@ -392,7 +392,7 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Connection Status -->
-          <div class="py-2 border-t border-[#2a2a2a] mt-2">
+          <div class="py-2 mt-2">
             <div class="flex items-center gap-2 text-sm">
               <span class="text-gray-400">Connection:</span>
               <span
