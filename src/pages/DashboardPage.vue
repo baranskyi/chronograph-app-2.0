@@ -399,14 +399,42 @@ const totalRemaining = computed(() => {
               <!-- Row Number -->
               <div class="w-8 text-sm text-gray-500">{{ index + 1 }}</div>
 
+              <!-- Delete Button -->
+              <button
+                class="p-1.5 rounded hover:bg-red-500/20 text-gray-500 hover:text-red-400 mr-3 touch-manipulation active:scale-95"
+                @click="deleteTimer(timer.id, $event)"
+                title="Delete timer"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
+
               <!-- Start Time -->
               <div class="w-24 text-sm text-gray-400">{{ getScheduledStart(index) }}</div>
 
               <!-- Duration -->
               <div class="w-16 text-sm font-mono font-bold">{{ formatDuration(timer.settings.duration) }}</div>
 
-              <!-- Timer Name -->
-              <div class="flex-1 text-sm font-medium">{{ timer.name }}</div>
+              <!-- Timer Name (Editable) -->
+              <div class="flex-1 text-sm font-medium">
+                <input
+                  v-if="editingTimerId === timer.id"
+                  v-model="editingTimerName"
+                  type="text"
+                  class="bg-[#0f0f0f] border border-blue-500 rounded px-2 py-1 text-sm w-full max-w-[200px] focus:outline-none"
+                  @click.stop
+                  @blur="saveTimerName(timer.id)"
+                  @keydown.enter="saveTimerName(timer.id)"
+                  @keydown.escape="cancelEditingTimer"
+                  autofocus
+                />
+                <span
+                  v-else
+                  class="cursor-text hover:text-blue-300"
+                  @click="startEditingTimer(timer.id, timer.name, $event)"
+                >
+                  {{ timer.name }}
+                </span>
+              </div>
 
               <!-- Controls -->
               <div class="flex items-center gap-1">
@@ -423,7 +451,7 @@ const totalRemaining = computed(() => {
                   <Settings class="w-4 h-4" />
                 </button>
                 <button
-                  class="p-2 rounded min-h-10 min-w-10 touch-manipulation active:scale-95 transition-colors"
+                  class="p-1.5 rounded touch-manipulation active:scale-95 transition-colors flex items-center justify-center"
                   :class="timer.status === 'running' ? 'bg-amber-500 text-black hover:bg-amber-400' : 'bg-emerald-600 hover:bg-emerald-700'"
                   @click.stop="timer.status === 'running' ? pause(timer.id) : play(timer.id)"
                 >
