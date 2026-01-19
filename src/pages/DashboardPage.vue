@@ -384,7 +384,7 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Live Connections -->
-          <div class="py-2 border-t border-[#2a2a2a] mt-2 mx-4">
+          <div class="py-2 border-t border-[#2a2a2a] mt-2">
             <div class="flex items-center gap-2 text-sm">
               <span class="text-gray-500">Live Connections</span>
               <span class="text-white">{{ roomStore.viewerCount }}/3</span>
