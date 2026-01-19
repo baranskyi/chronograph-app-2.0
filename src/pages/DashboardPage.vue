@@ -321,7 +321,13 @@ const totalRemaining = computed(() => {
           <!-- Timers Header -->
           <div class="h-12 px-4 border-b border-[#2a2a2a] flex items-center gap-4">
             <span class="font-medium">Timers</span>
-            <span class="text-gray-500 text-sm">Actions</span>
+            <button
+              class="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
+              @click="handleAddTimer"
+            >
+              <Plus class="w-4 h-4" />
+              <span>Add Timer</span>
+            </button>
             <div class="flex-1" />
             <label class="flex items-center gap-2 text-sm text-gray-400">
               <input type="checkbox" class="rounded bg-[#2a2a2a] border-[#333]" />
@@ -391,16 +397,6 @@ const totalRemaining = computed(() => {
               </div>
             </div>
 
-            <!-- Add Timer Button -->
-            <div class="px-4 py-4">
-              <button
-                class="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-                @click="handleAddTimer"
-              >
-                <Plus class="w-4 h-4" />
-                <span>Add Timer</span>
-              </button>
-            </div>
 
           </div>
         </div>
