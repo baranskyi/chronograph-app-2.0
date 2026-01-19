@@ -131,9 +131,9 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- ON AIR Badge - Top Right -->
       <div
         v-if="displayTimer?.status === 'running'"
-        class="fixed top-4 right-4 z-20"
+        class="fixed top-6 right-6 z-20"
       >
-        <span class="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-md shadow-lg animate-pulse">
+        <span class="bg-red-600 text-white text-base font-bold rounded-lg shadow-lg animate-pulse" style="padding: 12px 24px;">
           ON AIR
         </span>
       </div>
