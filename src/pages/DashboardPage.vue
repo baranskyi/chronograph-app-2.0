@@ -394,9 +394,6 @@ const totalRemaining = computed(() => {
               :class="timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'hover:bg-[#1a1a1a]'"
               @click="timerStore.selectTimer(timer.id)"
             >
-              <!-- Row Number -->
-              <div class="w-8 text-sm text-gray-500">{{ index + 1 }}</div>
-
               <!-- Duration -->
               <div class="w-16 text-sm font-mono font-bold">{{ formatDuration(timer.settings.duration) }}</div>
 
