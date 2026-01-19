@@ -4,13 +4,13 @@ import { computed } from 'vue'
 interface Props {
   totalSeconds: number
   remainingSeconds: number
-  yellowThreshold?: number  // percentage when yellow zone starts (e.g., 30 = 30%)
-  redThreshold?: number     // percentage when red zone starts (e.g., 10 = 10%)
+  yellowThreshold?: number  // seconds remaining when yellow zone starts
+  redThreshold?: number     // seconds remaining when red zone starts
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  yellowThreshold: 30,
-  redThreshold: 10
+  yellowThreshold: 60,
+  redThreshold: 30
 })
 
 // Progress as percentage (0-100)
@@ -20,11 +20,28 @@ const progress = computed(() => {
   return Math.min(100, Math.max(0, (elapsed / props.totalSeconds) * 100))
 })
 
-// Zone widths (from left to right: passed, green, yellow, red)
+// Calculate zone widths based on seconds thresholds
+// Green: from 0 to (totalSeconds - yellowThreshold)
+// Yellow: from (totalSeconds - yellowThreshold) to (totalSeconds - redThreshold)
+// Red: from (totalSeconds - redThreshold) to totalSeconds
+const greenWidth = computed(() => {
+  if (props.totalSeconds <= 0) return '0%'
+  const greenSeconds = Math.max(0, props.totalSeconds - props.yellowThreshold)
+  return `${(greenSeconds / props.totalSeconds) * 100}%`
+})
+
+const yellowWidth = computed(() => {
+  if (props.totalSeconds <= 0) return '0%'
+  const yellowSeconds = Math.max(0, props.yellowThreshold - props.redThreshold)
+  return `${(yellowSeconds / props.totalSeconds) * 100}%`
+})
+
+const redWidth = computed(() => {
+  if (props.totalSeconds <= 0) return '0%'
+  return `${(props.redThreshold / props.totalSeconds) * 100}%`
+})
+
 const passedWidth = computed(() => `${progress.value}%`)
-const greenWidth = computed(() => `${100 - props.yellowThreshold}%`)
-const yellowWidth = computed(() => `${props.yellowThreshold - props.redThreshold}%`)
-const redWidth = computed(() => `${props.redThreshold}%`)
 
 // Marker position (at the edge of passed area)
 const markerPosition = computed(() => `${progress.value}%`)
