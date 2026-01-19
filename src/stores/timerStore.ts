@@ -336,6 +336,7 @@ export const useTimerStore = defineStore('timer', () => {
     addTimer,
     addTimers,
     removeTimer,
+    reorderTimers,
     updateTimer,
     selectTimer,
     setOnAir,
