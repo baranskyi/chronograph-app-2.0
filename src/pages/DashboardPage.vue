@@ -301,9 +301,9 @@ const totalRemaining = computed(() => {
       <!-- 3-Column Layout -->
       <div class="flex h-[calc(100vh-3rem-3rem)]">
         <!-- LEFT: Preview Panel -->
-        <div class="w-[280px] bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col py-4">
+        <div class="w-[280px] bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
           <!-- Timer Preview Header -->
-          <div class="py-2 border-b border-[#2a2a2a] flex items-center gap-2 mb-2 mx-4">
+          <div class="py-2 border-b border-[#2a2a2a] flex items-center gap-2 mb-2">
             <span class="text-xs text-cyan-400 font-medium">
               {{ timerStore.selectedTimer?.name || 'Timer 1' }}
             </span>
