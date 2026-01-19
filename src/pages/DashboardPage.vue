@@ -420,7 +420,7 @@ const totalRemaining = computed(() => {
             >
               <!-- Drag Handle -->
               <div
-                class="p-1 mr-2 cursor-grab active:cursor-grabbing text-gray-500 hover:text-white"
+                class="p-1 mr-2 cursor-grab active:cursor-grabbing text-white"
                 draggable="true"
                 @dragstart="handleDragStart(timer.id, $event)"
                 @dragend="handleDragEnd"
