@@ -341,25 +341,6 @@ const totalRemaining = computed(() => {
             </div>
           </div>
 
-          <!-- Clock & Cue Info -->
-          <div class="px-4 py-3 border-t border-[#2a2a2a] text-xs text-gray-400">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-gray-500">&#128340;</span>
-              <span>{{ formattedClock }}</span>
-              <span class="ml-2 text-gray-600">Europe/Madrid</span>
-            </div>
-            <div class="flex gap-4">
-              <div>
-                <span class="text-gray-500">Cue finish</span>
-                <div class="text-white">{{ formattedClock }}</div>
-              </div>
-              <div>
-                <span class="text-gray-500">Over/Under</span>
-                <div class="text-white">–</div>
-              </div>
-            </div>
-          </div>
-
           <!-- Live Connections -->
           <div class="px-4 py-2 border-t border-[#2a2a2a]">
             <div class="flex items-center gap-2 text-sm">
