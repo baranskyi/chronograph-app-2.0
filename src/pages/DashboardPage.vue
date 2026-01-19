@@ -495,9 +495,9 @@ const totalRemaining = computed(() => {
         </div>
 
         <!-- RIGHT: Messages Panel -->
-        <div class="w-[280px] bg-[#1a1a1a] border-l border-[#2a2a2a] flex flex-col py-4">
+        <div class="w-[280px] bg-[#1a1a1a] border-l border-[#2a2a2a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
           <!-- Messages Header -->
-          <div class="h-12 border-b border-[#2a2a2a] flex items-center mb-2 mx-4">
+          <div class="h-12 border-b border-[#2a2a2a] flex items-center mb-2">
             <span class="font-medium">Messages</span>
             <button class="ml-auto px-3 py-1 text-sm bg-[#2a2a2a] rounded hover:bg-[#333]">Focus</button>
           </div>
