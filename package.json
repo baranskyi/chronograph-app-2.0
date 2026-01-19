@@ -2,7 +2,7 @@
   "name": "chronograph-app",
   "description": "Chronograph.pro - Professional countdown timer for conferences and presentations",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "engines": {
     "node": ">=20.19.0"
@@ -11,7 +11,10 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "start": "serve dist -s -l ${PORT:-3000}"
+    "start": "serve dist -s -l ${PORT:-3000}",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version"
   },
   "dependencies": {
     "@vueuse/core": "^14.1.0",

@@ -332,14 +332,37 @@ const totalRemaining = computed(() => {
             </div>
             <div v-else class="text-4xl text-gray-500">--:--</div>
 
-            <!-- Progress Bar -->
+            <!-- Progress Bar with Time Labels -->
             <div class="w-full mt-4" v-if="timerStore.selectedTimer">
               <ProgressBar
                 :total-seconds="timerStore.selectedTimer.settings.duration"
                 :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
-                :yellow-threshold="30"
-                :red-threshold="10"
+                :yellow-threshold="timerStore.selectedTimer.settings.yellowThreshold"
+                :red-threshold="timerStore.selectedTimer.settings.redThreshold"
               />
+              <!-- Time Labels -->
+              <div class="relative w-full mt-1" style="height: 16px;">
+                <!-- Start: 00:00 -->
+                <span class="absolute left-0 text-[10px] text-gray-500">00:00</span>
+                <!-- Yellow boundary -->
+                <span
+                  class="absolute text-[10px] text-yellow-500 -translate-x-1/2"
+                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%` }"
+                >
+                  {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
+                </span>
+                <!-- Red boundary -->
+                <span
+                  class="absolute text-[10px] text-red-500 -translate-x-1/2"
+                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%` }"
+                >
+                  {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
+                </span>
+                <!-- End: Total duration -->
+                <span class="absolute right-0 text-[10px] text-gray-500">
+                  {{ formatDuration(timerStore.selectedTimer.settings.duration) }}
+                </span>
+              </div>
             </div>
           </div>
 
