@@ -310,7 +310,7 @@ const totalRemaining = computed(() => {
           </div>
 
           <!-- Big Time Display -->
-          <div class="flex-1 flex flex-col items-center justify-center px-4">
+          <div class="flex-1 flex flex-col items-center justify-center">
             <div
               v-if="timerStore.selectedTimer"
               class="text-[4.5rem] font-mono font-bold tabular-nums leading-none"
