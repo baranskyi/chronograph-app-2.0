@@ -382,9 +382,6 @@ const totalRemaining = computed(() => {
             >
               Blackout
             </button>
-            <button class="p-1.5 bg-[#2a2a2a] rounded hover:bg-[#333]">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zm6 0a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zm5 0a1 1 0 10-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4z" /></svg>
-            </button>
           </div>
 
           <!-- Timer List -->
