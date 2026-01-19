@@ -334,10 +334,11 @@ const totalRemaining = computed(() => {
             <div class="mt-4 flex items-center gap-3">
               <span
                 v-if="timerStore.selectedTimer"
-                class="px-3 py-1 text-xs font-bold rounded-md transition-colors"
+                class="text-xs font-bold rounded-md transition-colors"
                 :class="timerStore.selectedTimer.status === 'running'
                   ? 'bg-red-600 text-white'
                   : 'bg-transparent border border-gray-500 text-gray-500'"
+                style="padding: 6px 12px;"
               >ON AIR</span>
               <span class="text-sm text-gray-400 font-mono">
                 {{ timerStore.selectedTimer ? formatDuration(timerStore.selectedTimer.elapsedSeconds) : '0:00:00' }}.0
