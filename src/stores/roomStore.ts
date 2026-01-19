@@ -390,6 +390,7 @@ export const useRoomStore = defineStore('room', () => {
     isConnecting.value = false
     error.value = null
     viewerTimerId.value = null
+    viewerCount.value = 0
 
     // Clear timer store
     const timerStore = useTimerStore()
