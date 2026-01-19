@@ -11,11 +11,14 @@ import { Play, Pause, SkipBack, SkipForward, Settings, MoreHorizontal, Plus } fr
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
 
+const APP_VERSION = '0.1.0'
+
 const showSettings = ref(false)
 const showShare = ref(false)
 const isInitializing = ref(true)
 const initError = ref<string | null>(null)
 const customMessage = ref('')
+const pingMs = ref<number | null>(null)
 
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
@@ -38,6 +41,19 @@ onMounted(async () => {
   clockInterval = window.setInterval(() => {
     currentTime.value = new Date()
   }, 1000)
+
+  // Measure ping every 5 seconds
+  const measurePing = async () => {
+    const start = performance.now()
+    try {
+      await fetch(window.location.origin, { method: 'HEAD', cache: 'no-store' })
+      pingMs.value = Math.round(performance.now() - start)
+    } catch {
+      pingMs.value = null
+    }
+  }
+  measurePing()
+  window.setInterval(measurePing, 5000)
 })
 
 onUnmounted(() => {
@@ -483,7 +499,7 @@ const totalRemaining = computed(() => {
       <!-- Bottom Status Bar -->
       <footer class="h-12 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4 gap-4">
         <div class="text-xs text-gray-500">
-          stagetimer.io · v3.1.3 · Docs · <span class="text-gray-600">&#10003;</span> 85 ms
+          chronograph.pro · v{{ APP_VERSION }} · <span class="text-gray-600">&#10003;</span> {{ pingMs !== null ? pingMs + ' ms' : '...' }}
         </div>
         <div class="flex-1 flex items-center gap-2 px-4">
           <span class="text-xs text-gray-400 w-12">{{ formatDuration(totalElapsed) }}</span>
