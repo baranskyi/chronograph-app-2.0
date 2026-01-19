@@ -311,6 +311,17 @@ const totalRemaining = computed(() => {
 
           <!-- Big Time Display -->
           <div class="flex-1 flex flex-col items-center justify-center">
+            <!-- ON AIR Badge (above timer) -->
+            <div class="mb-4" v-if="timerStore.selectedTimer">
+              <span
+                class="text-xs font-bold rounded-md transition-colors"
+                :class="timerStore.selectedTimer.status === 'running'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-transparent border border-gray-500 text-gray-500'"
+                style="padding: 6px 12px;"
+              >ON AIR</span>
+            </div>
+
             <div
               v-if="timerStore.selectedTimer"
               class="text-[4.5rem] font-mono font-bold tabular-nums leading-none"
@@ -328,29 +339,6 @@ const totalRemaining = computed(() => {
                 :yellow-threshold="30"
                 :red-threshold="10"
               />
-            </div>
-
-            <!-- ON AIR Badge -->
-            <div class="mt-4 flex items-center gap-3">
-              <span
-                v-if="timerStore.selectedTimer"
-                class="text-xs font-bold rounded-md transition-colors"
-                :class="timerStore.selectedTimer.status === 'running'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-transparent border border-gray-500 text-gray-500'"
-                style="padding: 6px 12px;"
-              >ON AIR</span>
-              <span class="text-sm text-gray-400 font-mono">
-                {{ timerStore.selectedTimer ? formatDuration(timerStore.selectedTimer.elapsedSeconds) : '0:00:00' }}.0
-              </span>
-            </div>
-
-            <!-- Time Scale -->
-            <div class="w-full mt-3 flex justify-between text-xs text-gray-500 px-1" v-if="timerStore.selectedTimer">
-              <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
-              <span>{{ formatDuration(Math.floor(timerStore.selectedTimer.settings.duration * 0.75)) }}</span>
-              <span>{{ formatDuration(Math.floor(timerStore.selectedTimer.settings.duration * 0.5)) }}</span>
-              <span>{{ formatDuration(Math.floor(timerStore.selectedTimer.settings.duration * 0.25)) }}</span>
             </div>
           </div>
 
