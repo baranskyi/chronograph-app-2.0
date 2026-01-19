@@ -387,12 +387,20 @@ const totalRemaining = computed(() => {
             </div>
           </div>
 
-          <!-- Live Connections -->
+          <!-- Connection Status -->
           <div class="py-2 border-t border-[#2a2a2a] mt-2">
             <div class="flex items-center gap-2 text-sm">
-              <span class="text-gray-500">Live Connections</span>
-              <span class="text-white">{{ roomStore.viewerCount }}/3</span>
-              <span class="ml-auto text-gray-600">&gt;</span>
+              <span class="text-gray-400">Connection:</span>
+              <span
+                v-if="roomStore.viewerCount > 0"
+                class="px-2 py-0.5 rounded text-black font-medium"
+                style="background-color: #22c55e;"
+              >in progress</span>
+              <span
+                v-else
+                class="px-2 py-0.5 rounded text-black font-medium"
+                style="background-color: #eab308;"
+              >waiting</span>
             </div>
           </div>
         </div>
