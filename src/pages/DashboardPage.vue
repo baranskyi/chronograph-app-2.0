@@ -455,7 +455,7 @@ const totalRemaining = computed(() => {
               </div>
 
               <!-- Duration -->
-              <div class="text-sm font-mono font-bold ml-4">{{ formatDuration(timer.settings.duration) }}</div>
+              <div class="text-sm font-mono font-bold ml-2 text-gray-400">{{ formatDuration(timer.settings.duration) }}</div>
 
               <!-- Spacer -->
               <div class="flex-1" />
