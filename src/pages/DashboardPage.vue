@@ -394,11 +394,8 @@ const totalRemaining = computed(() => {
               :class="timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'hover:bg-[#1a1a1a]'"
               @click="timerStore.selectTimer(timer.id)"
             >
-              <!-- Duration -->
-              <div class="w-16 text-sm font-mono font-bold">{{ formatDuration(timer.settings.duration) }}</div>
-
               <!-- Timer Name (Editable) -->
-              <div class="flex-1 text-sm font-medium">
+              <div class="text-sm font-medium">
                 <input
                   v-if="editingTimerId === timer.id"
                   v-model="editingTimerName"
@@ -418,6 +415,12 @@ const totalRemaining = computed(() => {
                   {{ timer.name }}
                 </span>
               </div>
+
+              <!-- Spacer -->
+              <div class="flex-1" />
+
+              <!-- Duration -->
+              <div class="text-sm font-mono font-bold mr-4">{{ formatDuration(timer.settings.duration) }}</div>
 
               <!-- Controls -->
               <div class="flex items-center gap-1">
