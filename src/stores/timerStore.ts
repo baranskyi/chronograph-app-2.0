@@ -303,6 +303,26 @@ export const useTimerStore = defineStore('timer', () => {
     if (selectedTimerId.value) resetTimer(selectedTimerId.value)
   }
 
+  // Reorder timers by moving sourceId to targetId's position
+  function reorderTimers(sourceId: string, targetId: string) {
+    const timerArray = Array.from(timers.entries())
+    const sourceIndex = timerArray.findIndex(([id]) => id === sourceId)
+    const targetIndex = timerArray.findIndex(([id]) => id === targetId)
+
+    if (sourceIndex === -1 || targetIndex === -1) return
+
+    // Remove source from array
+    const [removed] = timerArray.splice(sourceIndex, 1)
+    // Insert at target position
+    timerArray.splice(targetIndex, 0, removed)
+
+    // Rebuild the Map with new order
+    timers.clear()
+    for (const [id, timer] of timerArray) {
+      timers.set(id, timer)
+    }
+  }
+
   return {
     // Multi-timer state
     timers,
