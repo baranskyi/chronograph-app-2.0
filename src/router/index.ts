@@ -7,19 +7,25 @@ const routes = [
     component: () => import('../pages/HomePage.vue')
   },
   {
-    path: '/controller',
-    name: 'controller',
-    component: () => import('../pages/ControllerPage.vue')
+    path: '/dashboard',
+    name: 'dashboard',
+    component: () => import('../pages/DashboardPage.vue')
   },
+  // Legacy controller route - redirect to dashboard
   {
-    path: '/viewer/:roomId',
+    path: '/controller',
+    redirect: '/dashboard'
+  },
+  // Viewer with optional timer ID
+  {
+    path: '/viewer/:roomId/:timerId?',
     name: 'viewer',
     component: () => import('../pages/ViewerPage.vue'),
     props: true
   },
   // Short URL - same component, different path
   {
-    path: '/v/:roomId',
+    path: '/v/:roomId/:timerId?',
     name: 'viewer-short',
     component: () => import('../pages/ViewerPage.vue'),
     props: true

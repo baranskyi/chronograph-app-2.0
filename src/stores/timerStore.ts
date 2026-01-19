@@ -1,44 +1,44 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
-import { useStorage } from '@vueuse/core'
-import type { TimerSettings, TimerStatus, TimerMode, TimerColorState } from '../types/timer'
-import { DEFAULT_SETTINGS } from '../types/timer'
+import { ref, computed, reactive } from 'vue'
+import type { Timer, TimerSettings, TimerStatus, TimerMode, TimerColorState } from '../types/timer'
+import { DEFAULT_SETTINGS, getTimerColorState, formatTime } from '../types/timer'
 
 export const useTimerStore = defineStore('timer', () => {
-  // Persisted settings
-  const settings = useStorage<TimerSettings>('chronograph-settings', { ...DEFAULT_SETTINGS })
+  // Multi-timer state
+  const timers = reactive(new Map<string, Timer>())
+  const selectedTimerId = ref<string | null>(null)
+  const activeTimerId = ref<string | null>(null) // "On Air" timer
 
-  // Timer state (not persisted)
-  const remainingSeconds = ref(settings.value.duration)
-  const elapsedSeconds = ref(0)
-  const status = ref<TimerStatus>('stopped')
-  const intervalId = ref<number | null>(null)
+  // Interval IDs for running timers
+  const intervalIds = new Map<string, number>()
 
-  // Computed properties
-  const isRunning = computed(() => status.value === 'running')
-  const isPaused = computed(() => status.value === 'paused')
-  const isStopped = computed(() => status.value === 'stopped')
-  const isOvertime = computed(() => remainingSeconds.value < 0)
+  // Computed: All timers as array (sorted by creation order)
+  const timerList = computed(() => Array.from(timers.values()))
 
-  const colorState = computed<TimerColorState>(() => {
-    const seconds = remainingSeconds.value
-    if (seconds <= settings.value.redThreshold) return 'red'
-    if (seconds <= settings.value.yellowThreshold) return 'yellow'
-    return 'green'
-  })
+  // Computed: Selected timer (for UI editing)
+  const selectedTimer = computed(() =>
+    selectedTimerId.value ? timers.get(selectedTimerId.value) : null
+  )
 
-  const displaySeconds = computed(() => {
-    if (settings.value.mode === 'clock') {
-      return new Date().getSeconds() + new Date().getMinutes() * 60 + new Date().getHours() * 3600
-    }
-    if (settings.value.mode === 'countup') {
-      return elapsedSeconds.value
-    }
-    return remainingSeconds.value
-  })
+  // Computed: Active "On Air" timer
+  const activeTimer = computed(() =>
+    activeTimerId.value ? timers.get(activeTimerId.value) : null
+  )
 
-  const formattedTime = computed(() => {
-    if (settings.value.mode === 'clock') {
+  // Computed: Get color state for a timer
+  function getColorState(timerId: string): TimerColorState {
+    const timer = timers.get(timerId)
+    if (!timer) return 'green'
+    if (timer.settings.mode === 'clock') return 'green'
+    return getTimerColorState(timer)
+  }
+
+  // Computed: Get formatted time for a timer
+  function getFormattedTime(timerId: string): string {
+    const timer = timers.get(timerId)
+    if (!timer) return '00:00'
+
+    if (timer.settings.mode === 'clock') {
       return new Date().toLocaleTimeString('en-US', {
         hour12: false,
         hour: '2-digit',
@@ -47,150 +47,308 @@ export const useTimerStore = defineStore('timer', () => {
       })
     }
 
-    const totalSeconds = Math.abs(displaySeconds.value)
-    const hours = Math.floor(totalSeconds / 3600)
-    const minutes = Math.floor((totalSeconds % 3600) / 60)
-    const seconds = totalSeconds % 60
-
-    const prefix = isOvertime.value && settings.value.mode === 'countdown' ? '-' : ''
-
-    if (hours > 0) {
-      return `${prefix}${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    if (timer.settings.mode === 'countup') {
+      return formatTime(timer.elapsedSeconds)
     }
-    return `${prefix}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  })
 
-  // Actions
-  function start() {
-    if (status.value === 'running') return
-
-    status.value = 'running'
-    intervalId.value = window.setInterval(() => {
-      tick()
-    }, 1000)
+    return formatTime(timer.remainingSeconds)
   }
 
-  function pause() {
-    if (status.value !== 'running') return
+  // Check if timer is in overtime
+  function isOvertime(timerId: string): boolean {
+    const timer = timers.get(timerId)
+    if (!timer) return false
+    return timer.remainingSeconds < 0 && timer.settings.mode === 'countdown'
+  }
 
-    status.value = 'paused'
-    if (intervalId.value !== null) {
-      clearInterval(intervalId.value)
-      intervalId.value = null
+  // Actions: Timer CRUD
+  function addTimer(timer: Timer) {
+    timers.set(timer.id, { ...timer })
+    if (timer.isOnAir) {
+      activeTimerId.value = timer.id
+    }
+    // Select first timer if none selected
+    if (!selectedTimerId.value) {
+      selectedTimerId.value = timer.id
     }
   }
 
-  function stop() {
-    status.value = 'stopped'
-    if (intervalId.value !== null) {
-      clearInterval(intervalId.value)
-      intervalId.value = null
-    }
-  }
-
-  function reset() {
-    stop()
-    remainingSeconds.value = settings.value.duration
-    elapsedSeconds.value = 0
-  }
-
-  function tick() {
-    elapsedSeconds.value++
-
-    if (settings.value.mode === 'countdown') {
-      remainingSeconds.value--
-
-      // Check if timer reached zero
-      if (remainingSeconds.value === 0) {
-        if (!settings.value.overtimeEnabled) {
-          stop()
-        }
-        // Sound will be triggered by watcher in component
+  function addTimers(timerArray: Timer[]) {
+    timerArray.forEach(t => {
+      timers.set(t.id, { ...t })
+      if (t.isOnAir) {
+        activeTimerId.value = t.id
+      }
+    })
+    // Select first timer if none selected
+    if (!selectedTimerId.value && timerArray.length > 0) {
+      const firstTimer = timerArray[0]
+      if (firstTimer) {
+        selectedTimerId.value = firstTimer.id
       }
     }
   }
 
-  function setDuration(seconds: number) {
-    settings.value.duration = seconds
-    if (status.value === 'stopped') {
-      remainingSeconds.value = seconds
+  function removeTimer(timerId: string) {
+    stopTimer(timerId)
+    timers.delete(timerId)
+
+    // Update selections if needed
+    if (selectedTimerId.value === timerId) {
+      const remaining = Array.from(timers.keys())
+      const first = remaining[0]
+      selectedTimerId.value = first ?? null
+    }
+    if (activeTimerId.value === timerId) {
+      const remaining = Array.from(timers.keys())
+      const first = remaining[0]
+      activeTimerId.value = first ?? null
     }
   }
 
-  function setMode(mode: TimerMode) {
-    settings.value.mode = mode
-    reset()
+  function updateTimer(timerId: string, updates: Partial<Timer>) {
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    Object.assign(timer, updates)
   }
 
-  function adjustTime(seconds: number) {
-    remainingSeconds.value += seconds
-    if (remainingSeconds.value < 0 && !settings.value.overtimeEnabled) {
-      remainingSeconds.value = 0
+  function selectTimer(timerId: string) {
+    if (timers.has(timerId)) {
+      selectedTimerId.value = timerId
     }
   }
 
-  function updateSettings(newSettings: Partial<TimerSettings>) {
-    settings.value = { ...settings.value, ...newSettings }
+  function setOnAir(timerId: string) {
+    // Clear all isOnAir flags
+    for (const t of timers.values()) {
+      t.isOnAir = false
+    }
+    // Set new On Air timer
+    const timer = timers.get(timerId)
+    if (timer) {
+      timer.isOnAir = true
+      activeTimerId.value = timerId
+    }
   }
 
-  // Get serializable state for sync (controller sends this)
-  function getStateForSync() {
+  // Actions: Timer controls
+  function startTimer(timerId: string) {
+    const timer = timers.get(timerId)
+    if (!timer || timer.status === 'running') return
+
+    timer.status = 'running'
+
+    const id = window.setInterval(() => {
+      tickTimer(timerId)
+    }, 1000)
+    intervalIds.set(timerId, id)
+  }
+
+  function pauseTimer(timerId: string) {
+    const timer = timers.get(timerId)
+    if (!timer || timer.status !== 'running') return
+
+    timer.status = 'paused'
+
+    const intervalId = intervalIds.get(timerId)
+    if (intervalId !== undefined) {
+      clearInterval(intervalId)
+      intervalIds.delete(timerId)
+    }
+  }
+
+  function stopTimer(timerId: string) {
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    timer.status = 'stopped'
+
+    const intervalId = intervalIds.get(timerId)
+    if (intervalId !== undefined) {
+      clearInterval(intervalId)
+      intervalIds.delete(timerId)
+    }
+  }
+
+  function resetTimer(timerId: string) {
+    stopTimer(timerId)
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    timer.remainingSeconds = timer.settings.duration
+    timer.elapsedSeconds = 0
+  }
+
+  function tickTimer(timerId: string) {
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    timer.elapsedSeconds++
+
+    if (timer.settings.mode === 'countdown') {
+      timer.remainingSeconds--
+
+      // Check if timer reached zero
+      if (timer.remainingSeconds === 0) {
+        if (!timer.settings.overtimeEnabled) {
+          stopTimer(timerId)
+        }
+      }
+    }
+  }
+
+  function adjustTime(timerId: string, seconds: number) {
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    timer.remainingSeconds += seconds
+    if (timer.remainingSeconds < 0 && !timer.settings.overtimeEnabled) {
+      timer.remainingSeconds = 0
+    }
+  }
+
+  function setDuration(timerId: string, seconds: number) {
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    timer.settings.duration = seconds
+    if (timer.status === 'stopped') {
+      timer.remainingSeconds = seconds
+    }
+  }
+
+  function setMode(timerId: string, mode: TimerMode) {
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    timer.settings.mode = mode
+    resetTimer(timerId)
+  }
+
+  function updateSettings(timerId: string, settings: Partial<TimerSettings>) {
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    timer.settings = { ...timer.settings, ...settings }
+  }
+
+  // State sync for socket communication
+  function getTimerStateForSync(timerId: string) {
+    const timer = timers.get(timerId)
+    if (!timer) return null
+
     return {
-      settings: { ...settings.value },
-      remainingSeconds: remainingSeconds.value,
-      elapsedSeconds: elapsedSeconds.value,
-      status: status.value
+      settings: { ...timer.settings },
+      remainingSeconds: timer.remainingSeconds,
+      elapsedSeconds: timer.elapsedSeconds,
+      status: timer.status
     }
   }
 
-  // Apply state from remote (viewer receives this)
-  function applyRemoteState(state: {
-    settings: TimerSettings
-    remainingSeconds: number
-    elapsedSeconds: number
-    status: TimerStatus
+  function applyRemoteTimerState(timerId: string, state: {
+    settings?: TimerSettings
+    remainingSeconds?: number
+    elapsedSeconds?: number
+    status?: TimerStatus
   }) {
-    settings.value = { ...state.settings }
-    remainingSeconds.value = state.remainingSeconds
-    elapsedSeconds.value = state.elapsedSeconds
-    status.value = state.status
+    const timer = timers.get(timerId)
+    if (!timer) return
+
+    if (state.settings) timer.settings = { ...state.settings }
+    if (state.remainingSeconds !== undefined) timer.remainingSeconds = state.remainingSeconds
+    if (state.elapsedSeconds !== undefined) timer.elapsedSeconds = state.elapsedSeconds
+    if (state.status !== undefined) timer.status = state.status
   }
 
-  // Watch for duration changes and reset if stopped
-  watch(() => settings.value.duration, (newDuration) => {
-    if (status.value === 'stopped') {
-      remainingSeconds.value = newDuration
+  // Clear all timers
+  function clearAllTimers() {
+    for (const id of intervalIds.keys()) {
+      clearInterval(intervalIds.get(id))
     }
+    intervalIds.clear()
+    timers.clear()
+    selectedTimerId.value = null
+    activeTimerId.value = null
+  }
+
+  // Legacy compatibility: single timer methods for existing components
+  const settings = computed(() => selectedTimer.value?.settings ?? DEFAULT_SETTINGS)
+  const remainingSeconds = computed(() => selectedTimer.value?.remainingSeconds ?? 0)
+  const elapsedSeconds = computed(() => selectedTimer.value?.elapsedSeconds ?? 0)
+  const status = computed(() => selectedTimer.value?.status ?? 'stopped')
+  const isRunning = computed(() => selectedTimer.value?.status === 'running')
+  const isPaused = computed(() => selectedTimer.value?.status === 'paused')
+  const isStopped = computed(() => selectedTimer.value?.status === 'stopped')
+  const isOvertimeComputed = computed(() => selectedTimerId.value ? isOvertime(selectedTimerId.value) : false)
+  const colorState = computed(() => selectedTimerId.value ? getColorState(selectedTimerId.value) : 'green')
+  const displaySeconds = computed(() => {
+    if (!selectedTimer.value) return 0
+    if (selectedTimer.value.settings.mode === 'countup') return selectedTimer.value.elapsedSeconds
+    return selectedTimer.value.remainingSeconds
   })
+  const formattedTime = computed(() => selectedTimerId.value ? getFormattedTime(selectedTimerId.value) : '00:00')
+
+  // Legacy single timer actions (operate on selected timer)
+  function start() {
+    if (selectedTimerId.value) startTimer(selectedTimerId.value)
+  }
+  function pause() {
+    if (selectedTimerId.value) pauseTimer(selectedTimerId.value)
+  }
+  function stop() {
+    if (selectedTimerId.value) stopTimer(selectedTimerId.value)
+  }
+  function reset() {
+    if (selectedTimerId.value) resetTimer(selectedTimerId.value)
+  }
 
   return {
-    // State
+    // Multi-timer state
+    timers,
+    selectedTimerId,
+    activeTimerId,
+    timerList,
+    selectedTimer,
+    activeTimer,
+
+    // Multi-timer methods
+    addTimer,
+    addTimers,
+    removeTimer,
+    updateTimer,
+    selectTimer,
+    setOnAir,
+    startTimer,
+    pauseTimer,
+    stopTimer,
+    resetTimer,
+    adjustTime,
+    setDuration,
+    setMode,
+    updateSettings,
+    getColorState,
+    getFormattedTime,
+    checkIsOvertime: isOvertime,
+    getTimerStateForSync,
+    applyRemoteTimerState,
+    clearAllTimers,
+
+    // Legacy compatibility (selected timer)
     settings,
     remainingSeconds,
     elapsedSeconds,
     status,
-
-    // Computed
     isRunning,
     isPaused,
     isStopped,
-    isOvertime,
+    isOvertime: isOvertimeComputed,
     colorState,
     displaySeconds,
     formattedTime,
-
-    // Actions
     start,
     pause,
     stop,
     reset,
-    setDuration,
-    setMode,
-    adjustTime,
-    updateSettings,
-
-    // Sync methods
-    getStateForSync,
-    applyRemoteState,
   }
 })

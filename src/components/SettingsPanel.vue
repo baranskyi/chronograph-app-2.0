@@ -2,11 +2,24 @@
 import { ref } from 'vue'
 import { useTimerStore } from '../stores/timerStore'
 import type { TimerMode } from '../types/timer'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const store = useTimerStore()
 
+const props = defineProps<{
+  open: boolean
+}>()
+
 const emit = defineEmits<{
-  close: []
+  'update:open': [value: boolean]
 }>()
 
 // Local state for form inputs
@@ -46,20 +59,25 @@ function applyPreset(seconds: number) {
 }
 
 function saveSettings() {
+  const timerId = store.selectedTimerId
+  if (!timerId) return
+
   const duration = durationMinutes.value * 60 + durationSeconds.value
   const yellowThreshold = yellowMinutes.value * 60 + yellowSeconds.value
   const redThreshold = redMinutes.value * 60 + redSeconds.value
 
-  store.updateSettings({
+  store.updateSettings(timerId, {
     duration,
     yellowThreshold,
     redThreshold,
   })
-  store.setDuration(duration)
+  store.setDuration(timerId, duration)
 }
 
-function handleModeChange(mode: TimerMode) {
-  store.setMode(mode)
+function handleModeChange(mode: string | number) {
+  const timerId = store.selectedTimerId
+  if (!timerId) return
+  store.setMode(timerId, String(mode) as TimerMode)
 }
 
 function incrementMinutes(type: 'duration' | 'yellow' | 'red') {
@@ -127,117 +145,114 @@ function decrementSeconds(type: 'duration' | 'yellow' | 'red') {
   }
   saveSettings()
 }
+
+function handleSoundToggle(checked: boolean) {
+  if (store.selectedTimerId) {
+    store.updateSettings(store.selectedTimerId, { soundEnabled: checked })
+  }
+}
+
+function handleOvertimeToggle(checked: boolean) {
+  if (store.selectedTimerId) {
+    store.updateSettings(store.selectedTimerId, { overtimeEnabled: checked })
+  }
+}
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-    @click.self="emit('close')"
-  >
-    <div class="bg-[#12121a] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden shadow-2xl border border-white/5">
-      <!-- Header -->
-      <div class="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <h2 class="text-lg font-semibold text-white">Settings</h2>
-        <button
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
-          @click="emit('close')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+  <Dialog :open="props.open" @update:open="emit('update:open', $event)">
+    <DialogContent class="max-w-lg max-h-[90vh] overflow-hidden bg-card border-border">
+      <DialogHeader>
+        <DialogTitle>Settings</DialogTitle>
+      </DialogHeader>
 
-      <div class="overflow-y-auto max-h-[calc(90vh-64px)] px-6 py-5 space-y-6">
+      <div class="overflow-y-auto max-h-[calc(90vh-100px)] space-y-6 pr-2">
         <!-- Timer Mode -->
         <div>
-          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Mode</label>
-          <div class="flex bg-[#1a1a24] rounded-xl p-1">
-            <button
-              v-for="mode in (['countdown', 'countup', 'clock'] as TimerMode[])"
-              :key="mode"
-              class="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all"
-              :class="store.settings.mode === mode
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'"
-              @click="handleModeChange(mode)"
-            >
-              {{ mode === 'countup' ? 'Count Up' : mode === 'countdown' ? 'Countdown' : 'Clock' }}
-            </button>
-          </div>
+          <label class="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Mode</label>
+          <Tabs :default-value="store.settings.mode" @update:model-value="handleModeChange">
+            <TabsList class="w-full">
+              <TabsTrigger value="countdown" class="flex-1">Countdown</TabsTrigger>
+              <TabsTrigger value="countup" class="flex-1">Count Up</TabsTrigger>
+              <TabsTrigger value="clock" class="flex-1">Clock</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         <!-- Duration Presets -->
         <div v-if="store.settings.mode === 'countdown'">
-          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Quick Set (minutes)</label>
+          <label class="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Quick Set (minutes)</label>
           <div class="flex flex-wrap gap-2">
-            <button
+            <Button
               v-for="preset in presets"
               :key="preset.seconds"
-              class="w-12 h-12 rounded-xl text-sm font-semibold transition-all"
-              :class="isPresetActive(preset.seconds)
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
-                : 'bg-[#1a1a24] text-gray-300 hover:bg-[#22222e] hover:text-white'"
+              :variant="isPresetActive(preset.seconds) ? 'default' : 'secondary'"
+              size="icon"
+              class="w-12 h-12"
               @click="applyPreset(preset.seconds)"
             >
               {{ preset.label }}
-            </button>
+            </Button>
           </div>
         </div>
 
         <!-- Custom Duration -->
         <div v-if="store.settings.mode === 'countdown'">
-          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Duration</label>
-          <div class="bg-[#1a1a24] rounded-xl p-4">
+          <label class="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Duration</label>
+          <div class="bg-secondary rounded-xl p-4">
             <div class="flex items-center justify-center gap-4">
               <!-- Minutes -->
               <div class="flex flex-col items-center">
-                <button
-                  class="w-10 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   @click="incrementMinutes('duration')"
                 >
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                   </svg>
-                </button>
-                <div class="text-4xl font-mono font-bold text-white my-1 w-16 text-center">
+                </Button>
+                <div class="text-4xl font-mono font-bold text-foreground my-1 w-16 text-center">
                   {{ durationMinutes.toString().padStart(2, '0') }}
                 </div>
-                <button
-                  class="w-10 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   @click="decrementMinutes('duration')"
                 >
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
-                </button>
-                <span class="text-xs text-gray-500 mt-1">min</span>
+                </Button>
+                <span class="text-xs text-muted-foreground mt-1">min</span>
               </div>
 
-              <span class="text-3xl font-bold text-gray-600">:</span>
+              <span class="text-3xl font-bold text-muted-foreground">:</span>
 
               <!-- Seconds -->
               <div class="flex flex-col items-center">
-                <button
-                  class="w-10 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   @click="incrementSeconds('duration')"
                 >
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                   </svg>
-                </button>
-                <div class="text-4xl font-mono font-bold text-white my-1 w-16 text-center">
+                </Button>
+                <div class="text-4xl font-mono font-bold text-foreground my-1 w-16 text-center">
                   {{ durationSeconds.toString().padStart(2, '0') }}
                 </div>
-                <button
-                  class="w-10 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   @click="decrementSeconds('duration')"
                 >
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
-                </button>
-                <span class="text-xs text-gray-500 mt-1">sec</span>
+                </Button>
+                <span class="text-xs text-muted-foreground mt-1">sec</span>
               </div>
             </div>
           </div>
@@ -245,70 +260,46 @@ function decrementSeconds(type: 'duration' | 'yellow' | 'red') {
 
         <!-- Warning Thresholds -->
         <div v-if="store.settings.mode === 'countdown'">
-          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Warning Thresholds</label>
+          <label class="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Warning Thresholds</label>
           <div class="space-y-3">
             <!-- Yellow Warning -->
-            <div class="bg-[#1a1a24] rounded-xl p-4 flex items-center justify-between">
+            <div class="bg-secondary rounded-xl p-4 flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <span class="text-sm text-gray-300">Yellow warning</span>
+                <span class="text-sm text-foreground">Yellow warning</span>
               </div>
               <div class="flex items-center gap-2">
-                <div class="flex items-center bg-[#12121a] rounded-lg">
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="decrementMinutes('yellow')"
-                  >−</button>
-                  <span class="w-8 text-center font-mono text-white">{{ yellowMinutes }}</span>
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="incrementMinutes('yellow')"
-                  >+</button>
+                <div class="flex items-center bg-background rounded-lg">
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="decrementMinutes('yellow')">−</Button>
+                  <span class="w-8 text-center font-mono text-foreground">{{ yellowMinutes }}</span>
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="incrementMinutes('yellow')">+</Button>
                 </div>
-                <span class="text-xs text-gray-500">:</span>
-                <div class="flex items-center bg-[#12121a] rounded-lg">
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="decrementSeconds('yellow')"
-                  >−</button>
-                  <span class="w-8 text-center font-mono text-white">{{ yellowSeconds.toString().padStart(2, '0') }}</span>
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="incrementSeconds('yellow')"
-                  >+</button>
+                <span class="text-xs text-muted-foreground">:</span>
+                <div class="flex items-center bg-background rounded-lg">
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="decrementSeconds('yellow')">−</Button>
+                  <span class="w-8 text-center font-mono text-foreground">{{ yellowSeconds.toString().padStart(2, '0') }}</span>
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="incrementSeconds('yellow')">+</Button>
                 </div>
               </div>
             </div>
 
             <!-- Red Warning -->
-            <div class="bg-[#1a1a24] rounded-xl p-4 flex items-center justify-between">
+            <div class="bg-secondary rounded-xl p-4 flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                <span class="text-sm text-gray-300">Red warning</span>
+                <span class="text-sm text-foreground">Red warning</span>
               </div>
               <div class="flex items-center gap-2">
-                <div class="flex items-center bg-[#12121a] rounded-lg">
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="decrementMinutes('red')"
-                  >−</button>
-                  <span class="w-8 text-center font-mono text-white">{{ redMinutes }}</span>
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="incrementMinutes('red')"
-                  >+</button>
+                <div class="flex items-center bg-background rounded-lg">
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="decrementMinutes('red')">−</Button>
+                  <span class="w-8 text-center font-mono text-foreground">{{ redMinutes }}</span>
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="incrementMinutes('red')">+</Button>
                 </div>
-                <span class="text-xs text-gray-500">:</span>
-                <div class="flex items-center bg-[#12121a] rounded-lg">
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="decrementSeconds('red')"
-                  >−</button>
-                  <span class="w-8 text-center font-mono text-white">{{ redSeconds.toString().padStart(2, '0') }}</span>
-                  <button
-                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-white transition-colors"
-                    @click="incrementSeconds('red')"
-                  >+</button>
+                <span class="text-xs text-muted-foreground">:</span>
+                <div class="flex items-center bg-background rounded-lg">
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="decrementSeconds('red')">−</Button>
+                  <span class="w-8 text-center font-mono text-foreground">{{ redSeconds.toString().padStart(2, '0') }}</span>
+                  <Button variant="ghost" size="icon-sm" class="h-8 w-8" @click="incrementSeconds('red')">+</Button>
                 </div>
               </div>
             </div>
@@ -317,37 +308,28 @@ function decrementSeconds(type: 'duration' | 'yellow' | 'red') {
 
         <!-- Options -->
         <div>
-          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Options</label>
+          <label class="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Options</label>
           <div class="space-y-2">
             <!-- Sound Toggle -->
-            <div
-              class="bg-[#1a1a24] rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-[#1e1e28] transition-colors"
-              @click="store.updateSettings({ soundEnabled: !store.settings.soundEnabled })"
-            >
+            <div class="bg-secondary rounded-xl p-4 flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
                   <svg class="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                   </svg>
                 </div>
-                <span class="text-sm text-gray-300">Play sound when timer ends</span>
+                <span class="text-sm text-foreground">Play sound when timer ends</span>
               </div>
-              <div
-                class="w-11 h-6 rounded-full transition-colors relative"
-                :class="store.settings.soundEnabled ? 'bg-blue-600' : 'bg-gray-700'"
-              >
-                <div
-                  class="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform"
-                  :class="store.settings.soundEnabled ? 'translate-x-6' : 'translate-x-1'"
-                ></div>
-              </div>
+              <Switch
+                :checked="store.settings.soundEnabled"
+                @update:checked="handleSoundToggle"
+              />
             </div>
 
             <!-- Overtime Toggle -->
             <div
               v-if="store.settings.mode === 'countdown'"
-              class="bg-[#1a1a24] rounded-xl p-4 flex items-center justify-between cursor-pointer hover:bg-[#1e1e28] transition-colors"
-              @click="store.updateSettings({ overtimeEnabled: !store.settings.overtimeEnabled })"
+              class="bg-secondary rounded-xl p-4 flex items-center justify-between"
             >
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
@@ -355,44 +337,39 @@ function decrementSeconds(type: 'duration' | 'yellow' | 'red') {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span class="text-sm text-gray-300">Continue after zero (overtime)</span>
+                <span class="text-sm text-foreground">Continue after zero (overtime)</span>
               </div>
-              <div
-                class="w-11 h-6 rounded-full transition-colors relative"
-                :class="store.settings.overtimeEnabled ? 'bg-blue-600' : 'bg-gray-700'"
-              >
-                <div
-                  class="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform"
-                  :class="store.settings.overtimeEnabled ? 'translate-x-6' : 'translate-x-1'"
-                ></div>
-              </div>
+              <Switch
+                :checked="store.settings.overtimeEnabled"
+                @update:checked="handleOvertimeToggle"
+              />
             </div>
           </div>
         </div>
 
         <!-- Keyboard Shortcuts -->
-        <div class="pt-4 border-t border-white/5">
-          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Shortcuts</label>
+        <div class="pt-4 border-t border-border">
+          <label class="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Shortcuts</label>
           <div class="grid grid-cols-2 gap-2 text-sm">
-            <div class="flex items-center gap-2 text-gray-500">
-              <kbd class="px-2 py-1 bg-[#1a1a24] rounded text-xs font-mono text-gray-400">Space</kbd>
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <kbd class="px-2 py-1 bg-secondary rounded text-xs font-mono text-foreground">Space</kbd>
               <span>Play/Pause</span>
             </div>
-            <div class="flex items-center gap-2 text-gray-500">
-              <kbd class="px-2 py-1 bg-[#1a1a24] rounded text-xs font-mono text-gray-400">R</kbd>
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <kbd class="px-2 py-1 bg-secondary rounded text-xs font-mono text-foreground">R</kbd>
               <span>Reset</span>
             </div>
-            <div class="flex items-center gap-2 text-gray-500">
-              <kbd class="px-2 py-1 bg-[#1a1a24] rounded text-xs font-mono text-gray-400">F</kbd>
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <kbd class="px-2 py-1 bg-secondary rounded text-xs font-mono text-foreground">F</kbd>
               <span>Fullscreen</span>
             </div>
-            <div class="flex items-center gap-2 text-gray-500">
-              <kbd class="px-2 py-1 bg-[#1a1a24] rounded text-xs font-mono text-gray-400">Esc</kbd>
+            <div class="flex items-center gap-2 text-muted-foreground">
+              <kbd class="px-2 py-1 bg-secondary rounded text-xs font-mono text-foreground">Esc</kbd>
               <span>Close</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </DialogContent>
+  </Dialog>
 </template>

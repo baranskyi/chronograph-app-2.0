@@ -59,7 +59,7 @@ onUnmounted(() => {
 
 // Broadcast state changes to viewers
 watch(
-  () => timerStore.getStateForSync(),
+  () => timerStore.selectedTimer,
   () => {
     roomStore.broadcastState()
   },
@@ -223,8 +223,8 @@ function handleKeydown(e: KeyboardEvent) {
       </div>
 
       <!-- Modals -->
-      <SettingsPanel v-if="showSettings" @close="showSettings = false" />
-      <SharePanel v-if="showShare" @close="showShare = false" />
+      <SettingsPanel v-model:open="showSettings" />
+      <SharePanel v-model:open="showShare" />
 
       <!-- Fullscreen hint -->
       <div

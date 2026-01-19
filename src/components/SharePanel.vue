@@ -2,90 +2,150 @@
 import { ref, computed } from 'vue'
 import QRCodeVue3 from 'qrcode.vue'
 import { useRoomStore } from '../stores/roomStore'
+import { useTimerStore } from '../stores/timerStore'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const roomStore = useRoomStore()
-const copied = ref(false)
+const timerStore = useTimerStore()
+const copied = ref<string | null>(null)
+const selectedQRTimer = ref<string | null>(null) // null = active timer link
+
+const props = defineProps<{
+  open: boolean
+}>()
 
 const emit = defineEmits<{
-  close: []
+  'update:open': [value: boolean]
 }>()
 
 const viewerUrl = computed(() => roomStore.shareUrl)
 
-async function copyLink() {
-  if (!viewerUrl.value) return
+const currentQRUrl = computed(() => {
+  if (selectedQRTimer.value) {
+    return roomStore.getTimerShareUrl(selectedQRTimer.value)
+  }
+  return viewerUrl.value
+})
+
+async function copyLink(url: string, id: string) {
   try {
-    await navigator.clipboard.writeText(viewerUrl.value)
-    copied.value = true
+    await navigator.clipboard.writeText(url)
+    copied.value = id
     setTimeout(() => {
-      copied.value = false
+      copied.value = null
     }, 2000)
   } catch (err) {
     console.error('Failed to copy:', err)
   }
 }
+
+function selectQRTimer(timerId: string | null) {
+  selectedQRTimer.value = timerId
+}
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-    @click.self="emit('close')"
-  >
-    <div class="bg-[#1a1a24] rounded-lg p-6 w-full max-w-md mx-4 border border-gray-800">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-semibold text-white">Share Timer</h2>
-        <button
-          class="text-gray-400 hover:text-white transition-colors"
-          @click="emit('close')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+  <Dialog :open="props.open" @update:open="emit('update:open', $event)">
+    <DialogContent class="max-w-lg max-h-[90vh] overflow-hidden bg-card border-border">
+      <DialogHeader>
+        <DialogTitle>Share Timer</DialogTitle>
+      </DialogHeader>
 
-      <!-- Room ID -->
-      <div class="text-center mb-6">
-        <div class="text-sm text-gray-400 mb-1">Room Code</div>
-        <div class="text-3xl font-mono font-bold tracking-wider text-white">
-          {{ roomStore.roomId }}
+      <div class="overflow-y-auto max-h-[calc(90vh-100px)] space-y-6">
+        <!-- Room ID -->
+        <div class="text-center">
+          <div class="text-sm text-muted-foreground mb-1">Room Code</div>
+          <div class="text-3xl font-mono font-bold tracking-wider text-foreground">
+            {{ roomStore.roomId }}
+          </div>
         </div>
-      </div>
 
-      <!-- QR Code -->
-      <div class="flex justify-center mb-6">
-        <div class="bg-white p-4 rounded-lg">
-          <QRCodeVue3
-            v-if="viewerUrl"
-            :value="viewerUrl"
-            :size="180"
-            level="M"
-          />
+        <!-- QR Code -->
+        <div class="flex justify-center">
+          <div class="bg-white p-4 rounded-lg">
+            <QRCodeVue3
+              v-if="currentQRUrl"
+              :value="currentQRUrl"
+              :size="180"
+              level="M"
+            />
+          </div>
         </div>
-      </div>
 
-      <!-- Link -->
-      <div class="mb-4">
-        <div class="text-sm text-gray-400 mb-2">Viewer Link</div>
-        <div class="flex gap-2">
-          <input
-            type="text"
-            :value="viewerUrl"
-            readonly
-            class="flex-1 bg-[#0a0a0f] border border-gray-700 rounded px-3 py-2 text-sm text-gray-300"
-          />
-          <button
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors text-sm font-medium"
-            @click="copyLink"
+        <!-- QR Timer selector -->
+        <div v-if="timerStore.timerList.length > 1" class="flex justify-center gap-2">
+          <Button
+            :variant="selectedQRTimer === null ? 'default' : 'secondary'"
+            size="sm"
+            @click="selectQRTimer(null)"
           >
-            {{ copied ? 'Copied!' : 'Copy' }}
-          </button>
+            Active Timer
+          </Button>
+          <Button
+            v-for="timer in timerStore.timerList"
+            :key="timer.id"
+            :variant="selectedQRTimer === timer.id ? 'default' : 'secondary'"
+            size="sm"
+            @click="selectQRTimer(timer.id)"
+          >
+            {{ timer.name }}
+          </Button>
         </div>
-      </div>
 
-      <p class="text-sm text-gray-500 text-center">
-        Share this link with viewers. They will see the timer in real-time.
-      </p>
-    </div>
-  </div>
+        <!-- Active Timer Link -->
+        <div>
+          <div class="text-sm text-muted-foreground mb-2">Active Timer Link (follows On Air)</div>
+          <div class="flex gap-2">
+            <Input
+              :model-value="viewerUrl || ''"
+              readonly
+              class="flex-1"
+            />
+            <Button
+              @click="viewerUrl && copyLink(viewerUrl, 'active')"
+            >
+              {{ copied === 'active' ? 'Copied!' : 'Copy' }}
+            </Button>
+          </div>
+        </div>
+
+        <!-- Individual Timer Links -->
+        <div v-if="timerStore.timerList.length > 1">
+          <div class="text-sm text-muted-foreground mb-2">Individual Timer Links</div>
+          <div class="space-y-2">
+            <div
+              v-for="timer in timerStore.timerList"
+              :key="timer.id"
+              class="flex items-center gap-2"
+            >
+              <span class="text-xs text-muted-foreground w-20 truncate" :title="timer.name">{{ timer.name }}</span>
+              <Input
+                :model-value="roomStore.getTimerShareUrl(timer.id) || ''"
+                readonly
+                class="flex-1 h-8 text-xs"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                @click="roomStore.getTimerShareUrl(timer.id) && copyLink(roomStore.getTimerShareUrl(timer.id)!, timer.id)"
+              >
+                {{ copied === timer.id ? 'Copied!' : 'Copy' }}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-sm text-muted-foreground text-center">
+          Share these links with viewers. They will see the timer in real-time.
+        </p>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>

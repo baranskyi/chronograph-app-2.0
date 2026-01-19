@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFullscreen } from '@vueuse/core'
 import { useTimerStore } from '../stores/timerStore'
+import { createDefaultTimer } from '../types/timer'
 import TimerDisplay from '../components/TimerDisplay.vue'
 import TimerControls from '../components/TimerControls.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
@@ -11,6 +12,12 @@ const router = useRouter()
 const store = useTimerStore()
 const showSettings = ref(false)
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
+
+// Initialize a local timer for standalone mode if none exists
+if (store.timerList.length === 0) {
+  const localTimer = createDefaultTimer('local', 'Timer')
+  store.addTimer(localTimer)
+}
 
 // Keyboard shortcuts
 function handleKeydown(e: KeyboardEvent) {
@@ -49,7 +56,7 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 function startRemoteSession() {
-  router.push('/controller')
+  router.push('/dashboard')
 }
 
 onMounted(() => {
@@ -86,10 +93,7 @@ onUnmounted(() => {
     </TimerControls>
 
     <!-- Settings Modal -->
-    <SettingsPanel
-      v-if="showSettings"
-      @close="showSettings = false"
-    />
+    <SettingsPanel v-model:open="showSettings" />
 
     <!-- Fullscreen hint -->
     <div

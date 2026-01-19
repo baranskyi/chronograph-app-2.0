@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFullscreen } from '@vueuse/core'
 import { useRoomStore } from '../stores/roomStore'
-import TimerDisplay from '../components/TimerDisplay.vue'
+import { useTimerStore } from '../stores/timerStore'
 import ConnectionStatus from '../components/ConnectionStatus.vue'
 import MessageOverlay from '../components/MessageOverlay.vue'
+import { useAudio } from '../composables/useAudio'
 
 const route = useRoute()
 const router = useRouter()
 const roomStore = useRoomStore()
+const timerStore = useTimerStore()
+const audio = useAudio()
 
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
@@ -17,11 +20,45 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 const roomId = (route.params.roomId as string).toUpperCase()
+const requestedTimerId = route.params.timerId as string | undefined
+
+// Get the timer to display
+const displayTimer = computed(() => {
+  // If a specific timer was requested, show that one
+  if (requestedTimerId) {
+    return timerStore.timers.get(requestedTimerId)
+  }
+  // Otherwise show the active (On Air) timer
+  return timerStore.activeTimer
+})
+
+// Get display values
+const colorState = computed(() => {
+  if (!displayTimer.value) return 'green'
+  if (displayTimer.value.settings.mode === 'clock') return 'green'
+  return timerStore.getColorState(displayTimer.value.id)
+})
+
+const formattedTime = computed(() => {
+  if (!displayTimer.value) return '00:00'
+  return timerStore.getFormattedTime(displayTimer.value.id)
+})
+
+const timerName = computed(() => displayTimer.value?.name ?? 'Timer')
 
 onMounted(async () => {
   try {
-    await roomStore.joinAsViewer(roomId)
+    await roomStore.joinAsViewer(roomId, requestedTimerId)
     loading.value = false
+
+    // Resume audio context on first interaction
+    const resumeAudio = () => {
+      audio.resumeContext()
+      document.removeEventListener('click', resumeAudio)
+      document.removeEventListener('keydown', resumeAudio)
+    }
+    document.addEventListener('click', resumeAudio)
+    document.addEventListener('keydown', resumeAudio)
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error'
     error.value = errorMessage
@@ -34,6 +71,22 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
   roomStore.disconnect()
 })
+
+// Play sound when displayed timer reaches zero
+watch(
+  () => displayTimer.value?.remainingSeconds,
+  (newVal, oldVal) => {
+    const timer = displayTimer.value
+    if (
+      timer?.settings.soundEnabled &&
+      timer?.settings.mode === 'countdown' &&
+      oldVal === 1 &&
+      newVal === 0
+    ) {
+      audio.playEnd()
+    }
+  }
+)
 
 function handleKeydown(e: KeyboardEvent) {
   switch (e.key.toLowerCase()) {
@@ -74,16 +127,41 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Connection status -->
       <ConnectionStatus v-if="!isFullscreen" />
 
-      <!-- Room ID badge -->
+      <!-- Room/Timer badge -->
       <div
         v-if="!isFullscreen"
-        class="fixed top-4 right-4 text-xs text-gray-400 bg-gray-800/80 px-3 py-1.5 rounded-full z-10"
+        class="fixed top-4 right-4 text-xs text-gray-400 bg-gray-800/80 px-3 py-1.5 rounded-full z-10 flex items-center gap-2"
       >
-        Viewing: {{ roomId }}
+        <span>Viewing: {{ roomId }}</span>
+        <span v-if="displayTimer" class="text-gray-500">|</span>
+        <span v-if="displayTimer">{{ timerName }}</span>
+        <span
+          v-if="displayTimer?.isOnAir"
+          class="px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-medium rounded"
+        >
+          LIVE
+        </span>
+      </div>
+
+      <!-- No timer to display -->
+      <div v-if="!displayTimer" class="flex-1 flex flex-col items-center justify-center gap-4">
+        <div class="text-gray-500 text-xl">Waiting for timer...</div>
+        <div class="text-gray-600 text-sm">
+          {{ requestedTimerId ? `Timer ${requestedTimerId} not found` : 'No active timer' }}
+        </div>
       </div>
 
       <!-- Timer Display -->
-      <TimerDisplay />
+      <div v-else class="timer-display flex flex-1 items-center justify-center">
+        <div
+          class="timer-font text-center select-none transition-colors duration-300"
+          :class="`timer-${colorState}`"
+        >
+          <span class="text-[20vw] font-bold leading-none md:text-[25vw]">
+            {{ formattedTime }}
+          </span>
+        </div>
+      </div>
 
       <!-- Message Overlay -->
       <MessageOverlay v-if="roomStore.currentMessage" :message="roomStore.currentMessage" />
@@ -126,6 +204,31 @@ function handleKeydown(e: KeyboardEvent) {
 </template>
 
 <style scoped>
+.timer-display {
+  min-height: 200px;
+}
+
+.timer-green {
+  color: var(--color-green);
+  text-shadow: 0 0 60px rgba(34, 197, 94, 0.5);
+}
+
+.timer-yellow {
+  color: var(--color-yellow);
+  text-shadow: 0 0 60px rgba(234, 179, 8, 0.5);
+}
+
+.timer-red {
+  color: var(--color-red);
+  text-shadow: 0 0 60px rgba(239, 68, 68, 0.5);
+  animation: pulse-red 1s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 .blackout-enter-active,
 .blackout-leave-active {
   transition: opacity 0.3s ease;

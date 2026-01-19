@@ -2,14 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useTimerStore } from './timerStore'
-import type { TimerSettings, TimerStatus } from '../types/timer'
-
-interface TimerState {
-  settings: TimerSettings
-  remainingSeconds: number
-  elapsedSeconds: number
-  status: TimerStatus
-}
+import type { Timer } from '../types/timer'
 
 export type MessagePriority = 'normal' | 'urgent'
 
@@ -34,10 +27,19 @@ export const useRoomStore = defineStore('room', () => {
   // Blackout mode
   const isBlackout = ref(false)
 
+  // Viewer mode: which timer to follow
+  const viewerTimerId = ref<string | null>(null) // null = follow active timer
+
   const shareUrl = computed(() => {
     if (!roomId.value) return null
     return `${window.location.origin}/viewer/${roomId.value}`
   })
+
+  // Get share URL for specific timer
+  function getTimerShareUrl(timerId: string): string | null {
+    if (!roomId.value) return null
+    return `${window.location.origin}/viewer/${roomId.value}/${timerId}`
+  }
 
   function connect() {
     if (socket.value?.connected) return
@@ -84,13 +86,23 @@ export const useRoomStore = defineStore('room', () => {
 
       // Wait for connection if not connected
       const attemptCreate = () => {
-        socket.value!.emit('room:create', (response: { roomId?: string; error?: string }) => {
+        socket.value!.emit('room:create', (response: { roomId?: string; timers?: Timer[]; error?: string }) => {
           if (response.error) {
             error.value = response.error
             reject(new Error(response.error))
           } else if (response.roomId) {
             roomId.value = response.roomId
             isController.value = true
+
+            // Add initial timers to store
+            if (response.timers) {
+              const timerStore = useTimerStore()
+              timerStore.addTimers(response.timers)
+            }
+
+            // Setup controller listeners
+            setupControllerListeners()
+
             console.log('Room created:', response.roomId)
             resolve(response.roomId)
           }
@@ -105,7 +117,35 @@ export const useRoomStore = defineStore('room', () => {
     })
   }
 
-  async function joinAsViewer(id: string): Promise<void> {
+  function setupControllerListeners() {
+    if (!socket.value) return
+    const timerStore = useTimerStore()
+
+    // Listen for timer created (in case of reconnect sync)
+    socket.value.on('timer:created', (timer: Timer) => {
+      timerStore.addTimer(timer)
+    })
+
+    // Listen for timer deleted
+    socket.value.on('timer:deleted', ({ timerId, newActiveTimerId }: { timerId: string; newActiveTimerId: string | null }) => {
+      timerStore.removeTimer(timerId)
+      if (newActiveTimerId) {
+        timerStore.setOnAir(newActiveTimerId)
+      }
+    })
+
+    // Listen for timer renamed
+    socket.value.on('timer:renamed', ({ timerId, name }: { timerId: string; name: string }) => {
+      timerStore.updateTimer(timerId, { name })
+    })
+
+    // Listen for On Air changes
+    socket.value.on('timer:on-air-changed', ({ timerId }: { timerId: string }) => {
+      timerStore.setOnAir(timerId)
+    })
+  }
+
+  async function joinAsViewer(id: string, timerId?: string): Promise<void> {
     connect()
 
     return new Promise((resolve, reject) => {
@@ -115,41 +155,30 @@ export const useRoomStore = defineStore('room', () => {
       }
 
       const attemptJoin = () => {
-        socket.value!.emit('room:join-viewer', { roomId: id }, (response: { success?: boolean; timerState?: TimerState | null; error?: string }) => {
+        socket.value!.emit('room:join-viewer', { roomId: id, timerId }, (response: { success?: boolean; timers?: Timer[]; activeTimerId?: string | null; error?: string }) => {
           if (response.error) {
             error.value = response.error
             reject(new Error(response.error))
           } else if (response.success) {
             roomId.value = id.toUpperCase()
             isController.value = false
+            viewerTimerId.value = timerId ?? null
 
-            // Apply initial state if available
-            if (response.timerState) {
+            // Apply initial timers
+            if (response.timers) {
               const timerStore = useTimerStore()
-              timerStore.applyRemoteState(response.timerState)
+              timerStore.addTimers(response.timers)
+
+              // Set active timer
+              if (response.activeTimerId) {
+                timerStore.setOnAir(response.activeTimerId)
+              }
             }
 
-            // Listen for ongoing updates
-            socket.value!.on('timer:sync', (state: TimerState) => {
-              const timerStore = useTimerStore()
-              timerStore.applyRemoteState(state)
-            })
+            // Setup viewer listeners
+            setupViewerListeners()
 
-            // Listen for speaker messages
-            socket.value!.on('message:show', (msg: SpeakerMessage) => {
-              currentMessage.value = msg
-              if (messageTimeout) clearTimeout(messageTimeout)
-              messageTimeout = setTimeout(() => {
-                currentMessage.value = null
-              }, msg.duration)
-            })
-
-            // Listen for blackout mode
-            socket.value!.on('blackout:sync', (enabled: boolean) => {
-              isBlackout.value = enabled
-            })
-
-            console.log('Joined room as viewer:', id)
+            console.log('Joined room as viewer:', id, timerId ? `(timer: ${timerId})` : '')
             resolve()
           }
         })
@@ -163,16 +192,147 @@ export const useRoomStore = defineStore('room', () => {
     })
   }
 
-  function broadcastState() {
+  function setupViewerListeners() {
+    if (!socket.value) return
+    const timerStore = useTimerStore()
+
+    // Listen for timer sync (state updates)
+    socket.value.on('timer:sync', ({ timerId, timer }: { timerId: string; timer: Timer }) => {
+      timerStore.updateTimer(timerId, timer)
+    })
+
+    // Listen for timer created
+    socket.value.on('timer:created', (timer: Timer) => {
+      timerStore.addTimer(timer)
+    })
+
+    // Listen for timer deleted
+    socket.value.on('timer:deleted', ({ timerId, newActiveTimerId }: { timerId: string; newActiveTimerId: string | null }) => {
+      timerStore.removeTimer(timerId)
+      if (newActiveTimerId) {
+        timerStore.setOnAir(newActiveTimerId)
+      }
+    })
+
+    // Listen for timer renamed
+    socket.value.on('timer:renamed', ({ timerId, name }: { timerId: string; name: string }) => {
+      timerStore.updateTimer(timerId, { name })
+    })
+
+    // Listen for On Air changes
+    socket.value.on('timer:on-air-changed', ({ timerId }: { timerId: string }) => {
+      timerStore.setOnAir(timerId)
+    })
+
+    // Listen for speaker messages
+    socket.value.on('message:show', (msg: SpeakerMessage) => {
+      currentMessage.value = msg
+      if (messageTimeout) clearTimeout(messageTimeout)
+      messageTimeout = setTimeout(() => {
+        currentMessage.value = null
+      }, msg.duration)
+    })
+
+    // Listen for blackout mode
+    socket.value.on('blackout:sync', (enabled: boolean) => {
+      isBlackout.value = enabled
+    })
+  }
+
+  // Timer CRUD operations (controller only)
+  function createTimer(name?: string, duration?: number): Promise<Timer | null> {
+    return new Promise((resolve) => {
+      if (!isController.value || !roomId.value || !socket.value?.connected) {
+        resolve(null)
+        return
+      }
+
+      socket.value.emit('timer:create', { roomId: roomId.value, name, duration }, (response: { success?: boolean; timer?: Timer; error?: string }) => {
+        if (response.success && response.timer) {
+          const timerStore = useTimerStore()
+          timerStore.addTimer(response.timer)
+          resolve(response.timer)
+        } else {
+          console.error('Failed to create timer:', response.error)
+          resolve(null)
+        }
+      })
+    })
+  }
+
+  function deleteTimer(timerId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!isController.value || !roomId.value || !socket.value?.connected) {
+        resolve(false)
+        return
+      }
+
+      socket.value.emit('timer:delete', { roomId: roomId.value, timerId }, (response: { success: boolean; error?: string }) => {
+        if (response.success) {
+          const timerStore = useTimerStore()
+          timerStore.removeTimer(timerId)
+        }
+        resolve(response.success)
+      })
+    })
+  }
+
+  function renameTimer(timerId: string, name: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!isController.value || !roomId.value || !socket.value?.connected) {
+        resolve(false)
+        return
+      }
+
+      socket.value.emit('timer:rename', { roomId: roomId.value, timerId, name }, (response: { success: boolean; error?: string }) => {
+        if (response.success) {
+          const timerStore = useTimerStore()
+          timerStore.updateTimer(timerId, { name })
+        }
+        resolve(response.success)
+      })
+    })
+  }
+
+  function setTimerOnAir(timerId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!isController.value || !roomId.value || !socket.value?.connected) {
+        resolve(false)
+        return
+      }
+
+      socket.value.emit('timer:set-on-air', { roomId: roomId.value, timerId }, (response: { success: boolean; error?: string }) => {
+        if (response.success) {
+          const timerStore = useTimerStore()
+          timerStore.setOnAir(timerId)
+        }
+        resolve(response.success)
+      })
+    })
+  }
+
+  function broadcastTimerState(timerId: string) {
     if (!isController.value || !roomId.value || !socket.value?.connected) {
       return
     }
 
     const timerStore = useTimerStore()
+    const state = timerStore.getTimerStateForSync(timerId)
+    if (!state) return
+
     socket.value.emit('timer:state', {
       roomId: roomId.value,
-      state: timerStore.getStateForSync()
+      timerId,
+      state
     })
+  }
+
+  // Legacy: broadcast selected timer state
+  function broadcastState() {
+    const timerStore = useTimerStore()
+    if (timerStore.selectedTimerId) {
+      broadcastTimerState(timerStore.selectedTimerId)
+    }
   }
 
   function sendMessage(text: string, duration = 5000, priority: MessagePriority = 'normal') {
@@ -220,6 +380,11 @@ export const useRoomStore = defineStore('room', () => {
     isController.value = false
     isConnecting.value = false
     error.value = null
+    viewerTimerId.value = null
+
+    // Clear timer store
+    const timerStore = useTimerStore()
+    timerStore.clearAllTimers()
   }
 
   return {
@@ -231,19 +396,28 @@ export const useRoomStore = defineStore('room', () => {
     isConnecting,
     currentMessage,
     isBlackout,
+    viewerTimerId,
 
     // Computed
     shareUrl,
+    getTimerShareUrl,
 
     // Actions
     connect,
     createRoom,
     joinAsViewer,
     broadcastState,
+    broadcastTimerState,
     sendMessage,
     clearMessage,
     setBlackout,
     toggleBlackout,
-    disconnect
+    disconnect,
+
+    // Timer CRUD
+    createTimer,
+    deleteTimer,
+    renameTimer,
+    setTimerOnAir
   }
 })

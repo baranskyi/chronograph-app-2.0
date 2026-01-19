@@ -1,13 +1,26 @@
 import type { Server, Socket } from 'socket.io'
 import { roomManager } from '../services/roomManager.js'
-import type { TimerState, MessagePriority } from '../types/room.js'
+import type { Timer, TimerState, MessagePriority } from '../types/room.js'
 
 interface CreateRoomCallback {
-  (response: { roomId: string } | { error: string }): void
+  (response: { roomId: string; timers: Timer[] } | { error: string }): void
 }
 
 interface JoinRoomCallback {
-  (response: { success: true; timerState: TimerState | null } | { error: string }): void
+  (response: { success: true; timers: Timer[]; activeTimerId: string | null } | { error: string }): void
+}
+
+interface TimerCallback {
+  (response: { success: true; timer: Timer } | { error: string }): void
+}
+
+interface SimpleCallback {
+  (response: { success: boolean; error?: string }): void
+}
+
+// Convert Timer[] to plain objects for socket transmission
+function serializeTimers(timers: Timer[]): Timer[] {
+  return timers.map(t => ({ ...t }))
 }
 
 export function setupHandlers(io: Server, socket: Socket): void {
@@ -19,7 +32,12 @@ export function setupHandlers(io: Server, socket: Socket): void {
       const room = roomManager.createRoom()
       room.controllerSocketId = socket.id
       socket.join(room.roomId)
-      callback({ roomId: room.roomId })
+
+      // Auto-create first timer
+      const timer = roomManager.createTimer(room.roomId, 'Timer 1')
+      const timers = timer ? [timer] : []
+
+      callback({ roomId: room.roomId, timers: serializeTimers(timers) })
     } catch (error) {
       console.error('Error creating room:', error)
       callback({ error: 'Failed to create room' })
@@ -40,12 +58,14 @@ export function setupHandlers(io: Server, socket: Socket): void {
     room.lastActivity = Date.now()
     socket.join(room.roomId)
     console.log(`Controller rejoined room: ${roomId}`)
-    callback({ success: true, timerState: room.timerState })
+
+    const timers = roomManager.getTimers(roomId)
+    callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId })
   })
 
   // Viewer joins a room
   socket.on('room:join-viewer', (
-    { roomId }: { roomId: string },
+    { roomId, timerId }: { roomId: string; timerId?: string },
     callback: JoinRoomCallback
   ) => {
     const room = roomManager.getRoom(roomId)
@@ -54,19 +74,114 @@ export function setupHandlers(io: Server, socket: Socket): void {
       return
     }
     socket.join(room.roomId)
-    console.log(`Viewer joined room: ${roomId}`)
-    callback({ success: true, timerState: room.timerState })
+
+    // If specific timer requested, join that timer's sub-room
+    if (timerId) {
+      socket.join(`${room.roomId}:${timerId}`)
+    }
+
+    console.log(`Viewer joined room: ${roomId}${timerId ? ` (timer: ${timerId})` : ''}`)
+
+    const timers = roomManager.getTimers(roomId)
+    callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId })
+  })
+
+  // Create a new timer
+  socket.on('timer:create', (
+    { roomId, name, duration }: { roomId: string; name?: string; duration?: number },
+    callback: TimerCallback
+  ) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      callback({ error: 'Not authorized' })
+      return
+    }
+
+    const timer = roomManager.createTimer(roomId, name || '', duration)
+    if (!timer) {
+      callback({ error: 'Failed to create timer' })
+      return
+    }
+
+    // Broadcast to all clients in the room
+    io.to(roomId.toUpperCase()).emit('timer:created', { ...timer })
+    callback({ success: true, timer: { ...timer } })
+  })
+
+  // Delete a timer
+  socket.on('timer:delete', (
+    { roomId, timerId }: { roomId: string; timerId: string },
+    callback: SimpleCallback
+  ) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      callback({ success: false, error: 'Not authorized' })
+      return
+    }
+
+    const success = roomManager.deleteTimer(roomId, timerId)
+    if (!success) {
+      callback({ success: false, error: 'Timer not found' })
+      return
+    }
+
+    const room = roomManager.getRoom(roomId)
+    io.to(roomId.toUpperCase()).emit('timer:deleted', { timerId, newActiveTimerId: room?.activeTimerId })
+    callback({ success: true })
+  })
+
+  // Rename a timer
+  socket.on('timer:rename', (
+    { roomId, timerId, name }: { roomId: string; timerId: string; name: string },
+    callback: SimpleCallback
+  ) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      callback({ success: false, error: 'Not authorized' })
+      return
+    }
+
+    const success = roomManager.renameTimer(roomId, timerId, name)
+    if (!success) {
+      callback({ success: false, error: 'Timer not found' })
+      return
+    }
+
+    io.to(roomId.toUpperCase()).emit('timer:renamed', { timerId, name })
+    callback({ success: true })
+  })
+
+  // Set timer as "On Air"
+  socket.on('timer:set-on-air', (
+    { roomId, timerId }: { roomId: string; timerId: string },
+    callback: SimpleCallback
+  ) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      callback({ success: false, error: 'Not authorized' })
+      return
+    }
+
+    const success = roomManager.setActiveTimer(roomId, timerId)
+    if (!success) {
+      callback({ success: false, error: 'Timer not found' })
+      return
+    }
+
+    io.to(roomId.toUpperCase()).emit('timer:on-air-changed', { timerId })
+    callback({ success: true })
   })
 
   // Controller sends timer state updates
-  socket.on('timer:state', ({ roomId, state }: { roomId: string; state: TimerState }) => {
+  socket.on('timer:state', ({ roomId, timerId, state }: { roomId: string; timerId: string; state: Partial<TimerState> }) => {
     if (!roomManager.isController(roomId, socket.id)) {
       return // Only controller can update state
     }
 
-    roomManager.updateTimerState(roomId, state)
-    // Broadcast to all viewers in the room (except sender)
-    socket.to(roomId.toUpperCase()).emit('timer:sync', state)
+    const success = roomManager.updateTimerState(roomId, timerId, state)
+    if (!success) return
+
+    const timer = roomManager.getTimer(roomId, timerId)
+    if (!timer) return
+
+    // Broadcast to all viewers in the room
+    socket.to(roomId.toUpperCase()).emit('timer:sync', { timerId, timer: { ...timer } })
   })
 
   // Controller sends message to viewers (speaker)
