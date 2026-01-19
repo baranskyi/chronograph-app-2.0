@@ -413,37 +413,24 @@ const totalRemaining = computed(() => {
             <div
               v-for="(timer, index) in timerStore.orderedTimerList"
               :key="timer.id"
-              class="relative"
+              class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200"
+              :class="[
+                timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'bg-[#1a1a1a] hover:bg-[#252525]',
+                draggedTimerId === timer.id ? 'opacity-50 scale-[0.98]' : '',
+                dragOverTimerId === timer.id && draggedTimerId !== timer.id ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0f0f0f]' : ''
+              ]"
+              draggable="true"
+              @click="timerStore.selectTimer(timer.id)"
+              @dragstart="handleDragStart(timer.id, $event)"
+              @dragend="handleDragEnd"
+              @dragover="handleDragOver(timer.id, $event)"
+              @dragleave="handleDragLeave"
+              @drop="handleDrop(timer.id, $event)"
             >
-              <!-- Drop indicator line (before this item) -->
-              <div
-                v-if="dragOverTimerId === timer.id && draggedTimerId !== timer.id"
-                class="absolute -top-1 left-0 right-0 h-1 bg-blue-500 rounded-full z-10 shadow-[0_0_8px_rgba(59,130,246,0.8)]"
-              />
-
-              <!-- Timer item -->
-              <div
-                class="flex items-center px-4 py-3 rounded-lg cursor-pointer transition-all duration-200"
-                :class="[
-                  timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'bg-[#1a1a1a] hover:bg-[#252525]',
-                  draggedTimerId === timer.id ? 'opacity-40 scale-95 shadow-2xl ring-2 ring-blue-500' : '',
-                  dragOverTimerId === timer.id && draggedTimerId !== timer.id ? 'translate-y-1' : ''
-                ]"
-                @click="timerStore.selectTimer(timer.id)"
-                @dragover="handleDragOver(timer.id, $event)"
-                @dragleave="handleDragLeave"
-                @drop="handleDrop(timer.id, $event)"
-              >
-                <!-- Drag Handle -->
-                <div
-                  class="p-1 mr-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-white transition-colors"
-                  draggable="true"
-                  @dragstart="handleDragStart(timer.id, $event)"
-                  @dragend="handleDragEnd"
-                  @click.stop
-                >
-                  <GripVertical class="w-4 h-4" />
-                </div>
+              <!-- Drag Handle -->
+              <div class="p-1 mr-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-white transition-colors">
+                <GripVertical class="w-4 h-4" />
+              </div>
 
               <!-- Timer Name (Editable) -->
               <div class="text-sm font-medium">
