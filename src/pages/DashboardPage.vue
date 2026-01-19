@@ -6,7 +6,7 @@ import { useRoomStore } from '../stores/roomStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import SharePanel from '../components/SharePanel.vue'
-import { Play, Pause, RotateCcw, SkipBack, SkipForward, Settings, MoreHorizontal, Plus } from 'lucide-vue-next'
+import { Play, Pause, SkipBack, SkipForward, Settings, MoreHorizontal, Plus } from 'lucide-vue-next'
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
