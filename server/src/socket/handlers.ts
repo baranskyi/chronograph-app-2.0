@@ -263,6 +263,17 @@ export function setupHandlers(io: Server, socket: Socket): void {
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`)
+
+    // Check if this was a viewer and update count
+    const roomId = removeViewer(socket.id)
+    if (roomId) {
+      const room = roomManager.getRoom(roomId)
+      if (room?.controllerSocketId) {
+        const viewerCount = getViewerCount(roomId)
+        io.to(room.controllerSocketId).emit('room:viewer-count', { count: viewerCount })
+        console.log(`Viewer left room: ${roomId} (viewers: ${viewerCount})`)
+      }
+    }
     // Room cleanup happens via TTL, no immediate action needed
   })
 }
