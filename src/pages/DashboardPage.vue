@@ -344,34 +344,50 @@ const totalRemaining = computed(() => {
 
           <!-- Transport Controls -->
           <div class="py-3 border-t border-[#2a2a2a] mt-2">
-            <div class="flex items-center justify-center gap-2" v-if="timerStore.selectedTimerId">
+            <div class="flex items-center justify-center gap-3" v-if="timerStore.selectedTimerId">
               <button
-                class="px-3 py-2 text-sm bg-[#2a2a2a] rounded hover:bg-[#333] min-h-10 min-w-10 touch-manipulation active:scale-95"
+                class="flex items-center justify-center gap-1 bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
+                style="padding: 10px 14px;"
                 @click="adjust(timerStore.selectedTimerId!, -60)"
-              >-1m</button>
-              <button
-                class="p-2 bg-[#2a2a2a] rounded hover:bg-[#333] min-h-10 min-w-10 touch-manipulation active:scale-95"
-                @click="reset(timerStore.selectedTimerId!)"
+                title="Subtract 1 minute"
               >
-                <SkipBack class="w-4 h-4" />
+                <Minus class="w-4 h-4" />
+                <span class="text-sm font-medium">1m</span>
               </button>
               <button
-                class="p-2 rounded min-h-10 min-w-12 touch-manipulation active:scale-95 transition-colors"
+                class="flex items-center justify-center bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
+                style="padding: 10px;"
+                @click="reset(timerStore.selectedTimerId!)"
+                title="Reset"
+              >
+                <SkipBack class="w-5 h-5" />
+              </button>
+              <button
+                class="flex items-center justify-center rounded-lg touch-manipulation active:scale-95 transition-colors cursor-pointer"
+                style="padding: 12px 20px;"
                 :class="timerStore.selectedTimer?.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'"
                 @click="timerStore.selectedTimer?.status === 'running' ? pause(timerStore.selectedTimerId!) : play(timerStore.selectedTimerId!)"
+                :title="timerStore.selectedTimer?.status === 'running' ? 'Pause' : 'Play'"
               >
-                <Pause v-if="timerStore.selectedTimer?.status === 'running'" class="w-4 h-4 mx-auto" />
-                <Play v-else class="w-4 h-4 mx-auto" />
+                <Pause v-if="timerStore.selectedTimer?.status === 'running'" class="w-5 h-5" />
+                <Play v-else class="w-5 h-5" />
               </button>
               <button
-                class="p-2 bg-[#2a2a2a] rounded hover:bg-[#333] min-h-10 min-w-10 touch-manipulation active:scale-95"
+                class="flex items-center justify-center bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
+                style="padding: 10px;"
+                title="Skip forward"
               >
-                <SkipForward class="w-4 h-4" />
+                <SkipForward class="w-5 h-5" />
               </button>
               <button
-                class="px-3 py-2 text-sm bg-[#2a2a2a] rounded hover:bg-[#333] min-h-10 min-w-10 touch-manipulation active:scale-95"
+                class="flex items-center justify-center gap-1 bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
+                style="padding: 10px 14px;"
                 @click="adjust(timerStore.selectedTimerId!, 60)"
-              >+1m</button>
+                title="Add 1 minute"
+              >
+                <Plus class="w-4 h-4" />
+                <span class="text-sm font-medium">1m</span>
+              </button>
             </div>
           </div>
 
