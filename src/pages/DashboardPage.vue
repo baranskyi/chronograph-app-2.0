@@ -379,14 +379,6 @@ const totalRemaining = computed(() => {
                 <span class="text-sm font-medium">1m</span>
               </button>
               <button
-                class="flex items-center justify-center bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
-                style="padding: 10px;"
-                @click="reset(timerStore.selectedTimerId!)"
-                title="Reset"
-              >
-                <SkipBack class="w-5 h-5" />
-              </button>
-              <button
                 class="flex items-center justify-center rounded-lg touch-manipulation active:scale-95 transition-colors cursor-pointer"
                 style="padding: 12px 20px;"
                 :class="timerStore.selectedTimer?.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'"
@@ -395,13 +387,6 @@ const totalRemaining = computed(() => {
               >
                 <Pause v-if="timerStore.selectedTimer?.status === 'running'" class="w-5 h-5" />
                 <Play v-else class="w-5 h-5" />
-              </button>
-              <button
-                class="flex items-center justify-center bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
-                style="padding: 10px;"
-                title="Skip forward"
-              >
-                <SkipForward class="w-5 h-5" />
               </button>
               <button
                 class="flex items-center justify-center gap-1 bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
