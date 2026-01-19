@@ -227,8 +227,8 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 .timer-green {
-  color: #ffffff;
-  text-shadow: none;
+  color: #10b981;
+  text-shadow: 0 0 60px rgba(16, 185, 129, 0.5);
 }
 
 .timer-yellow {
