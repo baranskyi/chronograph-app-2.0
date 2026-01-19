@@ -352,6 +352,9 @@ export const useTimerStore = defineStore('timer', () => {
     selectedTimerId,
     activeTimerId,
     timerList,
+    orderedTimerList,
+    timerOrder,
+    syncTimerOrder,
     selectedTimer,
     activeTimer,
 
