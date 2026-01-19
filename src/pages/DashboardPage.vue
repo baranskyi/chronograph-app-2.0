@@ -394,9 +394,9 @@ const totalRemaining = computed(() => {
         </div>
 
         <!-- CENTER: Timers Panel -->
-        <div class="flex-1 flex flex-col bg-[#0f0f0f] px-6 py-4">
+        <div class="flex-1 flex flex-col bg-[#0f0f0f] py-4">
           <!-- Timers Header -->
-          <div class="h-12 border-b border-[#2a2a2a] flex items-center gap-4 mb-2">
+          <div class="h-12 border-b border-[#2a2a2a] flex items-center gap-4 mb-2 mx-4">
             <span class="font-medium">Timers</span>
             <button
               class="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
