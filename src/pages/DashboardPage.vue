@@ -10,6 +10,7 @@ import SharePanel from '../components/SharePanel.vue'
 import ConnectionStatus from '../components/ConnectionStatus.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
@@ -217,17 +218,18 @@ function handleKeydown(e: KeyboardEvent) {
       </div>
 
       <!-- 3-Column Layout -->
-      <div v-if="!isFullscreen" class="flex-1 grid grid-cols-12 gap-4 p-4 overflow-hidden">
+      <div v-if="!isFullscreen" class="flex-1 grid grid-cols-12 gap-6 p-6 overflow-hidden">
         <!-- Left: Timer Preview -->
         <div class="col-span-3">
           <TimerPreview @open-settings="handleOpenSettings()" />
         </div>
 
         <!-- Center: Timer List -->
-        <div class="col-span-6 flex flex-col bg-zinc-900/50 rounded-xl overflow-hidden">
-          <!-- List header -->
-          <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-            <div class="text-sm font-medium text-gray-300">Timers ({{ timerStore.timerList.length }})</div>
+        <Card class="col-span-6 flex flex-col overflow-hidden py-0">
+          <CardHeader class="flex-row items-center justify-between space-y-0 py-4 px-4 border-b">
+            <CardTitle class="text-base font-medium">
+              Timers ({{ timerStore.timerList.length }})
+            </CardTitle>
             <Button
               size="sm"
               @click="handleAddTimer"
@@ -238,10 +240,9 @@ function handleKeydown(e: KeyboardEvent) {
               </svg>
               Add Timer
             </Button>
-          </div>
+          </CardHeader>
 
-          <!-- Timer list -->
-          <div class="flex-1 overflow-y-auto p-2 space-y-2">
+          <CardContent class="flex-1 overflow-y-auto p-3 space-y-2">
             <TimerCard
               v-for="(timer, index) in timerStore.timerList"
               :key="timer.id"
@@ -250,17 +251,16 @@ function handleKeydown(e: KeyboardEvent) {
               @select="handleSelectTimer"
               @open-settings="handleOpenSettings"
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <!-- Right: Messages -->
-        <div class="col-span-3 flex flex-col bg-zinc-900/50 rounded-xl overflow-hidden">
-          <!-- Messages header -->
-          <div class="px-4 py-3 border-b border-zinc-800">
-            <div class="text-sm font-medium text-gray-300">Message to Speaker</div>
-          </div>
+        <Card class="col-span-3 flex flex-col overflow-hidden py-0">
+          <CardHeader class="py-4 px-4 border-b">
+            <CardTitle class="text-base font-medium">Message to Speaker</CardTitle>
+          </CardHeader>
 
-          <div class="flex-1 p-4 flex flex-col gap-4">
+          <CardContent class="flex-1 p-4 flex flex-col gap-4">
             <!-- Custom message input -->
             <div class="flex gap-2">
               <Input
@@ -279,8 +279,8 @@ function handleKeydown(e: KeyboardEvent) {
             </div>
 
             <!-- Preset buttons -->
-            <div class="space-y-2">
-              <div class="text-xs text-gray-500 uppercase tracking-wide">Presets</div>
+            <div class="space-y-3">
+              <div class="text-xs text-muted-foreground uppercase tracking-wide font-medium">Presets</div>
               <div class="flex flex-wrap gap-2">
                 <Button
                   v-for="preset in messagePresets"
@@ -303,21 +303,21 @@ function handleKeydown(e: KeyboardEvent) {
             </div>
 
             <!-- Share links -->
-            <div class="mt-auto pt-4 border-t border-zinc-800">
-              <div class="text-xs text-gray-500 uppercase tracking-wide mb-2">Quick Links</div>
-              <div class="space-y-1 text-xs">
-                <div class="flex items-center justify-between text-gray-400">
-                  <span>Viewer (active):</span>
-                  <code class="bg-zinc-800 px-2 py-0.5 rounded">/v/{{ roomStore.roomId }}</code>
+            <div class="mt-auto pt-4 border-t">
+              <div class="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">Quick Links</div>
+              <div class="space-y-1.5 text-xs">
+                <div class="flex items-center justify-between text-muted-foreground">
+                  <span>Viewer:</span>
+                  <code class="bg-muted px-2 py-0.5 rounded text-foreground">/v/{{ roomStore.roomId }}</code>
                 </div>
-                <div v-if="timerStore.selectedTimerId" class="flex items-center justify-between text-gray-400">
-                  <span>Selected timer:</span>
-                  <code class="bg-zinc-800 px-2 py-0.5 rounded">/v/{{ roomStore.roomId }}/{{ timerStore.selectedTimerId }}</code>
+                <div v-if="timerStore.selectedTimerId" class="flex items-center justify-between text-muted-foreground">
+                  <span>Timer:</span>
+                  <code class="bg-muted px-2 py-0.5 rounded text-foreground">/v/{{ roomStore.roomId }}/{{ timerStore.selectedTimerId }}</code>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Fullscreen mode: Just show selected timer -->
