@@ -208,9 +208,7 @@ const totalRemaining = computed(() => {
         <div class="w-[280px] bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col">
           <!-- Timer Preview Header -->
           <div class="px-3 py-2 border-b border-[#2a2a2a] flex items-center gap-2">
-            <div class="w-2 h-2 bg-cyan-400 rounded-full" />
-            <span class="text-xs text-gray-400">stagetimer.io</span>
-            <span class="text-xs text-cyan-400 font-medium ml-auto">
+            <span class="text-xs text-cyan-400 font-medium">
               {{ timerStore.selectedTimer?.name || 'Timer 1' }}
             </span>
           </div>
@@ -401,16 +399,9 @@ const totalRemaining = computed(() => {
               >
                 <Plus class="w-4 h-4" />
                 <span>Add Timer</span>
-                <span class="text-amber-400">&#9733;</span>
               </button>
             </div>
 
-            <!-- Paid Feature Note -->
-            <div class="px-4 py-2 text-xs text-gray-500">
-              <span class="text-amber-400">&#9733;</span>
-              <span class="ml-1">Paid Feature:</span>
-              <span class="ml-1">Adding or controlling more than 3 timers requires a license upgrade.</span>
-            </div>
           </div>
         </div>
 
