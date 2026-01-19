@@ -497,78 +497,25 @@ const totalRemaining = computed(() => {
         <!-- RIGHT: Messages Panel -->
         <div class="w-[280px] bg-[#1a1a1a] border-l border-[#2a2a2a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
           <!-- Messages Header -->
-          <div class="h-12 border-b border-[#2a2a2a] flex items-center mb-2">
-            <span class="font-medium">Messages</span>
-            <button class="ml-auto px-3 py-1 text-sm bg-[#2a2a2a] rounded hover:bg-[#333]">Focus</button>
+          <div class="h-12 border-b border-[#2a2a2a] flex items-center mb-4">
+            <span class="font-medium">Message to Speaker</span>
           </div>
 
           <!-- Message Input -->
-          <div class="py-4 border-b border-[#2a2a2a]">
-            <input
+          <div class="flex-1 flex flex-col">
+            <textarea
               v-model="customMessage"
-              type="text"
-              placeholder="Enter message ..."
-              class="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              @keydown.enter="sendCustomMessage"
-            />
-
-            <!-- Font Style Buttons (placeholder) -->
-            <div class="flex items-center gap-2 mt-3">
-              <span class="text-gray-500 text-sm">1</span>
-              <button class="px-2 py-1 text-sm bg-[#2a2a2a] rounded hover:bg-[#333]">A</button>
-              <button class="px-2 py-1 text-sm text-red-400 bg-[#2a2a2a] rounded hover:bg-[#333]">A</button>
-              <button class="px-2 py-1 text-sm text-red-400 bg-[#2a2a2a] rounded hover:bg-[#333]">A</button>
-              <button class="px-2 py-1 text-sm font-bold bg-[#2a2a2a] rounded hover:bg-[#333]">B</button>
-              <button class="px-2 py-1 text-xs bg-[#2a2a2a] rounded hover:bg-[#333]">aA</button>
-            </div>
-
-            <!-- Show Button -->
-            <button class="w-full mt-3 px-3 py-2 text-sm bg-[#2a2a2a] rounded hover:bg-[#333] flex items-center justify-center gap-2">
-              <span>&#8679;</span>
-              <span>Show</span>
-            </button>
-          </div>
-
-          <!-- Quick Messages -->
-          <div class="flex-1 py-4 overflow-y-auto">
-            <div class="grid grid-cols-2 gap-2">
-              <button
-                class="px-3 py-2 text-xs text-left bg-[#0f0f0f] border border-[#2a2a2a] rounded hover:bg-[#1a1a1a] min-h-10 touch-manipulation active:scale-95"
-                @click="sendMessage('Speak louder')"
-              >
-                Louder
-              </button>
-              <button
-                class="px-3 py-2 text-xs text-left bg-[#0f0f0f] border border-[#2a2a2a] rounded hover:bg-[#1a1a1a] min-h-10 touch-manipulation active:scale-95"
-                @click="sendMessage('Speak slower')"
-              >
-                Slower
-              </button>
-              <button
-                class="px-3 py-2 text-xs text-left bg-[#0f0f0f] border border-[#2a2a2a] rounded hover:bg-[#1a1a1a] min-h-10 touch-manipulation active:scale-95"
-                @click="sendMessage('Speed up')"
-              >
-                Speed up
-              </button>
-              <button
-                class="px-3 py-2 text-xs text-left bg-[#0f0f0f] border border-[#2a2a2a] rounded hover:bg-[#1a1a1a] min-h-10 touch-manipulation active:scale-95"
-                @click="sendMessage('Wrap up')"
-              >
-                Wrap up
-              </button>
-            </div>
+              placeholder="Enter message for speaker..."
+              rows="4"
+              class="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500 resize-none"
+            ></textarea>
 
             <button
-              class="w-full mt-4 px-3 py-2 text-sm bg-[#2a2a2a] border border-[#333] rounded hover:bg-[#333] flex items-center justify-center gap-2"
-              @click="handleAddTimer"
+              class="w-full mt-3 px-4 py-2 text-sm bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+              @click="sendCustomMessage"
             >
-              <Plus class="w-4 h-4" />
-              <span>Add Message</span>
+              Send
             </button>
-
-            <div class="mt-4 text-xs text-gray-500 text-center">
-              Submit questions link
-            </div>
           </div>
         </div>
       </div>
