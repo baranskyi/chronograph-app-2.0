@@ -2,6 +2,35 @@ import type { Server, Socket } from 'socket.io'
 import { roomManager } from '../services/roomManager.js'
 import type { Timer, TimerState, MessagePriority } from '../types/room.js'
 
+// Track viewers per room: Map<roomId, Set<socketId>>
+const roomViewers = new Map<string, Set<string>>()
+
+// Track which room each viewer socket is in: Map<socketId, roomId>
+const viewerRooms = new Map<string, string>()
+
+function getViewerCount(roomId: string): number {
+  return roomViewers.get(roomId.toUpperCase())?.size || 0
+}
+
+function addViewer(roomId: string, socketId: string): void {
+  const normalizedId = roomId.toUpperCase()
+  if (!roomViewers.has(normalizedId)) {
+    roomViewers.set(normalizedId, new Set())
+  }
+  roomViewers.get(normalizedId)!.add(socketId)
+  viewerRooms.set(socketId, normalizedId)
+}
+
+function removeViewer(socketId: string): string | null {
+  const roomId = viewerRooms.get(socketId)
+  if (roomId) {
+    roomViewers.get(roomId)?.delete(socketId)
+    viewerRooms.delete(socketId)
+    return roomId
+  }
+  return null
+}
+
 interface CreateRoomCallback {
   (response: { roomId: string; timers: Timer[] } | { error: string }): void
 }
