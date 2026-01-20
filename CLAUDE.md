@@ -7,14 +7,17 @@
 https://chronograph-app-20-production.up.railway.app
 ```
 
-## Auto-versioning
+## Auto-versioning & Auto-commit
 
 **IMPORTANT**: After each code change, automatically run:
 ```bash
 npm run version:patch
+git add -A && git commit -m "Auto-commit: description of change"
 ```
 
-This bumps the patch version (e.g., 1.0.2 → 1.0.3) so the app always shows the current version in the footer.
+This:
+1. Bumps the patch version (e.g., 1.0.2 → 1.0.3)
+2. Commits changes to git (Railway auto-deploys on push to main)
 
 ## Version Commands
 
