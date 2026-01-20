@@ -453,11 +453,11 @@ const totalRemaining = computed(() => {
                 </span>
               </div>
 
-              <!-- Duration -->
-              <div class="text-sm font-mono font-bold ml-4 text-gray-400">{{ formatDuration(timer.settings.duration) }}</div>
-
               <!-- Spacer -->
               <div class="flex-1" />
+
+              <!-- Duration -->
+              <div class="text-sm font-mono font-bold mr-4 text-gray-400">{{ formatDuration(timer.settings.duration) }}</div>
 
               <!-- Controls -->
               <div class="flex items-center gap-1">
