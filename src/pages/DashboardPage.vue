@@ -80,33 +80,6 @@ watch(() => timerStore.timerList.length, () => {
   timerStore.syncTimerOrder()
 })
 
-// Format current time as HH:MM:SS AM/PM
-const formattedClock = computed(() => {
-  return currentTime.value.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true
-  })
-})
-
-// Calculate scheduled start times for timers
-const getScheduledStart = (index: number) => {
-  const now = new Date()
-  let offset = 0
-  for (let i = 0; i < index; i++) {
-    const timer = timerStore.timerList[i]
-    if (timer) offset += timer.settings.duration
-  }
-  const start = new Date(now.getTime() + offset * 1000)
-  return start.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true
-  })
-}
-
 // Format duration as MM:SS
 const formatDuration = (seconds: number) => {
   const mins = Math.floor(Math.abs(seconds) / 60)
