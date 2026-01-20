@@ -6,7 +6,8 @@ import { useRoomStore } from '../stores/roomStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import SharePanel from '../components/SharePanel.vue'
-import { Play, Pause, Settings, MoreHorizontal, Plus, Minus, GripVertical } from 'lucide-vue-next'
+import { Play, Pause, Settings, MoreHorizontal, Plus, Minus, GripVertical, Link2, RotateCcw } from 'lucide-vue-next'
+import QRCodeVue3 from 'qrcode.vue'
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
@@ -25,6 +26,14 @@ const editingTimerName = ref('')
 const deleteConfirmTimerId = ref<string | null>(null)
 const draggedTimerId = ref<string | null>(null)
 const dragOverTimerId = ref<string | null>(null)
+
+// Share button state
+const showShareToast = ref(false)
+const shareToastTimerId = ref<string | null>(null)
+const showQrCode = ref(false)
+const qrCodeTimerId = ref<string | null>(null)
+const qrPosition = ref({ x: 0, y: 0 })
+let shareHoverTimeout: ReturnType<typeof setTimeout> | null = null
 
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
@@ -163,6 +172,43 @@ function handleDrop(targetTimerId: string, event: DragEvent) {
 function handleDragEnd() {
   draggedTimerId.value = null
   dragOverTimerId.value = null
+}
+
+// Share button handlers
+function handleShareClick(timerId: string, event: Event) {
+  event.stopPropagation()
+  const url = roomStore.getTimerShareUrl(timerId)
+  if (!url) return
+  navigator.clipboard.writeText(url)
+  shareToastTimerId.value = timerId
+  showShareToast.value = true
+  setTimeout(() => {
+    showShareToast.value = false
+    shareToastTimerId.value = null
+  }, 2000)
+}
+
+function handleShareMouseEnter(timerId: string, e: MouseEvent) {
+  shareHoverTimeout = setTimeout(() => {
+    qrCodeTimerId.value = timerId
+    qrPosition.value = { x: e.clientX, y: e.clientY }
+    showQrCode.value = true
+  }, 1000)
+}
+
+function handleShareMouseMove(e: MouseEvent) {
+  if (showQrCode.value) {
+    qrPosition.value = { x: e.clientX, y: e.clientY }
+  }
+}
+
+function handleShareMouseLeave() {
+  if (shareHoverTimeout) {
+    clearTimeout(shareHoverTimeout)
+    shareHoverTimeout = null
+  }
+  showQrCode.value = false
+  qrCodeTimerId.value = null
 }
 
 function sendCustomMessage() {
@@ -482,16 +528,18 @@ const colorClass = (id: string) => {
               <div class="text-sm font-mono font-bold mr-4 text-gray-400">{{ formatDuration(timer.settings.duration) }}</div>
 
               <!-- Controls -->
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1 relative">
                 <button
                   class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click.stop="reset(timer.id)"
+                  title="Reset"
                 >
-                  <SkipBack class="w-4 h-4" />
+                  <RotateCcw class="w-4 h-4" />
                 </button>
                 <button
                   class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click.stop="handleOpenSettings(timer.id)"
+                  title="Settings"
                 >
                   <Settings class="w-4 h-4" />
                 </button>
@@ -499,10 +547,30 @@ const colorClass = (id: string) => {
                   class="p-2 rounded min-h-10 min-w-10 touch-manipulation active:scale-95 transition-colors flex items-center justify-center"
                   :class="timer.status === 'running' ? 'bg-amber-500 text-black hover:bg-amber-400' : 'bg-emerald-600 hover:bg-emerald-700'"
                   @click.stop="timer.status === 'running' ? pause(timer.id) : play(timer.id)"
+                  :title="timer.status === 'running' ? 'Pause' : 'Play'"
                 >
                   <Pause v-if="timer.status === 'running'" class="w-4 h-4" />
                   <Play v-else class="w-4 h-4" />
                 </button>
+                <button
+                  class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
+                  @click="handleShareClick(timer.id, $event)"
+                  @mouseenter="handleShareMouseEnter(timer.id, $event)"
+                  @mousemove="handleShareMouseMove"
+                  @mouseleave="handleShareMouseLeave"
+                  title="Copy viewer link"
+                >
+                  <Link2 class="w-4 h-4" />
+                </button>
+                <!-- Share Toast -->
+                <Transition name="toast">
+                  <div
+                    v-if="showShareToast && shareToastTimerId === timer.id"
+                    class="absolute -top-10 right-0 bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap z-50"
+                  >
+                    Link to stream copied
+                  </div>
+                </Transition>
                 <button
                   class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click="showDeleteConfirm(timer.id, $event)"
@@ -585,5 +653,42 @@ const colorClass = (id: string) => {
         </div>
       </div>
     </Teleport>
+
+    <!-- QR Code Popup -->
+    <Teleport to="body">
+      <Transition name="qr">
+        <div
+          v-if="showQrCode && qrCodeTimerId"
+          class="fixed z-[9999] bg-white p-3 rounded-lg shadow-2xl"
+          :style="{ left: qrPosition.x + 16 + 'px', top: qrPosition.y - 80 + 'px' }"
+        >
+          <QRCodeVue3 :value="roomStore.getTimerShareUrl(qrCodeTimerId) || ''" :size="120" level="M" />
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+/* Toast animation */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.2s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* QR code animation */
+.qr-enter-active,
+.qr-leave-active {
+  transition: all 0.15s ease;
+}
+.qr-enter-from,
+.qr-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+</style>
