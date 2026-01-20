@@ -242,7 +242,7 @@ const totalRemaining = computed(() => {
     <!-- Main Dashboard -->
     <template v-else>
       <!-- Top Header -->
-      <header class="h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center px-4 gap-4">
+      <header class="h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center gap-4" style="padding: 0 16px;">
         <div class="font-semibold text-lg">{{ roomStore.roomId || 'Chronograph' }}</div>
         <button
           class="px-3 py-1.5 text-sm bg-[#2a2a2a] rounded hover:bg-[#333] flex items-center gap-2"

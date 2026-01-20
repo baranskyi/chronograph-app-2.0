@@ -1,5 +1,12 @@
 # Chronograph App - Claude Rules
 
+## Production Domain
+
+**ВАЖНО**: Для тестирования используй production домен, НЕ localhost:
+```
+https://chronograph-app-20-production.up.railway.app
+```
+
 ## Auto-versioning
 
 **IMPORTANT**: After each code change, automatically run:
@@ -22,6 +29,21 @@ This bumps the patch version (e.g., 1.0.2 → 1.0.3) so the app always shows the
 - Tailwind CSS v4
 - Vite
 - TypeScript
+- Supabase (Auth + Database)
+
+## Supabase
+
+- **Project URL**: https://zxrkwbmrspdkrpvyhlof.supabase.co
+- **Tables**: rooms, timers, sessions
+- **Auth**: Email/Password
+- **SQL migrations**: `docs/supabase/`
+
+## Deployment
+
+- **Platform**: Railway
+- **Environment Variables** (set in Railway):
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
 
 ## CSS Note
 
