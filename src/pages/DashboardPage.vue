@@ -330,7 +330,7 @@ const colorClass = (id: string) => {
               </div>
 
               <!-- Color Legend -->
-              <div class="flex justify-center gap-6 mt-4 text-xs">
+              <div class="flex justify-center gap-6 mt-8 text-xs">
                 <div class="flex items-center gap-2">
                   <div class="w-3 h-3 rounded-sm bg-emerald-500"></div>
                   <span class="text-gray-400">On time</span>
