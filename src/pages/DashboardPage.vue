@@ -5,7 +5,7 @@ import { useTimerStore } from '../stores/timerStore'
 import { useRoomStore } from '../stores/roomStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
-import { Play, Pause, Settings, MoreHorizontal, Plus, Minus, GripVertical, Link2, RotateCcw, ArrowLeft } from 'lucide-vue-next'
+import { Play, Pause, Settings, MoreHorizontal, Plus, GripVertical, Link2, RotateCcw, ArrowLeft } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -209,11 +209,6 @@ async function reset(id: string) {
   await roomStore.resetTimerOnServer(id)
 }
 
-function adjust(id: string, seconds: number) {
-  timerStore.adjustTime(id, seconds)
-  roomStore.broadcastTimerState(id)
-}
-
 function handleKeydown(e: KeyboardEvent) {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
   const id = timerStore.selectedTimerId
@@ -376,42 +371,8 @@ const colorClass = (id: string) => {
 
           </div>
 
-          <!-- Transport Controls -->
-          <div class="mt-auto pt-6">
-            <div class="flex items-center justify-center gap-3" v-if="timerStore.selectedTimerId">
-              <button
-                class="flex items-center justify-center gap-1 bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
-                style="padding: 10px 14px;"
-                @click="adjust(timerStore.selectedTimerId!, -60)"
-                title="Subtract 1 minute"
-              >
-                <Minus class="w-4 h-4" />
-                <span class="text-sm font-medium">1m</span>
-              </button>
-              <button
-                class="flex items-center justify-center rounded-lg touch-manipulation active:scale-95 transition-colors cursor-pointer"
-                style="padding: 12px 20px;"
-                :class="timerStore.selectedTimer?.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700'"
-                @click="timerStore.selectedTimer?.status === 'running' ? pause(timerStore.selectedTimerId!) : play(timerStore.selectedTimerId!)"
-                :title="timerStore.selectedTimer?.status === 'running' ? 'Pause' : 'Play'"
-              >
-                <Pause v-if="timerStore.selectedTimer?.status === 'running'" class="w-5 h-5" />
-                <Play v-else class="w-5 h-5" />
-              </button>
-              <button
-                class="flex items-center justify-center gap-1 bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
-                style="padding: 10px 14px;"
-                @click="adjust(timerStore.selectedTimerId!, 60)"
-                title="Add 1 minute"
-              >
-                <Plus class="w-4 h-4" />
-                <span class="text-sm font-medium">1m</span>
-              </button>
-            </div>
-          </div>
-
           <!-- Connection Status -->
-          <div class="mt-8 pt-6 border-t border-[#2a2a2a]">
+          <div class="mt-auto pt-6 border-t border-[#2a2a2a]">
             <div class="flex items-center justify-center gap-2 text-sm">
               <span class="text-gray-400">Connection:</span>
               <span
