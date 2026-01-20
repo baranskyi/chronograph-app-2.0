@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFullscreen } from '@vueuse/core'
 import { useTimerStore } from '../stores/timerStore'
+import { useAuthStore } from '../stores/authStore'
 import { createDefaultTimer } from '../types/timer'
 import TimerDisplay from '../components/TimerDisplay.vue'
 import TimerControls from '../components/TimerControls.vue'
@@ -10,6 +11,7 @@ import SettingsPanel from '../components/SettingsPanel.vue'
 
 const router = useRouter()
 const store = useTimerStore()
+const authStore = useAuthStore()
 const showSettings = ref(false)
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
