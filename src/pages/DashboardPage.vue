@@ -522,24 +522,9 @@ const totalRemaining = computed(() => {
       </div>
 
       <!-- Bottom Status Bar -->
-      <footer class="h-12 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4 gap-4">
+      <footer class="h-12 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4">
         <div class="text-xs text-gray-500">
           chronograph.pro · v{{ APP_VERSION }} · <span class="text-gray-600">&#10003;</span> {{ pingMs !== null ? pingMs + ' ms' : '...' }}
-        </div>
-        <div class="flex-1 flex items-center gap-2 px-4">
-          <span class="text-xs text-gray-400 w-12">{{ formatDuration(totalElapsed) }}</span>
-          <!-- Timeline Scrubber -->
-          <div class="flex-1 relative h-2 bg-[#2a2a2a] rounded">
-            <div
-              class="absolute inset-y-0 left-0 bg-gray-500 rounded"
-              :style="{ width: `${totalElapsed > 0 ? (totalElapsed / (totalElapsed + totalRemaining)) * 100 : 0}%` }"
-            />
-            <div
-              class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow"
-              :style="{ left: `${totalElapsed > 0 ? (totalElapsed / (totalElapsed + totalRemaining)) * 100 : 0}%` }"
-            />
-          </div>
-          <span class="text-xs text-gray-400 w-12 text-right">{{ formatDuration(totalRemaining) }}</span>
         </div>
       </footer>
     </template>
