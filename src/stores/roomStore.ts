@@ -215,6 +215,21 @@ export const useRoomStore = defineStore('room', () => {
       timerStore.setOnAir(timerId)
     })
 
+    // Listen for timer sync (full state update)
+    socket.value.on('timer:sync', ({ timerId, timer }: { timerId: string; timer: Timer }) => {
+      timerStore.updateTimer(timerId, timer)
+    })
+
+    // Listen for server tick (real-time timer updates)
+    socket.value.on('timer:tick', ({ timerId, remainingSeconds, elapsedSeconds, status }: {
+      timerId: string
+      remainingSeconds: number
+      elapsedSeconds: number
+      status: string
+    }) => {
+      timerStore.updateTimer(timerId, { remainingSeconds, elapsedSeconds, status: status as Timer['status'] })
+    })
+
     // Listen for viewer count changes
     socket.value.on('room:viewer-count', ({ count }: { count: number }) => {
       viewerCount.value = count
@@ -276,6 +291,16 @@ export const useRoomStore = defineStore('room', () => {
     // Listen for timer sync (state updates)
     socket.value.on('timer:sync', ({ timerId, timer }: { timerId: string; timer: Timer }) => {
       timerStore.updateTimer(timerId, timer)
+    })
+
+    // Listen for server tick (real-time timer updates)
+    socket.value.on('timer:tick', ({ timerId, remainingSeconds, elapsedSeconds, status }: {
+      timerId: string
+      remainingSeconds: number
+      elapsedSeconds: number
+      status: string
+    }) => {
+      timerStore.updateTimer(timerId, { remainingSeconds, elapsedSeconds, status: status as Timer['status'] })
     })
 
     // Listen for timer created
@@ -382,6 +407,55 @@ export const useRoomStore = defineStore('room', () => {
         if (response.success) {
           const timerStore = useTimerStore()
           timerStore.setOnAir(timerId)
+        }
+        resolve(response.success)
+      })
+    })
+  }
+
+  // Server-side timer control
+  function startTimerOnServer(timerId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!isController.value || !roomId.value || !socket.value?.connected) {
+        resolve(false)
+        return
+      }
+
+      socket.value.emit('timer:start', { roomId: roomId.value, timerId }, (response: { success: boolean; error?: string }) => {
+        if (!response.success) {
+          console.error('Failed to start timer:', response.error)
+        }
+        resolve(response.success)
+      })
+    })
+  }
+
+  function pauseTimerOnServer(timerId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!isController.value || !roomId.value || !socket.value?.connected) {
+        resolve(false)
+        return
+      }
+
+      socket.value.emit('timer:pause', { roomId: roomId.value, timerId }, (response: { success: boolean; error?: string }) => {
+        if (!response.success) {
+          console.error('Failed to pause timer:', response.error)
+        }
+        resolve(response.success)
+      })
+    })
+  }
+
+  function resetTimerOnServer(timerId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!isController.value || !roomId.value || !socket.value?.connected) {
+        resolve(false)
+        return
+      }
+
+      socket.value.emit('timer:reset', { roomId: roomId.value, timerId }, (response: { success: boolean; error?: string }) => {
+        if (!response.success) {
+          console.error('Failed to reset timer:', response.error)
         }
         resolve(response.success)
       })
@@ -498,6 +572,11 @@ export const useRoomStore = defineStore('room', () => {
     createTimer,
     deleteTimer,
     renameTimer,
-    setTimerOnAir
+    setTimerOnAir,
+
+    // Server-side timer control
+    startTimerOnServer,
+    pauseTimerOnServer,
+    resetTimerOnServer
   }
 })

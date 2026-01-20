@@ -39,6 +39,7 @@ export interface Timer {
   elapsedSeconds: number
   status: TimerStatus
   isOnAir: boolean
+  startedAt?: number | null // Timestamp when timer was started (server-side)
 }
 
 export const DEFAULT_SETTINGS: TimerSettings = {

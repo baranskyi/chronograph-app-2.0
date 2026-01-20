@@ -172,19 +172,19 @@ function sendCustomMessage() {
   }
 }
 
-function play(id: string) {
-  timerStore.startTimer(id)
-  roomStore.broadcastTimerState(id)
+async function play(id: string) {
+  // Use server-side timer control
+  await roomStore.startTimerOnServer(id)
 }
 
-function pause(id: string) {
-  timerStore.pauseTimer(id)
-  roomStore.broadcastTimerState(id)
+async function pause(id: string) {
+  // Use server-side timer control
+  await roomStore.pauseTimerOnServer(id)
 }
 
-function reset(id: string) {
-  timerStore.resetTimer(id)
-  roomStore.broadcastTimerState(id)
+async function reset(id: string) {
+  // Use server-side timer control
+  await roomStore.resetTimerOnServer(id)
 }
 
 function adjust(id: string, seconds: number) {

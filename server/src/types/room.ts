@@ -26,6 +26,7 @@ export interface Timer {
   elapsedSeconds: number
   status: TimerStatus
   isOnAir: boolean        // Only one timer can be "On Air"
+  startedAt: number | null // Timestamp when timer was started (for server-side calculation)
 }
 
 export interface RoomState {

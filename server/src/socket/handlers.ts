@@ -5,6 +5,10 @@ import type { Timer, TimerState, MessagePriority } from '../types/room.js'
 // Track viewers per room: Map<roomId, Set<socketId>>
 const roomViewers = new Map<string, Set<string>>()
 
+// Server tick loop reference
+let tickInterval: NodeJS.Timeout | null = null
+let ioInstance: Server | null = null
+
 // Track which room each viewer socket is in: Map<socketId, roomId>
 const viewerRooms = new Map<string, string>()
 
@@ -236,7 +240,94 @@ export function setupHandlers(io: Server, socket: Socket): void {
     }
   })
 
-  // Controller sends timer state updates
+  // Start a timer (server-side)
+  socket.on('timer:start', async (
+    { roomId, timerId }: { roomId: string; timerId: string },
+    callback: SimpleCallback
+  ) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      callback({ success: false, error: 'Not authorized' })
+      return
+    }
+
+    try {
+      const success = await roomManager.startTimer(roomId, timerId)
+      if (!success) {
+        callback({ success: false, error: 'Failed to start timer' })
+        return
+      }
+
+      const timer = await roomManager.getTimer(roomId, timerId)
+      if (timer) {
+        // Broadcast to all clients in the room
+        io.to(roomId.toUpperCase()).emit('timer:sync', { timerId, timer: { ...timer } })
+      }
+      callback({ success: true })
+    } catch (error) {
+      console.error('Error starting timer:', error)
+      callback({ success: false, error: 'Failed to start timer' })
+    }
+  })
+
+  // Pause a timer (server-side)
+  socket.on('timer:pause', async (
+    { roomId, timerId }: { roomId: string; timerId: string },
+    callback: SimpleCallback
+  ) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      callback({ success: false, error: 'Not authorized' })
+      return
+    }
+
+    try {
+      const success = await roomManager.pauseTimer(roomId, timerId)
+      if (!success) {
+        callback({ success: false, error: 'Failed to pause timer' })
+        return
+      }
+
+      const timer = await roomManager.getTimer(roomId, timerId)
+      if (timer) {
+        // Broadcast to all clients in the room
+        io.to(roomId.toUpperCase()).emit('timer:sync', { timerId, timer: { ...timer } })
+      }
+      callback({ success: true })
+    } catch (error) {
+      console.error('Error pausing timer:', error)
+      callback({ success: false, error: 'Failed to pause timer' })
+    }
+  })
+
+  // Reset a timer (server-side)
+  socket.on('timer:reset', async (
+    { roomId, timerId }: { roomId: string; timerId: string },
+    callback: SimpleCallback
+  ) => {
+    if (!roomManager.isController(roomId, socket.id)) {
+      callback({ success: false, error: 'Not authorized' })
+      return
+    }
+
+    try {
+      const success = await roomManager.resetTimer(roomId, timerId)
+      if (!success) {
+        callback({ success: false, error: 'Failed to reset timer' })
+        return
+      }
+
+      const timer = await roomManager.getTimer(roomId, timerId)
+      if (timer) {
+        // Broadcast to all clients in the room
+        io.to(roomId.toUpperCase()).emit('timer:sync', { timerId, timer: { ...timer } })
+      }
+      callback({ success: true })
+    } catch (error) {
+      console.error('Error resetting timer:', error)
+      callback({ success: false, error: 'Failed to reset timer' })
+    }
+  })
+
+  // Controller sends timer state updates (settings changes, etc.)
   socket.on('timer:state', async ({ roomId, timerId, state }: { roomId: string; timerId: string; state: Partial<TimerState> }) => {
     if (!roomManager.isController(roomId, socket.id)) {
       return // Only controller can update state
@@ -317,9 +408,47 @@ export function setupHandlers(io: Server, socket: Socket): void {
 }
 
 export function initializeSocket(io: Server): void {
+  ioInstance = io
+
   io.on('connection', (socket) => {
     setupHandlers(io, socket)
   })
 
-  console.log('Socket.io initialized')
+  // Start server tick loop (broadcasts running timer states every second)
+  startTickLoop(io)
+
+  console.log('Socket.io initialized with server-side timer tick loop')
+}
+
+// Server tick loop - broadcasts running timer states every second
+function startTickLoop(io: Server): void {
+  if (tickInterval) {
+    clearInterval(tickInterval)
+  }
+
+  tickInterval = setInterval(async () => {
+    try {
+      // Get all active rooms
+      const roomIds = roomManager.getActiveRoomIds()
+
+      for (const roomId of roomIds) {
+        // Get running timers for this room
+        const runningTimers = await roomManager.getRunningTimers(roomId)
+
+        // Broadcast each running timer's current state
+        for (const timer of runningTimers) {
+          io.to(roomId).emit('timer:tick', {
+            timerId: timer.id,
+            remainingSeconds: timer.remainingSeconds,
+            elapsedSeconds: timer.elapsedSeconds,
+            status: timer.status
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error in tick loop:', error)
+    }
+  }, 1000)
+
+  console.log('Server tick loop started')
 }

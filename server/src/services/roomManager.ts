@@ -115,7 +115,8 @@ class RoomManager {
 
       if (timers) {
         for (const t of timers) {
-          const timer: Timer = {
+          // Calculate real-time values for running timers
+          const timer = this.calculateTimerState({
             id: t.id,
             name: t.name,
             settings: {
@@ -126,8 +127,10 @@ class RoomManager {
             remainingSeconds: t.remaining_seconds,
             elapsedSeconds: t.elapsed_seconds,
             status: t.status as Timer['status'],
-            isOnAir: t.is_on_air
-          }
+            isOnAir: t.is_on_air,
+            startedAt: t.started_at ? new Date(t.started_at).getTime() : null,
+            started_at: t.started_at
+          })
           timerMap.set(t.id, timer)
           if (t.is_on_air) {
             activeTimerId = t.id
@@ -197,7 +200,8 @@ class RoomManager {
           status: 'stopped',
           is_on_air: isFirstTimer,
           position: timerCount,
-          settings: settings
+          settings: settings,
+          started_at: null
         })
         .select()
         .single()
@@ -224,7 +228,8 @@ class RoomManager {
         remainingSeconds: timer.remaining_seconds,
         elapsedSeconds: timer.elapsed_seconds,
         status: timer.status as Timer['status'],
-        isOnAir: timer.is_on_air
+        isOnAir: timer.is_on_air,
+        startedAt: null
       }
     }
 
@@ -252,7 +257,8 @@ class RoomManager {
       remainingSeconds: settings.duration,
       elapsedSeconds: 0,
       status: 'stopped',
-      isOnAir: room.timers.size === 0
+      isOnAir: room.timers.size === 0,
+      startedAt: null
     }
 
     room.timers.set(timerId, timer)
@@ -263,6 +269,228 @@ class RoomManager {
 
     console.log(`Timer created in memory: ${timerId} (${timer.name})`)
     return timer
+  }
+
+  // ============ SERVER-SIDE TIMER CONTROL ============
+
+  // Start a timer (server-side)
+  async startTimer(roomId: string, timerId: string): Promise<boolean> {
+    const now = Date.now()
+
+    if (isSupabaseEnabled() && supabase) {
+      const { error } = await supabase
+        .from('timers')
+        .update({
+          status: 'running',
+          started_at: new Date(now).toISOString()
+        })
+        .eq('id', timerId)
+
+      if (error) {
+        console.error('Failed to start timer:', error)
+        return false
+      }
+      console.log(`Timer started in Supabase: ${timerId}`)
+      return true
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
+    if (!room) return false
+    const timer = room.timers.get(timerId)
+    if (!timer) return false
+
+    timer.status = 'running'
+    timer.startedAt = now
+    room.lastActivity = now
+    console.log(`Timer started in memory: ${timerId}`)
+    return true
+  }
+
+  // Pause a timer (server-side)
+  async pauseTimer(roomId: string, timerId: string): Promise<boolean> {
+    const now = Date.now()
+
+    if (isSupabaseEnabled() && supabase) {
+      // First get current timer state
+      const { data: timer } = await supabase
+        .from('timers')
+        .select('*')
+        .eq('id', timerId)
+        .single()
+
+      if (!timer) return false
+
+      // Calculate elapsed time since started
+      let newElapsed = timer.elapsed_seconds
+      if (timer.started_at) {
+        const startedAt = new Date(timer.started_at).getTime()
+        const additionalElapsed = Math.floor((now - startedAt) / 1000)
+        newElapsed += additionalElapsed
+      }
+
+      const { error } = await supabase
+        .from('timers')
+        .update({
+          status: 'paused',
+          started_at: null,
+          elapsed_seconds: newElapsed,
+          remaining_seconds: Math.max(0, timer.duration - newElapsed)
+        })
+        .eq('id', timerId)
+
+      if (error) {
+        console.error('Failed to pause timer:', error)
+        return false
+      }
+      console.log(`Timer paused in Supabase: ${timerId}, elapsed: ${newElapsed}s`)
+      return true
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
+    if (!room) return false
+    const timer = room.timers.get(timerId)
+    if (!timer) return false
+
+    // Calculate elapsed time since started
+    if (timer.startedAt) {
+      const additionalElapsed = Math.floor((now - timer.startedAt) / 1000)
+      timer.elapsedSeconds += additionalElapsed
+      timer.remainingSeconds = Math.max(0, timer.settings.duration - timer.elapsedSeconds)
+    }
+
+    timer.status = 'paused'
+    timer.startedAt = null
+    room.lastActivity = now
+    console.log(`Timer paused in memory: ${timerId}`)
+    return true
+  }
+
+  // Reset a timer (server-side)
+  async resetTimer(roomId: string, timerId: string): Promise<boolean> {
+    if (isSupabaseEnabled() && supabase) {
+      // Get timer duration
+      const { data: timer } = await supabase
+        .from('timers')
+        .select('duration')
+        .eq('id', timerId)
+        .single()
+
+      if (!timer) return false
+
+      const { error } = await supabase
+        .from('timers')
+        .update({
+          status: 'stopped',
+          started_at: null,
+          elapsed_seconds: 0,
+          remaining_seconds: timer.duration
+        })
+        .eq('id', timerId)
+
+      if (error) {
+        console.error('Failed to reset timer:', error)
+        return false
+      }
+      console.log(`Timer reset in Supabase: ${timerId}`)
+      return true
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
+    if (!room) return false
+    const timer = room.timers.get(timerId)
+    if (!timer) return false
+
+    timer.status = 'stopped'
+    timer.startedAt = null
+    timer.elapsedSeconds = 0
+    timer.remainingSeconds = timer.settings.duration
+    room.lastActivity = Date.now()
+    console.log(`Timer reset in memory: ${timerId}`)
+    return true
+  }
+
+  // Calculate current timer state with real-time remaining seconds
+  calculateTimerState(timer: Timer & { started_at?: string | null }): Timer {
+    const now = Date.now()
+    let remainingSeconds = timer.remainingSeconds
+    let elapsedSeconds = timer.elapsedSeconds
+
+    // If timer is running, calculate real-time values
+    if (timer.status === 'running') {
+      let startedAt: number | null = null
+
+      // Handle both formats (timestamp number or ISO string)
+      if (timer.startedAt) {
+        startedAt = timer.startedAt
+      } else if (timer.started_at) {
+        startedAt = new Date(timer.started_at).getTime()
+      }
+
+      if (startedAt) {
+        const additionalElapsed = Math.floor((now - startedAt) / 1000)
+        elapsedSeconds = timer.elapsedSeconds + additionalElapsed
+        remainingSeconds = Math.max(0, timer.settings.duration - elapsedSeconds)
+      }
+    }
+
+    return {
+      ...timer,
+      remainingSeconds,
+      elapsedSeconds,
+      startedAt: timer.startedAt ?? (timer.started_at ? new Date(timer.started_at).getTime() : null)
+    }
+  }
+
+  // Get all running timers for a room (for tick loop)
+  async getRunningTimers(roomId: string): Promise<Timer[]> {
+    if (isSupabaseEnabled() && supabase) {
+      const { data: room } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('room_code', roomId.toUpperCase())
+        .single()
+
+      if (!room) return []
+
+      const { data: timers } = await supabase
+        .from('timers')
+        .select('*')
+        .eq('room_id', room.id)
+        .eq('status', 'running')
+
+      if (!timers) return []
+
+      return timers.map(t => this.calculateTimerState({
+        id: t.id,
+        name: t.name,
+        settings: {
+          ...DEFAULT_TIMER_SETTINGS,
+          ...t.settings,
+          duration: t.duration
+        },
+        remainingSeconds: t.remaining_seconds,
+        elapsedSeconds: t.elapsed_seconds,
+        status: t.status as Timer['status'],
+        isOnAir: t.is_on_air,
+        startedAt: t.started_at ? new Date(t.started_at).getTime() : null,
+        started_at: t.started_at
+      }))
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
+    if (!room) return []
+    return Array.from(room.timers.values())
+      .filter(t => t.status === 'running')
+      .map(t => this.calculateTimerState(t))
+  }
+
+  // Get all active rooms (for tick loop)
+  getActiveRoomIds(): string[] {
+    return Array.from(this.runtimeState.keys())
   }
 
   async deleteTimer(roomId: string, timerId: string): Promise<boolean> {
@@ -479,7 +707,8 @@ class RoomManager {
 
       if (!timer) return undefined
 
-      return {
+      // Calculate real-time values for running timers
+      return this.calculateTimerState({
         id: timer.id,
         name: timer.name,
         settings: {
@@ -490,14 +719,17 @@ class RoomManager {
         remainingSeconds: timer.remaining_seconds,
         elapsedSeconds: timer.elapsed_seconds,
         status: timer.status as Timer['status'],
-        isOnAir: timer.is_on_air
-      }
+        isOnAir: timer.is_on_air,
+        startedAt: timer.started_at ? new Date(timer.started_at).getTime() : null,
+        started_at: timer.started_at
+      })
     }
 
     // Fallback: in-memory
     const room = this.memoryRooms.get(roomId.toUpperCase())
     if (!room) return undefined
-    return room.timers.get(timerId)
+    const timer = room.timers.get(timerId)
+    return timer ? this.calculateTimerState(timer) : undefined
   }
 
   async getTimers(roomId: string): Promise<Timer[]> {
@@ -518,7 +750,8 @@ class RoomManager {
 
       if (!timers) return []
 
-      return timers.map(t => ({
+      // Calculate real-time values for all timers
+      return timers.map(t => this.calculateTimerState({
         id: t.id,
         name: t.name,
         settings: {
@@ -529,14 +762,16 @@ class RoomManager {
         remainingSeconds: t.remaining_seconds,
         elapsedSeconds: t.elapsed_seconds,
         status: t.status as Timer['status'],
-        isOnAir: t.is_on_air
+        isOnAir: t.is_on_air,
+        startedAt: t.started_at ? new Date(t.started_at).getTime() : null,
+        started_at: t.started_at
       }))
     }
 
     // Fallback: in-memory
     const room = this.memoryRooms.get(roomId.toUpperCase())
     if (!room) return []
-    return Array.from(room.timers.values())
+    return Array.from(room.timers.values()).map(t => this.calculateTimerState(t))
   }
 
   async getActiveTimer(roomId: string): Promise<Timer | undefined> {

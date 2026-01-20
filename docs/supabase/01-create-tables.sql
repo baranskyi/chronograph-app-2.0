@@ -66,6 +66,10 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'settings') THEN
     ALTER TABLE timers ADD COLUMN settings JSONB DEFAULT '{"mode": "countdown", "soundEnabled": true, "flashEnabled": true, "overtimeEnabled": true, "yellowThreshold": 30, "redThreshold": 10}';
   END IF;
+  -- started_at (for server-side timer calculation)
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'started_at') THEN
+    ALTER TABLE timers ADD COLUMN started_at TIMESTAMPTZ DEFAULT NULL;
+  END IF;
 END $$;
 
 -- 5. Добавить колонку active_timer_id в rooms (если не существует)
