@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useFullscreen } from '@vueuse/core'
 import { useTimerStore } from '../stores/timerStore'
 import { useRoomStore } from '../stores/roomStore'
@@ -216,14 +216,6 @@ const colorClass = (id: string) => {
   return state === 'green' ? 'text-emerald-400' : state === 'yellow' ? 'text-amber-400' : 'text-red-400'
 }
 
-// Total elapsed and remaining for all timers
-const totalElapsed = computed(() => {
-  return timerStore.timerList.reduce((sum, t) => sum + t.elapsedSeconds, 0)
-})
-
-const totalRemaining = computed(() => {
-  return timerStore.timerList.reduce((sum, t) => sum + t.remainingSeconds, 0)
-})
 </script>
 
 <template>
