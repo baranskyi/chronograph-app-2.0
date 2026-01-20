@@ -5,13 +5,13 @@ export const roomRoutes: FastifyPluginAsync = async (fastify) => {
   // Check if room exists (for viewer validation)
   fastify.get<{ Params: { roomId: string } }>('/rooms/:roomId', async (request, reply) => {
     const { roomId } = request.params
-    const room = roomManager.getRoom(roomId)
+    const room = await roomManager.getRoom(roomId)
 
     if (!room) {
       return reply.status(404).send({ error: 'Room not found' })
     }
 
-    const timers = roomManager.getTimers(roomId)
+    const timers = await roomManager.getTimers(roomId)
 
     return {
       roomId: room.roomId,
@@ -30,13 +30,13 @@ export const roomRoutes: FastifyPluginAsync = async (fastify) => {
   // Get timers for a room
   fastify.get<{ Params: { roomId: string } }>('/rooms/:roomId/timers', async (request, reply) => {
     const { roomId } = request.params
-    const room = roomManager.getRoom(roomId)
+    const room = await roomManager.getRoom(roomId)
 
     if (!room) {
       return reply.status(404).send({ error: 'Room not found' })
     }
 
-    const timers = roomManager.getTimers(roomId)
+    const timers = await roomManager.getTimers(roomId)
     return {
       timers,
       activeTimerId: room.activeTimerId
@@ -48,7 +48,7 @@ export const roomRoutes: FastifyPluginAsync = async (fastify) => {
     '/rooms/:roomId/timers/:timerId',
     async (request, reply) => {
       const { roomId, timerId } = request.params
-      const timer = roomManager.getTimer(roomId, timerId)
+      const timer = await roomManager.getTimer(roomId, timerId)
 
       if (!timer) {
         return reply.status(404).send({ error: 'Timer not found' })

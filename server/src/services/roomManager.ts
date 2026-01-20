@@ -1,14 +1,23 @@
 import type { RoomState, Timer, TimerState, TimerSettings } from '../types/room.js'
 import { DEFAULT_TIMER_SETTINGS } from '../types/room.js'
+import { supabase, isSupabaseEnabled } from './supabase.js'
+
+// In-memory cache for runtime state (socket connections, etc.)
+interface RuntimeRoomState {
+  controllerSocketId: string | null
+  lastActivity: number
+}
 
 class RoomManager {
-  private rooms = new Map<string, RoomState>()
+  // Runtime state only (socket connections, etc.) - not persisted
+  private runtimeState = new Map<string, RuntimeRoomState>()
+
+  // In-memory fallback when Supabase is not configured
+  private memoryRooms = new Map<string, RoomState>()
+  private timerCounter = new Map<string, number>()
   private readonly TTL = 24 * 60 * 60 * 1000 // 24 hours
-  private timerCounter = new Map<string, number>() // Track timer IDs per room
 
   generateRoomId(): string {
-    // Format: XXXX-XXXX (8 chars, uppercase alphanumeric)
-    // Exclude confusing characters: O/0, I/1, L
     const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
     let id = ''
     for (let i = 0; i < 8; i++) {
@@ -18,15 +27,51 @@ class RoomManager {
     return id
   }
 
-  generateTimerId(roomId: string): string {
-    const normalizedId = roomId.toUpperCase()
-    const count = (this.timerCounter.get(normalizedId) || 0) + 1
-    this.timerCounter.set(normalizedId, count)
-    return `t${count}`
+  // ============ ROOM OPERATIONS ============
+
+  async createRoom(): Promise<RoomState> {
+    const roomId = this.generateRoomId()
+
+    if (isSupabaseEnabled() && supabase) {
+      // Create room in Supabase
+      const { data: room, error } = await supabase
+        .from('rooms')
+        .insert({
+          room_code: roomId,
+          name: 'My Room',
+          is_active: true
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Failed to create room in Supabase:', error)
+        throw new Error('Failed to create room')
+      }
+
+      // Initialize runtime state
+      this.runtimeState.set(roomId, {
+        controllerSocketId: null,
+        lastActivity: Date.now()
+      })
+
+      console.log(`Room created in Supabase: ${roomId}`)
+
+      return {
+        roomId,
+        createdAt: Date.now(),
+        lastActivity: Date.now(),
+        controllerSocketId: null,
+        timers: new Map(),
+        activeTimerId: null
+      }
+    }
+
+    // Fallback: in-memory storage
+    return this.createRoomInMemory(roomId)
   }
 
-  createRoom(): RoomState {
-    const roomId = this.generateRoomId()
+  private createRoomInMemory(roomId: string): RoomState {
     const room: RoomState = {
       roomId,
       createdAt: Date.now(),
@@ -35,23 +80,166 @@ class RoomManager {
       timers: new Map<string, Timer>(),
       activeTimerId: null
     }
-    this.rooms.set(roomId, room)
+    this.memoryRooms.set(roomId, room)
     this.timerCounter.set(roomId, 0)
     this.cleanup()
-    console.log(`Room created: ${roomId}`)
+    console.log(`Room created in memory: ${roomId}`)
     return room
   }
 
-  getRoom(roomId: string): RoomState | undefined {
-    return this.rooms.get(roomId.toUpperCase())
+  async getRoom(roomId: string): Promise<RoomState | undefined> {
+    const normalizedId = roomId.toUpperCase()
+
+    if (isSupabaseEnabled() && supabase) {
+      // Fetch room from Supabase
+      const { data: room, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('room_code', normalizedId)
+        .eq('is_active', true)
+        .single()
+
+      if (error || !room) {
+        return undefined
+      }
+
+      // Fetch timers for this room
+      const { data: timers } = await supabase
+        .from('timers')
+        .select('*')
+        .eq('room_id', room.id)
+        .order('position', { ascending: true })
+
+      const timerMap = new Map<string, Timer>()
+      let activeTimerId: string | null = null
+
+      if (timers) {
+        for (const t of timers) {
+          const timer: Timer = {
+            id: t.id,
+            name: t.name,
+            settings: {
+              ...DEFAULT_TIMER_SETTINGS,
+              ...t.settings,
+              duration: t.duration
+            },
+            remainingSeconds: t.remaining_seconds,
+            elapsedSeconds: t.elapsed_seconds,
+            status: t.status as Timer['status'],
+            isOnAir: t.is_on_air
+          }
+          timerMap.set(t.id, timer)
+          if (t.is_on_air) {
+            activeTimerId = t.id
+          }
+        }
+      }
+
+      // Get or create runtime state
+      let runtime = this.runtimeState.get(normalizedId)
+      if (!runtime) {
+        runtime = { controllerSocketId: null, lastActivity: Date.now() }
+        this.runtimeState.set(normalizedId, runtime)
+      }
+
+      return {
+        roomId: normalizedId,
+        createdAt: new Date(room.created_at).getTime(),
+        lastActivity: runtime.lastActivity,
+        controllerSocketId: runtime.controllerSocketId,
+        timers: timerMap,
+        activeTimerId,
+        dbRoomId: room.id // Store DB UUID for updates
+      } as RoomState & { dbRoomId: string }
+    }
+
+    // Fallback: in-memory
+    return this.memoryRooms.get(normalizedId)
   }
 
-  // Timer CRUD operations
-  createTimer(roomId: string, name: string, duration?: number): Timer | null {
-    const room = this.rooms.get(roomId.toUpperCase())
+  // ============ TIMER OPERATIONS ============
+
+  async createTimer(roomId: string, name: string, duration?: number): Promise<Timer | null> {
+    const normalizedId = roomId.toUpperCase()
+
+    if (isSupabaseEnabled() && supabase) {
+      // Get room's DB UUID
+      const { data: room } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('room_code', normalizedId)
+        .single()
+
+      if (!room) return null
+
+      // Count existing timers
+      const { count } = await supabase
+        .from('timers')
+        .select('*', { count: 'exact', head: true })
+        .eq('room_id', room.id)
+
+      const timerCount = count || 0
+      const isFirstTimer = timerCount === 0
+
+      const settings: TimerSettings = {
+        ...DEFAULT_TIMER_SETTINGS,
+        duration: duration ?? DEFAULT_TIMER_SETTINGS.duration
+      }
+
+      const { data: timer, error } = await supabase
+        .from('timers')
+        .insert({
+          room_id: room.id,
+          name: name || `Timer ${timerCount + 1}`,
+          duration: settings.duration,
+          remaining_seconds: settings.duration,
+          elapsed_seconds: 0,
+          status: 'stopped',
+          is_on_air: isFirstTimer,
+          position: timerCount,
+          settings: settings
+        })
+        .select()
+        .single()
+
+      if (error || !timer) {
+        console.error('Failed to create timer:', error)
+        return null
+      }
+
+      // Update room's active_timer_id if this is first timer
+      if (isFirstTimer) {
+        await supabase
+          .from('rooms')
+          .update({ active_timer_id: timer.id, last_used_at: new Date().toISOString() })
+          .eq('id', room.id)
+      }
+
+      console.log(`Timer created in Supabase: ${timer.id} (${timer.name})`)
+
+      return {
+        id: timer.id,
+        name: timer.name,
+        settings,
+        remainingSeconds: timer.remaining_seconds,
+        elapsedSeconds: timer.elapsed_seconds,
+        status: timer.status as Timer['status'],
+        isOnAir: timer.is_on_air
+      }
+    }
+
+    // Fallback: in-memory
+    return this.createTimerInMemory(roomId, name, duration)
+  }
+
+  private createTimerInMemory(roomId: string, name: string, duration?: number): Timer | null {
+    const room = this.memoryRooms.get(roomId.toUpperCase())
     if (!room) return null
 
-    const timerId = this.generateTimerId(roomId)
+    const count = (this.timerCounter.get(roomId.toUpperCase()) || 0) + 1
+    this.timerCounter.set(roomId.toUpperCase(), count)
+    const timerId = `t${count}`
+
     const settings: TimerSettings = {
       ...DEFAULT_TIMER_SETTINGS,
       duration: duration ?? DEFAULT_TIMER_SETTINGS.duration
@@ -64,7 +252,7 @@ class RoomManager {
       remainingSeconds: settings.duration,
       elapsedSeconds: 0,
       status: 'stopped',
-      isOnAir: room.timers.size === 0 // First timer is automatically On Air
+      isOnAir: room.timers.size === 0
     }
 
     room.timers.set(timerId, timer)
@@ -73,12 +261,69 @@ class RoomManager {
     }
     room.lastActivity = Date.now()
 
-    console.log(`Timer created in room ${roomId}: ${timerId} (${timer.name})`)
+    console.log(`Timer created in memory: ${timerId} (${timer.name})`)
     return timer
   }
 
-  deleteTimer(roomId: string, timerId: string): boolean {
-    const room = this.rooms.get(roomId.toUpperCase())
+  async deleteTimer(roomId: string, timerId: string): Promise<boolean> {
+    if (isSupabaseEnabled() && supabase) {
+      const { data: timer } = await supabase
+        .from('timers')
+        .select('is_on_air, room_id')
+        .eq('id', timerId)
+        .single()
+
+      if (!timer) return false
+
+      const wasOnAir = timer.is_on_air
+
+      const { error } = await supabase
+        .from('timers')
+        .delete()
+        .eq('id', timerId)
+
+      if (error) {
+        console.error('Failed to delete timer:', error)
+        return false
+      }
+
+      // If deleted timer was On Air, assign to first remaining timer
+      if (wasOnAir) {
+        const { data: remainingTimers } = await supabase
+          .from('timers')
+          .select('id')
+          .eq('room_id', timer.room_id)
+          .order('position', { ascending: true })
+          .limit(1)
+
+        if (remainingTimers && remainingTimers.length > 0) {
+          await supabase
+            .from('timers')
+            .update({ is_on_air: true })
+            .eq('id', remainingTimers[0].id)
+
+          await supabase
+            .from('rooms')
+            .update({ active_timer_id: remainingTimers[0].id })
+            .eq('id', timer.room_id)
+        } else {
+          await supabase
+            .from('rooms')
+            .update({ active_timer_id: null })
+            .eq('id', timer.room_id)
+        }
+      }
+
+      console.log(`Timer deleted from Supabase: ${timerId}`)
+      return true
+    }
+
+    // Fallback: in-memory
+    return this.deleteTimerInMemory(roomId, timerId)
+  }
+
+  private deleteTimerInMemory(roomId: string, timerId: string): boolean {
+    const room = this.memoryRooms.get(roomId.toUpperCase())
     if (!room) return false
 
     const timer = room.timers.get(timerId)
@@ -87,7 +332,6 @@ class RoomManager {
     const wasOnAir = timer.isOnAir
     room.timers.delete(timerId)
 
-    // If deleted timer was On Air, assign to first remaining timer
     if (wasOnAir && room.timers.size > 0) {
       const firstTimer = room.timers.values().next().value
       if (firstTimer) {
@@ -99,30 +343,68 @@ class RoomManager {
     }
 
     room.lastActivity = Date.now()
-    console.log(`Timer deleted from room ${roomId}: ${timerId}`)
+    console.log(`Timer deleted from memory: ${timerId}`)
     return true
   }
 
-  renameTimer(roomId: string, timerId: string, name: string): boolean {
-    const room = this.rooms.get(roomId.toUpperCase())
-    if (!room) return false
+  async renameTimer(roomId: string, timerId: string, name: string): Promise<boolean> {
+    if (isSupabaseEnabled() && supabase) {
+      const { error } = await supabase
+        .from('timers')
+        .update({ name })
+        .eq('id', timerId)
 
+      if (error) {
+        console.error('Failed to rename timer:', error)
+        return false
+      }
+      return true
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
+    if (!room) return false
     const timer = room.timers.get(timerId)
     if (!timer) return false
-
     timer.name = name
     room.lastActivity = Date.now()
     return true
   }
 
-  updateTimerState(roomId: string, timerId: string, state: Partial<TimerState>): boolean {
-    const room = this.rooms.get(roomId.toUpperCase())
-    if (!room) return false
+  async updateTimerState(roomId: string, timerId: string, state: Partial<TimerState>): Promise<boolean> {
+    if (isSupabaseEnabled() && supabase) {
+      const updates: Record<string, unknown> = {}
 
+      if (state.settings) {
+        updates.settings = state.settings
+        if (state.settings.duration !== undefined) {
+          updates.duration = state.settings.duration
+        }
+      }
+      if (state.remainingSeconds !== undefined) updates.remaining_seconds = state.remainingSeconds
+      if (state.elapsedSeconds !== undefined) updates.elapsed_seconds = state.elapsedSeconds
+      if (state.status !== undefined) updates.status = state.status
+
+      if (Object.keys(updates).length === 0) return true
+
+      const { error } = await supabase
+        .from('timers')
+        .update(updates)
+        .eq('id', timerId)
+
+      if (error) {
+        console.error('Failed to update timer state:', error)
+        return false
+      }
+      return true
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
+    if (!room) return false
     const timer = room.timers.get(timerId)
     if (!timer) return false
 
-    // Update timer state
     if (state.settings) timer.settings = { ...timer.settings, ...state.settings }
     if (state.remainingSeconds !== undefined) timer.remainingSeconds = state.remainingSeconds
     if (state.elapsedSeconds !== undefined) timer.elapsedSeconds = state.elapsedSeconds
@@ -132,81 +414,200 @@ class RoomManager {
     return true
   }
 
-  setActiveTimer(roomId: string, timerId: string): boolean {
-    const room = this.rooms.get(roomId.toUpperCase())
-    if (!room) return false
+  async setActiveTimer(roomId: string, timerId: string): Promise<boolean> {
+    if (isSupabaseEnabled() && supabase) {
+      // Get room's DB UUID
+      const { data: room } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('room_code', roomId.toUpperCase())
+        .single()
 
+      if (!room) return false
+
+      // Clear all On Air flags for this room
+      await supabase
+        .from('timers')
+        .update({ is_on_air: false })
+        .eq('room_id', room.id)
+
+      // Set new On Air timer
+      const { error } = await supabase
+        .from('timers')
+        .update({ is_on_air: true })
+        .eq('id', timerId)
+
+      if (error) {
+        console.error('Failed to set active timer:', error)
+        return false
+      }
+
+      // Update room's active_timer_id
+      await supabase
+        .from('rooms')
+        .update({ active_timer_id: timerId, last_used_at: new Date().toISOString() })
+        .eq('id', room.id)
+
+      console.log(`Timer set On Air in Supabase: ${timerId}`)
+      return true
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
+    if (!room) return false
     const timer = room.timers.get(timerId)
     if (!timer) return false
 
-    // Clear all On Air flags
     for (const t of room.timers.values()) {
       t.isOnAir = false
     }
-
-    // Set new On Air timer
     timer.isOnAir = true
     room.activeTimerId = timerId
     room.lastActivity = Date.now()
 
-    console.log(`Timer set On Air in room ${roomId}: ${timerId}`)
+    console.log(`Timer set On Air in memory: ${timerId}`)
     return true
   }
 
-  getTimer(roomId: string, timerId: string): Timer | undefined {
-    const room = this.rooms.get(roomId.toUpperCase())
+  async getTimer(roomId: string, timerId: string): Promise<Timer | undefined> {
+    if (isSupabaseEnabled() && supabase) {
+      const { data: timer } = await supabase
+        .from('timers')
+        .select('*')
+        .eq('id', timerId)
+        .single()
+
+      if (!timer) return undefined
+
+      return {
+        id: timer.id,
+        name: timer.name,
+        settings: {
+          ...DEFAULT_TIMER_SETTINGS,
+          ...timer.settings,
+          duration: timer.duration
+        },
+        remainingSeconds: timer.remaining_seconds,
+        elapsedSeconds: timer.elapsed_seconds,
+        status: timer.status as Timer['status'],
+        isOnAir: timer.is_on_air
+      }
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
     if (!room) return undefined
     return room.timers.get(timerId)
   }
 
-  getTimers(roomId: string): Timer[] {
-    const room = this.rooms.get(roomId.toUpperCase())
+  async getTimers(roomId: string): Promise<Timer[]> {
+    if (isSupabaseEnabled() && supabase) {
+      const { data: room } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('room_code', roomId.toUpperCase())
+        .single()
+
+      if (!room) return []
+
+      const { data: timers } = await supabase
+        .from('timers')
+        .select('*')
+        .eq('room_id', room.id)
+        .order('position', { ascending: true })
+
+      if (!timers) return []
+
+      return timers.map(t => ({
+        id: t.id,
+        name: t.name,
+        settings: {
+          ...DEFAULT_TIMER_SETTINGS,
+          ...t.settings,
+          duration: t.duration
+        },
+        remainingSeconds: t.remaining_seconds,
+        elapsedSeconds: t.elapsed_seconds,
+        status: t.status as Timer['status'],
+        isOnAir: t.is_on_air
+      }))
+    }
+
+    // Fallback: in-memory
+    const room = this.memoryRooms.get(roomId.toUpperCase())
     if (!room) return []
     return Array.from(room.timers.values())
   }
 
-  getActiveTimer(roomId: string): Timer | undefined {
-    const room = this.rooms.get(roomId.toUpperCase())
+  async getActiveTimer(roomId: string): Promise<Timer | undefined> {
+    const room = await this.getRoom(roomId)
     if (!room || !room.activeTimerId) return undefined
-    return room.timers.get(room.activeTimerId)
+    return this.getTimer(roomId, room.activeTimerId)
   }
 
+  // ============ RUNTIME STATE (not persisted) ============
+
   setController(roomId: string, socketId: string): boolean {
-    const room = this.rooms.get(roomId.toUpperCase())
-    if (!room) return false
-    room.controllerSocketId = socketId
-    room.lastActivity = Date.now()
+    const normalizedId = roomId.toUpperCase()
+    let runtime = this.runtimeState.get(normalizedId)
+    if (!runtime) {
+      runtime = { controllerSocketId: null, lastActivity: Date.now() }
+      this.runtimeState.set(normalizedId, runtime)
+    }
+    runtime.controllerSocketId = socketId
+    runtime.lastActivity = Date.now()
+
+    // Also update in-memory fallback if exists
+    const memRoom = this.memoryRooms.get(normalizedId)
+    if (memRoom) {
+      memRoom.controllerSocketId = socketId
+      memRoom.lastActivity = Date.now()
+    }
+
     return true
   }
 
   isController(roomId: string, socketId: string): boolean {
-    const room = this.rooms.get(roomId.toUpperCase())
-    return room?.controllerSocketId === socketId
+    const runtime = this.runtimeState.get(roomId.toUpperCase())
+    if (runtime?.controllerSocketId === socketId) return true
+
+    // Also check in-memory fallback
+    const memRoom = this.memoryRooms.get(roomId.toUpperCase())
+    return memRoom?.controllerSocketId === socketId
   }
 
-  deleteRoom(roomId: string): void {
+  async deleteRoom(roomId: string): Promise<void> {
     const normalizedId = roomId.toUpperCase()
-    this.rooms.delete(normalizedId)
+
+    if (isSupabaseEnabled() && supabase) {
+      await supabase
+        .from('rooms')
+        .update({ is_active: false })
+        .eq('room_code', normalizedId)
+    }
+
+    this.runtimeState.delete(normalizedId)
+    this.memoryRooms.delete(normalizedId)
     this.timerCounter.delete(normalizedId)
     console.log(`Room deleted: ${roomId}`)
   }
 
   getRoomCount(): number {
-    return this.rooms.size
+    return this.memoryRooms.size + this.runtimeState.size
   }
 
   private cleanup(): void {
     const now = Date.now()
     let cleaned = 0
-    for (const [id, room] of this.rooms) {
+    for (const [id, room] of this.memoryRooms) {
       if (now - room.lastActivity > this.TTL) {
-        this.rooms.delete(id)
+        this.memoryRooms.delete(id)
         this.timerCounter.delete(id)
         cleaned++
       }
     }
     if (cleaned > 0) {
-      console.log(`Cleaned ${cleaned} expired rooms`)
+      console.log(`Cleaned ${cleaned} expired rooms from memory`)
     }
   }
 }
