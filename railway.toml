@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npm run build && cd server && npm install && npm run build"
+buildCommand = "echo 'Build v1.0.14' && npm install && npm run build && cd server && npm install && npm run build"
 
 [deploy]
 startCommand = "cd server && NODE_ENV=production node dist/index.js"
