@@ -220,12 +220,10 @@ function handleKeydown(e: KeyboardEvent) {
         />
 
         <!-- Color Legend -->
-        <div v-if="legendTimes && !isFullscreen" class="mt-3 flex flex-col items-center gap-2">
-          <!-- Time markers -->
+        <div v-if="legendTimes && !isFullscreen" class="mt-4 flex flex-col items-center gap-3">
+          <!-- Start and End time labels -->
           <div class="w-full flex justify-between text-xs text-gray-500 px-1">
             <span>{{ legendTimes.start }}</span>
-            <span>{{ legendTimes.yellowStart }}</span>
-            <span>{{ legendTimes.redStart }}</span>
             <span>{{ legendTimes.end }}</span>
           </div>
 
@@ -237,11 +235,11 @@ function handleKeydown(e: KeyboardEvent) {
             </div>
             <div class="flex items-center gap-2">
               <div class="w-3 h-3 rounded-sm bg-amber-500"></div>
-              <span class="text-gray-400">Warning ({{ yellowThreshold }}s left)</span>
+              <span class="text-gray-400">Warning</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-3 h-3 rounded-sm bg-red-500"></div>
-              <span class="text-gray-400">Wrap up ({{ redThreshold }}s left)</span>
+              <span class="text-gray-400">Wrap up</span>
             </div>
           </div>
         </div>
