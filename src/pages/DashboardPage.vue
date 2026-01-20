@@ -295,7 +295,7 @@ const colorClass = (id: string) => {
 
             <!-- Progress Bar with Time Labels -->
             <div class="w-full mt-4" v-if="timerStore.selectedTimer">
-              <div class="relative pb-8">
+              <div class="relative pb-14">
                 <ProgressBar
                   :total-seconds="timerStore.selectedTimer.settings.duration"
                   :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
