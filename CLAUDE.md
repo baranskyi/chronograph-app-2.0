@@ -13,11 +13,17 @@ https://chronograph-app-20-production.up.railway.app
 ```bash
 npm run version:patch
 git add -A && git commit -m "Auto-commit: description of change"
+git push
 ```
 
 This:
 1. Bumps the patch version (e.g., 1.0.2 → 1.0.3)
-2. Commits changes to git (Railway auto-deploys on push to main)
+2. Commits changes to git
+3. Pushes to Railway (auto-deploys on push to main)
+
+**ОБЯЗАТЕЛЬНО после каждого изменения**:
+- Сообщай текущую версию (например: "Версия: 1.1.0")
+- Пользователь проверяет версию в интерфейсе (правый нижний угол)
 
 ## Version Commands
 
@@ -41,12 +47,17 @@ This:
 - **Auth**: Email/Password
 - **SQL migrations**: `docs/supabase/`
 
-## Deployment
+## Deployment (Railway)
 
-- **Platform**: Railway
+**ВСЕГДА используем Railway для деплоя и тестирования.**
+
+- **Platform**: Railway (auto-deploy on push to main)
+- **Production URL**: https://chronograph-app-20-production.up.railway.app
 - **Environment Variables** (set in Railway):
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_ANON_KEY`
+
+После `git push` Railway автоматически деплоит изменения.
 
 ## CSS Note
 
