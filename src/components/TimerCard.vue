@@ -5,6 +5,7 @@ import { useRoomStore } from '../stores/roomStore'
 import type { Timer } from '../types/timer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import QRCodeVue3 from 'qrcode.vue'
 
 const props = defineProps<{
   timer: Timer
@@ -25,6 +26,14 @@ const formattedTime = computed(() => timerStore.getFormattedTime(props.timer.id)
 
 const isEditing = ref(false)
 const editName = ref('')
+
+// Share button state
+const showToast = ref(false)
+const showQrCode = ref(false)
+const qrPosition = ref({ x: 0, y: 0 })
+let hoverTimeout: ReturnType<typeof setTimeout> | null = null
+
+const shareUrl = computed(() => roomStore.getTimerShareUrl(props.timer.id) || '')
 
 function startEditing() {
   editName.value = props.timer.name
@@ -67,6 +76,37 @@ function handleSetOnAir() {
 
 function broadcastState() {
   roomStore.broadcastTimerState(props.timer.id)
+}
+
+// Share button handlers
+function handleShareClick() {
+  if (!shareUrl.value) return
+  navigator.clipboard.writeText(shareUrl.value)
+  showToast.value = true
+  setTimeout(() => {
+    showToast.value = false
+  }, 2000)
+}
+
+function handleShareMouseEnter(e: MouseEvent) {
+  hoverTimeout = setTimeout(() => {
+    qrPosition.value = { x: e.clientX, y: e.clientY }
+    showQrCode.value = true
+  }, 1000)
+}
+
+function handleShareMouseMove(e: MouseEvent) {
+  if (showQrCode.value) {
+    qrPosition.value = { x: e.clientX, y: e.clientY }
+  }
+}
+
+function handleShareMouseLeave() {
+  if (hoverTimeout) {
+    clearTimeout(hoverTimeout)
+    hoverTimeout = null
+  }
+  showQrCode.value = false
 }
 </script>
 
@@ -170,7 +210,47 @@ function broadcastState() {
           <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
         </svg>
       </Button>
+
+      <!-- Share Link -->
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        class="h-8 w-8 relative"
+        @click.stop="handleShareClick"
+        @mouseenter="handleShareMouseEnter"
+        @mousemove="handleShareMouseMove"
+        @mouseleave="handleShareMouseLeave"
+        title="Copy viewer link"
+      >
+        <!-- Share/Link icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" />
+        </svg>
+      </Button>
     </div>
+
+    <!-- Toast notification -->
+    <Transition name="toast">
+      <div
+        v-if="showToast"
+        class="absolute -top-10 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap z-50"
+      >
+        Link to stream copied
+      </div>
+    </Transition>
+
+    <!-- QR Code popup -->
+    <Teleport to="body">
+      <Transition name="qr">
+        <div
+          v-if="showQrCode && shareUrl"
+          class="fixed z-[9999] bg-white p-3 rounded-lg shadow-2xl"
+          :style="{ left: qrPosition.x + 16 + 'px', top: qrPosition.y - 80 + 'px' }"
+        >
+          <QRCodeVue3 :value="shareUrl" :size="120" level="M" />
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- On Air indicator/button -->
     <Button
@@ -194,5 +274,27 @@ function broadcastState() {
 }
 .timer-red {
   color: var(--color-red);
+}
+
+/* Toast animation */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.2s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -8px);
+}
+
+/* QR code animation */
+.qr-enter-active,
+.qr-leave-active {
+  transition: all 0.15s ease;
+}
+.qr-enter-from,
+.qr-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
 }
 </style>
