@@ -47,6 +47,29 @@ const formattedTime = computed(() => {
 
 const timerName = computed(() => displayTimer.value?.name ?? 'Timer')
 
+// Helper to format seconds as mm:ss
+function formatSeconds(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+// Legend thresholds (same as ProgressBar)
+const yellowThreshold = 30
+const redThreshold = 10
+
+// Computed times for legend
+const legendTimes = computed(() => {
+  if (!displayTimer.value) return null
+  const total = displayTimer.value.settings.duration
+  return {
+    start: '0:00',
+    yellowStart: formatSeconds(total - yellowThreshold),
+    redStart: formatSeconds(total - redThreshold),
+    end: formatSeconds(total)
+  }
+})
+
 onMounted(async () => {
   try {
     await roomStore.joinAsViewer(roomId, requestedTimerId)
@@ -128,15 +151,6 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Connection status -->
       <ConnectionStatus v-if="!isFullscreen" />
 
-      <!-- ON AIR Badge - Top Right -->
-      <div
-        v-if="displayTimer?.status === 'running'"
-        class="fixed top-6 right-6 z-20"
-      >
-        <span class="bg-red-600 text-white text-base font-bold rounded-lg shadow-lg animate-pulse" style="padding: 12px 24px;">
-          ON AIR
-        </span>
-      </div>
 
       <!-- Room/Timer badge -->
       <div
@@ -158,13 +172,25 @@ function handleKeydown(e: KeyboardEvent) {
 
       <!-- Timer Display -->
       <div v-else class="flex-1 flex items-center justify-center">
-        <div
-          class="timer-font text-center select-none transition-colors duration-300"
-          :class="`timer-${colorState}`"
-        >
-          <span class="text-[20vw] font-bold leading-none md:text-[25vw]">
-            {{ formattedTime }}
-          </span>
+        <div class="flex flex-col items-center">
+          <!-- ON AIR Badge - Above Timer -->
+          <div
+            v-if="displayTimer?.status === 'running'"
+            class="mb-4"
+          >
+            <span class="bg-red-600 text-white text-base font-bold rounded-lg shadow-lg animate-pulse" style="padding: 10px 20px;">
+              ON AIR
+            </span>
+          </div>
+          <!-- Timer -->
+          <div
+            class="timer-font text-center select-none transition-colors duration-300"
+            :class="`timer-${colorState}`"
+          >
+            <span class="text-[20vw] font-bold leading-none md:text-[25vw]">
+              {{ formattedTime }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -184,14 +210,41 @@ function handleKeydown(e: KeyboardEvent) {
       </Transition>
 
       <!-- Progress Bar at Bottom -->
-      <div v-if="displayTimer" class="w-full px-4 pb-4" :class="isFullscreen ? 'px-0 pb-0' : ''">
+      <div v-if="displayTimer" class="w-full px-4 pb-2" :class="isFullscreen ? 'px-0 pb-0' : ''">
         <ProgressBar
           :total-seconds="displayTimer.settings.duration"
           :remaining-seconds="displayTimer.remainingSeconds"
-          :yellow-threshold="30"
-          :red-threshold="10"
+          :yellow-threshold="yellowThreshold"
+          :red-threshold="redThreshold"
           :class="isFullscreen ? 'h-6 rounded-none' : 'h-5'"
         />
+
+        <!-- Color Legend -->
+        <div v-if="legendTimes && !isFullscreen" class="mt-3 flex flex-col items-center gap-2">
+          <!-- Time markers -->
+          <div class="w-full flex justify-between text-xs text-gray-500 px-1">
+            <span>{{ legendTimes.start }}</span>
+            <span>{{ legendTimes.yellowStart }}</span>
+            <span>{{ legendTimes.redStart }}</span>
+            <span>{{ legendTimes.end }}</span>
+          </div>
+
+          <!-- Legend items -->
+          <div class="flex gap-6 text-xs">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-sm bg-emerald-500"></div>
+              <span class="text-gray-400">On time</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-sm bg-amber-500"></div>
+              <span class="text-gray-400">Warning ({{ yellowThreshold }}s left)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-sm bg-red-500"></div>
+              <span class="text-gray-400">Wrap up ({{ redThreshold }}s left)</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Minimal controls for viewer (only when not fullscreen) -->
