@@ -5,8 +5,10 @@ import { useTimerStore } from '../stores/timerStore'
 import { useRoomStore } from '../stores/roomStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
-import SharePanel from '../components/SharePanel.vue'
-import { Play, Pause, Settings, MoreHorizontal, Plus, Minus, GripVertical, Link2, RotateCcw } from 'lucide-vue-next'
+import { Play, Pause, Settings, MoreHorizontal, Plus, Minus, GripVertical, Link2, RotateCcw, ArrowLeft } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
@@ -15,7 +17,6 @@ declare const __APP_VERSION__: string
 const APP_VERSION = __APP_VERSION__
 
 const showSettings = ref(false)
-const showShare = ref(false)
 const isInitializing = ref(true)
 const initError = ref<string | null>(null)
 const customMessage = ref('')
@@ -225,7 +226,6 @@ function handleKeydown(e: KeyboardEvent) {
     case 'f': toggleFullscreen(); break
     case 'escape':
       if (showSettings.value) showSettings.value = false
-      else if (showShare.value) showShare.value = false
       else if (isFullscreen.value) exitFullscreen()
       break
     case 'b': roomStore.toggleBlackout(); break
@@ -256,13 +256,14 @@ const colorClass = (id: string) => {
     <template v-else>
       <!-- Top Header -->
       <header class="h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center gap-4" style="padding: 0 16px;">
-        <div class="font-semibold text-lg">{{ roomStore.roomId || 'Chronograph' }}</div>
         <button
-          class="px-3 py-1.5 text-sm bg-[#2a2a2a] rounded hover:bg-[#333] flex items-center gap-2"
-          @click="showShare = true"
+          class="p-2 bg-[#2a2a2a] rounded hover:bg-[#333] transition-colors"
+          @click="router.push('/rooms')"
+          title="Back to rooms"
         >
-          <span>Output Links</span>
+          <ArrowLeft class="w-4 h-4" />
         </button>
+        <div class="font-semibold text-lg">{{ roomStore.roomId || 'Chronograph' }}</div>
         <div class="flex-1" />
         <button
           class="px-3 py-1.5 text-sm rounded transition-colors flex items-center gap-2"
@@ -270,9 +271,6 @@ const colorClass = (id: string) => {
           @click="roomStore.toggleBlackout()"
         >
           {{ roomStore.isBlackout ? 'Show' : 'Blackout' }}
-        </button>
-        <button class="px-3 py-1.5 text-sm bg-blue-600 rounded hover:bg-blue-700">
-          Room
         </button>
         <button class="p-2 bg-[#2a2a2a] rounded hover:bg-[#333]" @click="toggleFullscreen">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,49 +314,48 @@ const colorClass = (id: string) => {
             </div>
             <div v-else class="text-4xl text-gray-500">--:--</div>
 
-            <!-- Section 3: Progress Bar -->
+            <!-- Section 3: Progress Bar with markers -->
             <div class="w-full" v-if="timerStore.selectedTimer">
-              <ProgressBar
-                :total-seconds="timerStore.selectedTimer.settings.duration"
-                :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
-                :yellow-threshold="timerStore.selectedTimer.settings.yellowThreshold"
-                :red-threshold="timerStore.selectedTimer.settings.redThreshold"
-              />
-            </div>
-
-            <!-- Section 4: Time Markers with connecting lines -->
-            <div class="w-full" v-if="timerStore.selectedTimer" style="position: relative;">
-              <!-- Yellow threshold marker -->
-              <div
-                class="flex flex-col items-center"
-                :style="{ position: 'absolute', top: '-8px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
-              >
-                <!-- Vertical line going up to touch progress bar -->
-                <div class="w-px bg-amber-500" style="height: 24px;"></div>
-                <!-- Time label -->
-                <span class="text-xs text-amber-500" style="margin-top: 4px;">
-                  {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
-                </span>
-              </div>
-
-              <!-- Red threshold marker - on second row -->
-              <div
-                class="flex flex-col items-center"
-                :style="{ position: 'absolute', top: '-8px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
-              >
-                <!-- Vertical line going up to touch progress bar -->
-                <div class="w-px bg-red-500" style="height: 44px;"></div>
-                <!-- Time label -->
-                <span class="text-xs text-red-500" style="margin-top: 4px;">
-                  {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
-                </span>
-              </div>
-
-              <!-- Row: Start and End times -->
-              <div class="flex justify-between text-xs text-gray-500" style="padding-top: 60px;">
+              <!-- Start and End times ABOVE the bar -->
+              <div class="flex justify-between text-xs text-gray-500 mb-1">
                 <span>00:00</span>
                 <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
               </div>
+
+              <!-- Progress Bar -->
+              <div style="position: relative;">
+                <ProgressBar
+                  :total-seconds="timerStore.selectedTimer.settings.duration"
+                  :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
+                  :yellow-threshold="timerStore.selectedTimer.settings.yellowThreshold"
+                  :red-threshold="timerStore.selectedTimer.settings.redThreshold"
+                />
+
+                <!-- Yellow threshold marker - line from bar to label -->
+                <div
+                  class="flex flex-col items-center"
+                  :style="{ position: 'absolute', top: '100%', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+                >
+                  <div class="w-px bg-amber-500" style="height: 20px;"></div>
+                  <span class="text-xs text-amber-500 mt-1">
+                    {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
+                  </span>
+                </div>
+
+                <!-- Red threshold marker - line from bar to label (longer line for second row) -->
+                <div
+                  class="flex flex-col items-center"
+                  :style="{ position: 'absolute', top: '100%', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+                >
+                  <div class="w-px bg-red-500" style="height: 40px;"></div>
+                  <span class="text-xs text-red-500 mt-1">
+                    {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Spacer for markers below -->
+              <div style="height: 60px;"></div>
             </div>
 
             <!-- Section 5: Color Legend -->
@@ -587,7 +584,6 @@ const colorClass = (id: string) => {
 
     <!-- Modals -->
     <SettingsPanel v-model:open="showSettings" />
-    <SharePanel v-model:open="showShare" />
 
     <!-- Delete Confirmation Dialog -->
     <Teleport to="body">

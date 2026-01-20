@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import { useAuthStore } from './stores/authStore'
 
 const authStore = useAuthStore()
-const appVersion = '1.2.7'
+const appVersion = '1.2.8'
 
 onMounted(() => {
   authStore.initialize()
