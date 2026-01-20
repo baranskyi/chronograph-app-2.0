@@ -97,6 +97,9 @@ export const useRoomStore = defineStore('room', () => {
             roomId.value = response.roomId
             isController.value = true
 
+            // Save roomId to localStorage for reconnection
+            localStorage.setItem('chronograph-roomId', response.roomId)
+
             // Add initial timers to store
             if (response.timers) {
               const timerStore = useTimerStore()
@@ -118,6 +121,71 @@ export const useRoomStore = defineStore('room', () => {
         socket.value.once('connect', attemptCreate)
       }
     })
+  }
+
+  async function joinRoomAsController(id: string): Promise<boolean> {
+    connect()
+
+    return new Promise((resolve) => {
+      if (!socket.value) {
+        resolve(false)
+        return
+      }
+
+      const attemptJoin = () => {
+        socket.value!.emit('room:join-controller', { roomId: id }, (response: { success?: boolean; timers?: Timer[]; activeTimerId?: string | null; error?: string }) => {
+          if (response.error) {
+            console.log('Failed to rejoin room:', response.error)
+            resolve(false)
+          } else if (response.success) {
+            roomId.value = id.toUpperCase()
+            isController.value = true
+
+            // Restore timers from server
+            if (response.timers) {
+              const timerStore = useTimerStore()
+              timerStore.addTimers(response.timers)
+
+              // Set active timer
+              if (response.activeTimerId) {
+                timerStore.setOnAir(response.activeTimerId)
+              }
+            }
+
+            // Setup controller listeners
+            setupControllerListeners()
+
+            console.log('Rejoined room as controller:', id)
+            resolve(true)
+          } else {
+            resolve(false)
+          }
+        })
+      }
+
+      if (socket.value.connected) {
+        attemptJoin()
+      } else {
+        socket.value.once('connect', attemptJoin)
+      }
+    })
+  }
+
+  // Try to reconnect to existing room, or create new one
+  async function initializeRoom(): Promise<string> {
+    const savedRoomId = localStorage.getItem('chronograph-roomId')
+
+    if (savedRoomId) {
+      console.log('Attempting to rejoin room:', savedRoomId)
+      const success = await joinRoomAsController(savedRoomId)
+      if (success) {
+        return savedRoomId
+      }
+      console.log('Room no longer exists, creating new one')
+      localStorage.removeItem('chronograph-roomId')
+    }
+
+    return createRoom()
   }
 
   function setupControllerListeners() {
@@ -416,6 +484,7 @@ export const useRoomStore = defineStore('room', () => {
     // Actions
     connect,
     createRoom,
+    initializeRoom,
     joinAsViewer,
     broadcastState,
     broadcastTimerState,

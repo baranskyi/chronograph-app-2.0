@@ -34,12 +34,12 @@ let clockInterval: number | null = null
 
 onMounted(async () => {
   try {
-    await roomStore.createRoom()
+    await roomStore.initializeRoom()
     timerStore.syncTimerOrder()
     isInitializing.value = false
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-    initError.value = `Failed to create room: ${errorMessage}`
+    initError.value = `Failed to initialize room: ${errorMessage}`
     isInitializing.value = false
   }
   document.addEventListener('keydown', handleKeydown)
