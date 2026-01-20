@@ -282,7 +282,7 @@ const totalRemaining = computed(() => {
           <!-- Big Time Display -->
           <div class="flex-1 flex flex-col items-center justify-center">
             <!-- ON AIR Badge (above timer) -->
-            <div class="mb-8" v-if="timerStore.selectedTimer">
+            <div class="mb-16" v-if="timerStore.selectedTimer">
               <span
                 class="text-xs font-bold rounded-md transition-colors"
                 :class="timerStore.selectedTimer.status === 'running'
