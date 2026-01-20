@@ -165,10 +165,6 @@ function handleDragEnd() {
   dragOverTimerId.value = null
 }
 
-function sendMessage(text: string, urgent = false) {
-  roomStore.sendMessage(text, 5000, urgent ? 'urgent' : 'normal')
-}
-
 function sendCustomMessage() {
   if (customMessage.value.trim()) {
     roomStore.sendMessage(customMessage.value.trim())
