@@ -96,6 +96,23 @@ onUnmounted(() => {
       @open-settings="showSettings = true"
     >
       <template #extra>
+        <!-- Auth buttons -->
+        <template v-if="authStore.isAuthenticated">
+          <button
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors"
+            @click="goToMyRooms"
+          >
+            My Rooms
+          </button>
+        </template>
+        <template v-else>
+          <button
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-colors"
+            @click="goToLogin"
+          >
+            Sign In
+          </button>
+        </template>
         <button
           class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
           @click="startRemoteSession"
