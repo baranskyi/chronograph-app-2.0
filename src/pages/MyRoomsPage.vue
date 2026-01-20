@@ -46,9 +46,13 @@ async function loadRooms() {
 
     if (fetchError) throw fetchError
 
-    rooms.value = (data || []).map(room => ({
-      ...room,
-      timer_count: Array.isArray(room.timers) ? room.timers.length : (room.timers as any)?.count || 0
+    rooms.value = (data || []).map((room: any) => ({
+      id: room.id,
+      room_code: room.room_code,
+      name: room.name,
+      created_at: room.created_at,
+      last_used_at: room.last_used_at,
+      timer_count: Array.isArray(room.timers) ? room.timers.length : room.timers?.count || 0
     }))
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load rooms'
