@@ -31,9 +31,7 @@ async function loadRooms() {
   error.value = null
 
   try {
-    // Get rooms for current user OR rooms without user_id (legacy)
-    const userId = authStore.userId
-
+    // Get all active rooms (RLS will filter by user if enabled)
     const { data, error: fetchError } = await supabase
       .from('rooms')
       .select(`
@@ -42,12 +40,10 @@ async function loadRooms() {
         name,
         created_at,
         last_used_at,
-        user_id,
         timers(count)
       `)
       .eq('is_active', true)
-      .or(`user_id.eq.${userId},user_id.is.null`)
-      .order('last_used_at', { ascending: false })
+      .order('last_used_at', { ascending: false, nullsFirst: false })
 
     if (fetchError) throw fetchError
 
