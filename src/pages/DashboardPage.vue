@@ -305,30 +305,42 @@ const colorClass = (id: string) => {
               />
             </div>
 
-            <!-- Section 4: Time Markers (two rows like reference image) -->
-            <div class="w-full" v-if="timerStore.selectedTimer">
+            <!-- Section 4: Time Markers with connecting lines -->
+            <div class="w-full" v-if="timerStore.selectedTimer" style="position: relative;">
               <!-- Row 1: Start and End times -->
               <div class="flex justify-between text-sm text-gray-500">
                 <span>00:00</span>
                 <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
               </div>
-              <!-- Row 2: Yellow and Red threshold times (positioned) -->
-              <div style="position: relative; height: 24px;">
-                <!-- Yellow threshold time -->
-                <span
-                  class="text-sm text-amber-500"
-                  :style="{ position: 'absolute', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
-                >
+
+              <!-- Yellow threshold with vertical line -->
+              <div
+                class="flex flex-col items-center"
+                :style="{ position: 'absolute', top: '0', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+              >
+                <!-- Vertical line -->
+                <div class="w-px bg-amber-500" style="height: 28px; margin-top: -8px;"></div>
+                <!-- Time label -->
+                <span class="text-sm text-amber-500">
                   {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
                 </span>
-                <!-- Red threshold time -->
-                <span
-                  class="text-sm text-red-500"
-                  :style="{ position: 'absolute', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
-                >
+              </div>
+
+              <!-- Red threshold with vertical line (lower) -->
+              <div
+                class="flex flex-col items-center"
+                :style="{ position: 'absolute', top: '20px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+              >
+                <!-- Vertical line -->
+                <div class="w-px bg-red-500" style="height: 28px; margin-top: -28px;"></div>
+                <!-- Time label -->
+                <span class="text-sm text-red-500">
                   {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
                 </span>
               </div>
+
+              <!-- Spacer for the markers -->
+              <div style="height: 44px;"></div>
             </div>
 
             <!-- Section 5: Color Legend -->
