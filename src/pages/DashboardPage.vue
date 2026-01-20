@@ -327,35 +327,35 @@ const colorClass = (id: string) => {
             </div>
 
             <!-- Section 4: Time Markers with connecting lines -->
-            <div class="w-full" v-if="timerStore.selectedTimer" style="position: relative; margin-top: -4px;">
-              <!-- Yellow threshold marker - top row -->
+            <div class="w-full" v-if="timerStore.selectedTimer" style="position: relative;">
+              <!-- Yellow threshold marker -->
               <div
                 class="flex flex-col items-center"
-                :style="{ position: 'absolute', top: '0', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+                :style="{ position: 'absolute', top: '-8px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
               >
-                <!-- Vertical line touching progress bar -->
-                <div class="w-px bg-amber-500" style="height: 16px;"></div>
+                <!-- Vertical line going up to touch progress bar -->
+                <div class="w-px bg-amber-500" style="height: 24px;"></div>
                 <!-- Time label -->
-                <span class="text-xs text-amber-500 mt-1">
+                <span class="text-xs text-amber-500" style="margin-top: 4px;">
                   {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
                 </span>
               </div>
 
-              <!-- Red threshold marker - bottom row (offset down) -->
+              <!-- Red threshold marker - on second row -->
               <div
                 class="flex flex-col items-center"
-                :style="{ position: 'absolute', top: '36px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+                :style="{ position: 'absolute', top: '-8px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
               >
-                <!-- Vertical line touching progress bar -->
-                <div class="w-px bg-red-500" style="height: 36px; margin-top: -36px;"></div>
+                <!-- Vertical line going up to touch progress bar -->
+                <div class="w-px bg-red-500" style="height: 44px;"></div>
                 <!-- Time label -->
-                <span class="text-xs text-red-500 mt-1">
+                <span class="text-xs text-red-500" style="margin-top: 4px;">
                   {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
                 </span>
               </div>
 
               <!-- Row: Start and End times -->
-              <div class="flex justify-between text-xs text-gray-500" style="padding-top: 56px;">
+              <div class="flex justify-between text-xs text-gray-500" style="padding-top: 60px;">
                 <span>00:00</span>
                 <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
               </div>
@@ -414,7 +414,7 @@ const colorClass = (id: string) => {
           </div>
 
           <!-- Connection Status -->
-          <div class="mt-6 pt-4 border-t border-[#2a2a2a]">
+          <div class="mt-8 pt-6 border-t border-[#2a2a2a]">
             <div class="flex items-center justify-center gap-2 text-sm">
               <span class="text-gray-400">Connection:</span>
               <span
