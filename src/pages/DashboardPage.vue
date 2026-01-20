@@ -369,11 +369,8 @@ const colorClass = (id: string) => {
               </div>
             </div>
 
-          </div>
-
-          <!-- Connection Status -->
-          <div class="mt-auto pt-6 border-t border-[#2a2a2a]">
-            <div class="flex items-center justify-center gap-2 text-sm">
+            <!-- Connection Status -->
+            <div class="flex items-center justify-center gap-2 text-sm mt-8">
               <span class="text-gray-400">Connection:</span>
               <span
                 v-if="roomStore.viewerCount > 0"
@@ -386,6 +383,7 @@ const colorClass = (id: string) => {
                 style="background-color: #eab308;"
               >waiting</span>
             </div>
+
           </div>
         </div>
 
