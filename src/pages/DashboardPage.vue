@@ -253,7 +253,7 @@ const colorClass = (id: string) => {
       <header class="h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center gap-4" style="padding: 0 16px;">
         <button
           class="p-2 bg-[#2a2a2a] rounded hover:bg-[#333] transition-colors"
-          @click="router.push('/rooms')"
+          @click="router.push('/my-rooms')"
           title="Back to rooms"
         >
           <ArrowLeft class="w-4 h-4" />
