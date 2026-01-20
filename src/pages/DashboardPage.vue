@@ -288,7 +288,7 @@ const totalRemaining = computed(() => {
                 :class="timerStore.selectedTimer.status === 'running'
                   ? 'bg-red-600 text-white'
                   : 'bg-transparent border border-gray-500 text-gray-500'"
-                style="padding: 6px 12px;"
+                style="padding: 8px 16px;"
               >ON AIR</span>
             </div>
 
