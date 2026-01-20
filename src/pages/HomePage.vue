@@ -58,7 +58,19 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 function startRemoteSession() {
-  router.push('/dashboard')
+  if (authStore.isAuthenticated) {
+    router.push('/my-rooms')
+  } else {
+    router.push('/login')
+  }
+}
+
+function goToLogin() {
+  router.push('/login')
+}
+
+function goToMyRooms() {
+  router.push('/my-rooms')
 }
 
 onMounted(() => {
