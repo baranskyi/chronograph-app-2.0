@@ -215,19 +215,9 @@ export const useRoomStore = defineStore('room', () => {
       timerStore.setOnAir(timerId)
     })
 
-    // Listen for timer sync (full state update)
+    // Listen for timer sync (full state update from server)
     socket.value.on('timer:sync', ({ timerId, timer }: { timerId: string; timer: Timer }) => {
       timerStore.updateTimer(timerId, timer)
-    })
-
-    // Listen for server tick (real-time timer updates)
-    socket.value.on('timer:tick', ({ timerId, remainingSeconds, elapsedSeconds, status }: {
-      timerId: string
-      remainingSeconds: number
-      elapsedSeconds: number
-      status: string
-    }) => {
-      timerStore.updateTimer(timerId, { remainingSeconds, elapsedSeconds, status: status as Timer['status'] })
     })
 
     // Listen for viewer count changes
@@ -288,19 +278,9 @@ export const useRoomStore = defineStore('room', () => {
     if (!socket.value) return
     const timerStore = useTimerStore()
 
-    // Listen for timer sync (state updates)
+    // Listen for timer sync (state updates from server)
     socket.value.on('timer:sync', ({ timerId, timer }: { timerId: string; timer: Timer }) => {
       timerStore.updateTimer(timerId, timer)
-    })
-
-    // Listen for server tick (real-time timer updates)
-    socket.value.on('timer:tick', ({ timerId, remainingSeconds, elapsedSeconds, status }: {
-      timerId: string
-      remainingSeconds: number
-      elapsedSeconds: number
-      status: string
-    }) => {
-      timerStore.updateTimer(timerId, { remainingSeconds, elapsedSeconds, status: status as Timer['status'] })
     })
 
     // Listen for timer created

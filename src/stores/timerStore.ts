@@ -87,6 +87,8 @@ export const useTimerStore = defineStore('timer', () => {
         selectedTimerId.value = firstTimer.id
       }
     }
+    // Restore display intervals for running timers
+    restoreRunningTimers()
   }
 
   function removeTimer(timerId: string) {
@@ -110,7 +112,16 @@ export const useTimerStore = defineStore('timer', () => {
     const timer = timers.get(timerId)
     if (!timer) return
 
+    const wasRunning = timer.status === 'running'
     Object.assign(timer, updates)
+    const isRunning = timer.status === 'running'
+
+    // Handle display interval based on status change
+    if (!wasRunning && isRunning && timer.startedAt) {
+      startDisplayInterval(timerId)
+    } else if (wasRunning && !isRunning) {
+      stopDisplayInterval(timerId)
+    }
   }
 
   function selectTimer(timerId: string) {
@@ -132,30 +143,32 @@ export const useTimerStore = defineStore('timer', () => {
     }
   }
 
-  // Actions: Timer controls
+  // Actions: Timer controls (now server-driven)
   function startTimer(timerId: string) {
     const timer = timers.get(timerId)
     if (!timer || timer.status === 'running') return
 
     timer.status = 'running'
+    timer.startedAt = Date.now()
 
-    const id = window.setInterval(() => {
-      tickTimer(timerId)
-    }, 1000)
-    intervalIds.set(timerId, id)
+    // Start local display interval
+    startDisplayInterval(timerId)
   }
 
   function pauseTimer(timerId: string) {
     const timer = timers.get(timerId)
     if (!timer || timer.status !== 'running') return
 
-    timer.status = 'paused'
-
-    const intervalId = intervalIds.get(timerId)
-    if (intervalId !== undefined) {
-      clearInterval(intervalId)
-      intervalIds.delete(timerId)
+    // Calculate final elapsed time before pausing
+    if (timer.startedAt) {
+      const additionalElapsed = Math.floor((Date.now() - timer.startedAt) / 1000)
+      timer.elapsedSeconds += additionalElapsed
+      timer.remainingSeconds = Math.max(0, timer.settings.duration - timer.elapsedSeconds)
     }
+
+    timer.status = 'paused'
+    timer.startedAt = null
+    stopDisplayInterval(timerId)
   }
 
   function stopTimer(timerId: string) {
@@ -163,12 +176,8 @@ export const useTimerStore = defineStore('timer', () => {
     if (!timer) return
 
     timer.status = 'stopped'
-
-    const intervalId = intervalIds.get(timerId)
-    if (intervalId !== undefined) {
-      clearInterval(intervalId)
-      intervalIds.delete(timerId)
-    }
+    timer.startedAt = null
+    stopDisplayInterval(timerId)
   }
 
   function resetTimer(timerId: string) {
@@ -178,22 +187,50 @@ export const useTimerStore = defineStore('timer', () => {
 
     timer.remainingSeconds = timer.settings.duration
     timer.elapsedSeconds = 0
+    timer.startedAt = null
   }
 
-  function tickTimer(timerId: string) {
+  // Display interval - updates calculated values for smooth UI
+  function startDisplayInterval(timerId: string) {
+    stopDisplayInterval(timerId) // Clear any existing interval
+
+    const id = window.setInterval(() => {
+      updateCalculatedTime(timerId)
+    }, 100) // Update 10 times per second for smooth display
+    intervalIds.set(timerId, id)
+  }
+
+  function stopDisplayInterval(timerId: string) {
+    const intervalId = intervalIds.get(timerId)
+    if (intervalId !== undefined) {
+      clearInterval(intervalId)
+      intervalIds.delete(timerId)
+    }
+  }
+
+  // Calculate current time based on startedAt
+  function updateCalculatedTime(timerId: string) {
     const timer = timers.get(timerId)
-    if (!timer) return
+    if (!timer || timer.status !== 'running' || !timer.startedAt) return
 
-    timer.elapsedSeconds++
+    const now = Date.now()
+    const additionalElapsed = Math.floor((now - timer.startedAt) / 1000)
+    const totalElapsed = timer.elapsedSeconds + additionalElapsed
 
-    if (timer.settings.mode === 'countdown') {
-      timer.remainingSeconds--
+    // Update display values (these are calculated, not stored)
+    timer.remainingSeconds = timer.settings.duration - totalElapsed
 
-      // Check if timer reached zero
-      if (timer.remainingSeconds === 0) {
-        if (!timer.settings.overtimeEnabled) {
-          stopTimer(timerId)
-        }
+    // Check if timer reached zero
+    if (timer.remainingSeconds <= 0 && !timer.settings.overtimeEnabled) {
+      timer.remainingSeconds = 0
+    }
+  }
+
+  // Restore running timers after reconnect
+  function restoreRunningTimers() {
+    for (const timer of timers.values()) {
+      if (timer.status === 'running' && timer.startedAt) {
+        startDisplayInterval(timer.id)
       }
     }
   }
@@ -380,6 +417,7 @@ export const useTimerStore = defineStore('timer', () => {
     getTimerStateForSync,
     applyRemoteTimerState,
     clearAllTimers,
+    restoreRunningTimers,
 
     // Legacy compatibility (selected timer)
     settings,

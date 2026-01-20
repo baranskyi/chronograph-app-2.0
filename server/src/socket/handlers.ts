@@ -5,10 +5,6 @@ import type { Timer, TimerState, MessagePriority } from '../types/room.js'
 // Track viewers per room: Map<roomId, Set<socketId>>
 const roomViewers = new Map<string, Set<string>>()
 
-// Server tick loop reference
-let tickInterval: NodeJS.Timeout | null = null
-let ioInstance: Server | null = null
-
 // Track which room each viewer socket is in: Map<socketId, roomId>
 const viewerRooms = new Map<string, string>()
 
@@ -408,47 +404,9 @@ export function setupHandlers(io: Server, socket: Socket): void {
 }
 
 export function initializeSocket(io: Server): void {
-  ioInstance = io
-
   io.on('connection', (socket) => {
     setupHandlers(io, socket)
   })
 
-  // Start server tick loop (broadcasts running timer states every second)
-  startTickLoop(io)
-
-  console.log('Socket.io initialized with server-side timer tick loop')
-}
-
-// Server tick loop - broadcasts running timer states every second
-function startTickLoop(io: Server): void {
-  if (tickInterval) {
-    clearInterval(tickInterval)
-  }
-
-  tickInterval = setInterval(async () => {
-    try {
-      // Get all active rooms
-      const roomIds = roomManager.getActiveRoomIds()
-
-      for (const roomId of roomIds) {
-        // Get running timers for this room
-        const runningTimers = await roomManager.getRunningTimers(roomId)
-
-        // Broadcast each running timer's current state
-        for (const timer of runningTimers) {
-          io.to(roomId).emit('timer:tick', {
-            timerId: timer.id,
-            remainingSeconds: timer.remainingSeconds,
-            elapsedSeconds: timer.elapsedSeconds,
-            status: timer.status
-          })
-        }
-      }
-    } catch (error) {
-      console.error('Error in tick loop:', error)
-    }
-  }, 1000)
-
-  console.log('Server tick loop started')
+  console.log('Socket.io initialized (client-side timer calculation)')
 }
