@@ -227,7 +227,7 @@ const totalRemaining = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0f0f0f] text-white">
+  <div class="min-h-screen bg-[#0f0f0f] text-white" style="padding: 8px;">
     <!-- Loading -->
     <div v-if="isInitializing" class="h-screen flex items-center justify-center">
       <div class="text-xl font-semibold text-gray-400">Loading stagetimer...</div>
