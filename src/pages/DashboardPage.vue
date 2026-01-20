@@ -271,10 +271,11 @@ const colorClass = (id: string) => {
             </span>
           </div>
 
-          <!-- Big Time Display -->
-          <div class="flex-1 flex flex-col items-center justify-center">
-            <!-- ON AIR Badge (above timer) -->
-            <div class="mb-16" v-if="timerStore.selectedTimer">
+          <!-- Big Time Display - Rebuilt from scratch -->
+          <div class="flex-1 flex flex-col items-center justify-center gap-6">
+
+            <!-- Section 1: ON AIR Badge -->
+            <div v-if="timerStore.selectedTimer">
               <span
                 class="text-xs font-bold rounded-md transition-colors"
                 :class="timerStore.selectedTimer.status === 'running'
@@ -284,6 +285,7 @@ const colorClass = (id: string) => {
               >ON AIR</span>
             </div>
 
+            <!-- Section 2: Timer Display -->
             <div
               v-if="timerStore.selectedTimer"
               class="text-[4.5rem] font-mono font-bold tabular-nums leading-none"
@@ -293,58 +295,58 @@ const colorClass = (id: string) => {
             </div>
             <div v-else class="text-4xl text-gray-500">--:--</div>
 
-            <!-- Progress Bar with Time Labels -->
-            <div class="w-full mt-4" v-if="timerStore.selectedTimer">
-              <div class="relative pb-14">
-                <ProgressBar
-                  :total-seconds="timerStore.selectedTimer.settings.duration"
-                  :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
-                  :yellow-threshold="timerStore.selectedTimer.settings.yellowThreshold"
-                  :red-threshold="timerStore.selectedTimer.settings.redThreshold"
-                />
-                <!-- Yellow boundary marker with leader line -->
-                <div
-                  class="absolute top-full flex flex-col items-center"
-                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
-                >
-                  <div class="w-px h-3 bg-amber-500"></div>
-                  <span class="text-[10px] text-amber-500 whitespace-nowrap">
-                    {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
-                  </span>
-                </div>
-                <!-- Red boundary marker with leader line -->
-                <div
-                  class="absolute top-full flex flex-col items-center"
-                  :style="{ left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
-                >
-                  <div class="w-px h-5 bg-red-500"></div>
-                  <span class="text-[10px] text-red-500 whitespace-nowrap">
-                    {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
-                  </span>
-                </div>
-              </div>
-              <!-- Start and End labels -->
-              <div class="flex justify-between text-[10px] text-gray-500">
-                <span>00:00</span>
-                <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
-              </div>
+            <!-- Section 3: Progress Bar -->
+            <div class="w-full" v-if="timerStore.selectedTimer">
+              <ProgressBar
+                :total-seconds="timerStore.selectedTimer.settings.duration"
+                :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
+                :yellow-threshold="timerStore.selectedTimer.settings.yellowThreshold"
+                :red-threshold="timerStore.selectedTimer.settings.redThreshold"
+              />
+            </div>
 
-              <!-- Color Legend -->
-              <div class="flex justify-center gap-6 mt-4 text-xs">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-sm bg-emerald-500"></div>
-                  <span class="text-gray-400">On time</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-sm bg-amber-500"></div>
-                  <span class="text-gray-400">Warning</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-sm bg-red-500"></div>
-                  <span class="text-gray-400">Wrap up</span>
-                </div>
+            <!-- Section 4: Time Markers (positioned correctly) -->
+            <div class="w-full" v-if="timerStore.selectedTimer" style="position: relative; height: 24px;">
+              <!-- Start time -->
+              <span class="text-[10px] text-gray-500" style="position: absolute; left: 0;">
+                00:00
+              </span>
+              <!-- Yellow threshold time -->
+              <span
+                class="text-[10px] text-amber-500"
+                :style="{ position: 'absolute', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+              >
+                {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
+              </span>
+              <!-- Red threshold time -->
+              <span
+                class="text-[10px] text-red-500"
+                :style="{ position: 'absolute', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+              >
+                {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
+              </span>
+              <!-- End time -->
+              <span class="text-[10px] text-gray-500" style="position: absolute; right: 0;">
+                {{ formatDuration(timerStore.selectedTimer.settings.duration) }}
+              </span>
+            </div>
+
+            <!-- Section 5: Color Legend -->
+            <div class="flex justify-center gap-6 text-xs" v-if="timerStore.selectedTimer">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-sm bg-emerald-500"></div>
+                <span class="text-gray-400">On time</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-sm bg-amber-500"></div>
+                <span class="text-gray-400">Warning</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-sm bg-red-500"></div>
+                <span class="text-gray-400">Wrap up</span>
               </div>
             </div>
+
           </div>
 
           <!-- Transport Controls -->
