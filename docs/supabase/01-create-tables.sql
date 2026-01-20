@@ -39,7 +39,36 @@ CREATE TABLE IF NOT EXISTS sessions (
   total_duration INTEGER DEFAULT 0
 );
 
--- 4. Добавить колонку active_timer_id в rooms (если не существует)
+-- 4. Добавить недостающие колонки в timers (если таблица уже существовала)
+DO $$
+BEGIN
+  -- remaining_seconds
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'remaining_seconds') THEN
+    ALTER TABLE timers ADD COLUMN remaining_seconds INTEGER NOT NULL DEFAULT 300;
+  END IF;
+  -- elapsed_seconds
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'elapsed_seconds') THEN
+    ALTER TABLE timers ADD COLUMN elapsed_seconds INTEGER NOT NULL DEFAULT 0;
+  END IF;
+  -- status
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'status') THEN
+    ALTER TABLE timers ADD COLUMN status VARCHAR(20) DEFAULT 'stopped';
+  END IF;
+  -- is_on_air
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'is_on_air') THEN
+    ALTER TABLE timers ADD COLUMN is_on_air BOOLEAN DEFAULT false;
+  END IF;
+  -- position
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'position') THEN
+    ALTER TABLE timers ADD COLUMN position INTEGER DEFAULT 0;
+  END IF;
+  -- settings
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'timers' AND column_name = 'settings') THEN
+    ALTER TABLE timers ADD COLUMN settings JSONB DEFAULT '{"mode": "countdown", "soundEnabled": true, "flashEnabled": true, "overtimeEnabled": true, "yellowThreshold": 30, "redThreshold": 10}';
+  END IF;
+END $$;
+
+-- 5. Добавить колонку active_timer_id в rooms (если не существует)
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -50,7 +79,7 @@ BEGIN
   END IF;
 END $$;
 
--- 5. Добавить foreign key constraint (если не существует)
+-- 6. Добавить foreign key constraint (если не существует)
 DO $$
 BEGIN
   IF NOT EXISTS (
