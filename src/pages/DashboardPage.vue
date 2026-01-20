@@ -410,7 +410,7 @@ const totalRemaining = computed(() => {
           <!-- Timer List -->
           <div class="flex-1 overflow-y-auto flex flex-col gap-2">
             <div
-              v-for="(timer, index) in timerStore.orderedTimerList"
+              v-for="timer in timerStore.orderedTimerList"
               :key="timer.id"
               class="flex items-center px-3 py-3 rounded-lg cursor-pointer transition-all duration-200"
               :class="[
