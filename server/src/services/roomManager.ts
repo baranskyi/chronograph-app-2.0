@@ -412,34 +412,15 @@ class RoomManager {
     return true
   }
 
-  // Calculate current timer state with real-time remaining seconds
+  // Convert timer from DB format to client format
+  // Does NOT recalculate elapsed/remaining - client handles real-time calculation
+  // This prevents double-counting when client also calculates from startedAt
   calculateTimerState(timer: Timer & { started_at?: string | null }): Timer {
-    const now = Date.now()
-    let remainingSeconds = timer.remainingSeconds
-    let elapsedSeconds = timer.elapsedSeconds
-
-    // If timer is running, calculate real-time values
-    if (timer.status === 'running') {
-      let startedAt: number | null = null
-
-      // Handle both formats (timestamp number or ISO string)
-      if (timer.startedAt) {
-        startedAt = timer.startedAt
-      } else if (timer.started_at) {
-        startedAt = new Date(timer.started_at).getTime()
-      }
-
-      if (startedAt) {
-        const additionalElapsed = Math.floor((now - startedAt) / 1000)
-        elapsedSeconds = timer.elapsedSeconds + additionalElapsed
-        remainingSeconds = Math.max(0, timer.settings.duration - elapsedSeconds)
-      }
-    }
-
+    // Just convert started_at string to startedAt timestamp
+    // Return raw elapsed_seconds and remaining_seconds from database
+    // Client will calculate real-time values using startedAt + elapsedSeconds
     return {
       ...timer,
-      remainingSeconds,
-      elapsedSeconds,
       startedAt: timer.startedAt ?? (timer.started_at ? new Date(timer.started_at).getTime() : null)
     }
   }
