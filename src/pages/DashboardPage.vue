@@ -7,7 +7,6 @@ import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import SharePanel from '../components/SharePanel.vue'
 import { Play, Pause, Settings, MoreHorizontal, Plus, Minus, GripVertical, Link2, RotateCcw } from 'lucide-vue-next'
-import QRCodeVue3 from 'qrcode.vue'
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
@@ -27,13 +26,8 @@ const deleteConfirmTimerId = ref<string | null>(null)
 const draggedTimerId = ref<string | null>(null)
 const dragOverTimerId = ref<string | null>(null)
 
-// Share button state
+// Share button state - global toast at bottom center
 const showShareToast = ref(false)
-const shareToastTimerId = ref<string | null>(null)
-const showQrCode = ref(false)
-const qrCodeTimerId = ref<string | null>(null)
-const qrPosition = ref({ x: 0, y: 0 })
-let shareHoverTimeout: ReturnType<typeof setTimeout> | null = null
 
 const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFullscreen(document.documentElement)
 
@@ -174,41 +168,22 @@ function handleDragEnd() {
   dragOverTimerId.value = null
 }
 
-// Share button handlers
+// Share button handler - simple copy with global toast
 function handleShareClick(timerId: string, event: Event) {
   event.stopPropagation()
   const url = roomStore.getTimerShareUrl(timerId)
   if (!url) return
   navigator.clipboard.writeText(url)
-  shareToastTimerId.value = timerId
   showShareToast.value = true
   setTimeout(() => {
     showShareToast.value = false
-    shareToastTimerId.value = null
-  }, 2000)
+  }, 3000)
 }
 
-function handleShareMouseEnter(timerId: string, e: MouseEvent) {
-  shareHoverTimeout = setTimeout(() => {
-    qrCodeTimerId.value = timerId
-    qrPosition.value = { x: e.clientX, y: e.clientY }
-    showQrCode.value = true
-  }, 1000)
-}
-
-function handleShareMouseMove(e: MouseEvent) {
-  if (showQrCode.value) {
-    qrPosition.value = { x: e.clientX, y: e.clientY }
-  }
-}
-
-function handleShareMouseLeave() {
-  if (shareHoverTimeout) {
-    clearTimeout(shareHoverTimeout)
-    shareHoverTimeout = null
-  }
-  showQrCode.value = false
-  qrCodeTimerId.value = null
+// Calculate progress percentage for timer row
+function getTimerProgress(timer: { remainingSeconds: number; settings: { duration: number } }): number {
+  const elapsed = timer.settings.duration - timer.remainingSeconds
+  return Math.min(100, Math.max(0, (elapsed / timer.settings.duration) * 100))
 }
 
 function sendCustomMessage() {
@@ -352,41 +327,38 @@ const colorClass = (id: string) => {
             </div>
 
             <!-- Section 4: Time Markers with connecting lines -->
-            <div class="w-full" v-if="timerStore.selectedTimer" style="position: relative;">
-              <!-- Row 1: Start and End times -->
-              <div class="flex justify-between text-sm text-gray-500">
-                <span>00:00</span>
-                <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
-              </div>
-
-              <!-- Yellow threshold with vertical line -->
+            <div class="w-full" v-if="timerStore.selectedTimer" style="position: relative; margin-top: -4px;">
+              <!-- Yellow threshold marker - top row -->
               <div
                 class="flex flex-col items-center"
                 :style="{ position: 'absolute', top: '0', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
               >
-                <!-- Vertical line -->
-                <div class="w-px bg-amber-500" style="height: 28px; margin-top: -8px;"></div>
+                <!-- Vertical line touching progress bar -->
+                <div class="w-px bg-amber-500" style="height: 16px;"></div>
                 <!-- Time label -->
-                <span class="text-sm text-amber-500">
+                <span class="text-xs text-amber-500 mt-1">
                   {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.yellowThreshold) }}
                 </span>
               </div>
 
-              <!-- Red threshold with vertical line (lower) -->
+              <!-- Red threshold marker - bottom row (offset down) -->
               <div
                 class="flex flex-col items-center"
-                :style="{ position: 'absolute', top: '20px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
+                :style="{ position: 'absolute', top: '36px', left: `${((timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) / timerStore.selectedTimer.settings.duration) * 100}%`, transform: 'translateX(-50%)' }"
               >
-                <!-- Vertical line -->
-                <div class="w-px bg-red-500" style="height: 28px; margin-top: -28px;"></div>
+                <!-- Vertical line touching progress bar -->
+                <div class="w-px bg-red-500" style="height: 36px; margin-top: -36px;"></div>
                 <!-- Time label -->
-                <span class="text-sm text-red-500">
+                <span class="text-xs text-red-500 mt-1">
                   {{ formatDuration(timerStore.selectedTimer.settings.duration - timerStore.selectedTimer.settings.redThreshold) }}
                 </span>
               </div>
 
-              <!-- Spacer for the markers -->
-              <div style="height: 44px;"></div>
+              <!-- Row: Start and End times -->
+              <div class="flex justify-between text-xs text-gray-500" style="padding-top: 56px;">
+                <span>00:00</span>
+                <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
+              </div>
             </div>
 
             <!-- Section 5: Color Legend -->
@@ -408,7 +380,7 @@ const colorClass = (id: string) => {
           </div>
 
           <!-- Transport Controls -->
-          <div class="py-3 mt-8">
+          <div class="mt-auto pt-6">
             <div class="flex items-center justify-center gap-3" v-if="timerStore.selectedTimerId">
               <button
                 class="flex items-center justify-center gap-1 bg-[#2a2a2a] rounded-lg hover:bg-[#333] touch-manipulation active:scale-95 transition-colors cursor-pointer"
@@ -442,17 +414,17 @@ const colorClass = (id: string) => {
           </div>
 
           <!-- Connection Status -->
-          <div class="py-2 mt-2">
-            <div class="flex items-center gap-2 text-sm">
+          <div class="mt-6 pt-4 border-t border-[#2a2a2a]">
+            <div class="flex items-center justify-center gap-2 text-sm">
               <span class="text-gray-400">Connection:</span>
               <span
                 v-if="roomStore.viewerCount > 0"
-                class="ml-2 px-2 py-0.5 rounded text-black font-medium"
+                class="px-2 py-0.5 rounded text-black font-medium"
                 style="background-color: #22c55e;"
               >in progress</span>
               <span
                 v-else
-                class="ml-2 px-2 py-0.5 rounded text-black font-medium"
+                class="px-2 py-0.5 rounded text-black font-medium"
                 style="background-color: #eab308;"
               >waiting</span>
             </div>
@@ -480,7 +452,7 @@ const colorClass = (id: string) => {
             <div
               v-for="timer in timerStore.orderedTimerList"
               :key="timer.id"
-              class="flex items-center px-3 py-3 rounded-lg cursor-pointer transition-all duration-200"
+              class="relative flex items-center px-3 py-3 rounded-lg cursor-pointer transition-all duration-200 overflow-hidden"
               :class="[
                 timerStore.selectedTimerId === timer.id ? 'bg-blue-600' : 'bg-[#1a1a1a] hover:bg-[#252525]',
                 draggedTimerId === timer.id ? 'opacity-50 scale-[0.98]' : '',
@@ -494,13 +466,19 @@ const colorClass = (id: string) => {
               @dragleave="handleDragLeave"
               @drop="handleDrop(timer.id, $event)"
             >
+              <!-- Progress overlay for selected timer -->
+              <div
+                v-if="timerStore.selectedTimerId === timer.id && timer.status === 'running'"
+                class="absolute inset-0 bg-blue-500 transition-all duration-200 pointer-events-none"
+                :style="{ width: getTimerProgress(timer) + '%' }"
+              ></div>
               <!-- Drag Handle -->
-              <div class="p-1 mr-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-white transition-colors">
+              <div class="relative z-10 p-1 mr-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-white transition-colors">
                 <GripVertical class="w-4 h-4" />
               </div>
 
               <!-- Timer Name (Editable) -->
-              <div class="text-sm font-medium">
+              <div class="relative z-10 text-sm font-medium">
                 <input
                   v-if="editingTimerId === timer.id"
                   v-model="editingTimerName"
@@ -522,13 +500,13 @@ const colorClass = (id: string) => {
               </div>
 
               <!-- Spacer -->
-              <div class="flex-1" />
+              <div class="relative z-10 flex-1" />
 
               <!-- Duration -->
-              <div class="text-sm font-mono font-bold mr-4 text-gray-400">{{ formatDuration(timer.settings.duration) }}</div>
+              <div class="relative z-10 text-sm font-mono font-bold mr-4 text-gray-400">{{ formatDuration(timer.settings.duration) }}</div>
 
               <!-- Controls -->
-              <div class="flex items-center gap-1 relative">
+              <div class="relative z-10 flex items-center gap-1">
                 <button
                   class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click.stop="reset(timer.id)"
@@ -555,22 +533,10 @@ const colorClass = (id: string) => {
                 <button
                   class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click="handleShareClick(timer.id, $event)"
-                  @mouseenter="handleShareMouseEnter(timer.id, $event)"
-                  @mousemove="handleShareMouseMove"
-                  @mouseleave="handleShareMouseLeave"
                   title="Copy viewer link"
                 >
                   <Link2 class="w-4 h-4" />
                 </button>
-                <!-- Share Toast -->
-                <Transition name="toast">
-                  <div
-                    v-if="showShareToast && shareToastTimerId === timer.id"
-                    class="absolute -top-10 right-0 bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap z-50"
-                  >
-                    Link to stream copied
-                  </div>
-                </Transition>
                 <button
                   class="p-2 rounded hover:bg-white/10 min-h-10 min-w-10 touch-manipulation active:scale-95 flex items-center justify-center"
                   @click="showDeleteConfirm(timer.id, $event)"
@@ -654,15 +620,14 @@ const colorClass = (id: string) => {
       </div>
     </Teleport>
 
-    <!-- QR Code Popup -->
+    <!-- Global Toast - bottom center -->
     <Teleport to="body">
-      <Transition name="qr">
+      <Transition name="toast">
         <div
-          v-if="showQrCode && qrCodeTimerId"
-          class="fixed z-[9999] bg-white p-3 rounded-lg shadow-2xl"
-          :style="{ left: qrPosition.x + 16 + 'px', top: qrPosition.y - 80 + 'px' }"
+          v-if="showShareToast"
+          class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] bg-black/80 text-white text-sm font-medium px-6 py-3 rounded-xl shadow-lg"
         >
-          <QRCodeVue3 :value="roomStore.getTimerShareUrl(qrCodeTimerId) || ''" :size="120" level="M" />
+          Link copied
         </div>
       </Transition>
     </Teleport>
@@ -673,22 +638,11 @@ const colorClass = (id: string) => {
 /* Toast animation */
 .toast-enter-active,
 .toast-leave-active {
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 .toast-enter-from,
 .toast-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
-}
-
-/* QR code animation */
-.qr-enter-active,
-.qr-leave-active {
-  transition: all 0.15s ease;
-}
-.qr-enter-from,
-.qr-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
+  transform: translate(-50%, 16px);
 }
 </style>
