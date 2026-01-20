@@ -295,7 +295,7 @@ const colorClass = (id: string) => {
 
             <!-- Progress Bar with Time Labels -->
             <div class="w-full mt-4" v-if="timerStore.selectedTimer">
-              <div class="relative">
+              <div class="relative pb-8">
                 <ProgressBar
                   :total-seconds="timerStore.selectedTimer.settings.duration"
                   :remaining-seconds="timerStore.selectedTimer.remainingSeconds"
@@ -324,13 +324,13 @@ const colorClass = (id: string) => {
                 </div>
               </div>
               <!-- Start and End labels -->
-              <div class="flex justify-between mt-6 text-[10px] text-gray-500">
+              <div class="flex justify-between text-[10px] text-gray-500">
                 <span>00:00</span>
                 <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
               </div>
 
               <!-- Color Legend -->
-              <div class="flex justify-center gap-6 mt-8 text-xs">
+              <div class="flex justify-center gap-6 mt-4 text-xs">
                 <div class="flex items-center gap-2">
                   <div class="w-3 h-3 rounded-sm bg-emerald-500"></div>
                   <span class="text-gray-400">On time</span>
