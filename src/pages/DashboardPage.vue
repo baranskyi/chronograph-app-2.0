@@ -389,12 +389,12 @@ const colorClass = (id: string) => {
               <span class="text-gray-400">Connection:</span>
               <span
                 v-if="roomStore.viewerCount > 0"
-                class="px-2 py-0.5 rounded text-black font-medium"
+                class="ml-2 px-2 py-0.5 rounded text-black font-medium"
                 style="background-color: #22c55e;"
               >in progress</span>
               <span
                 v-else
-                class="px-2 py-0.5 rounded text-black font-medium"
+                class="ml-2 px-2 py-0.5 rounded text-black font-medium"
                 style="background-color: #eab308;"
               >waiting</span>
             </div>
