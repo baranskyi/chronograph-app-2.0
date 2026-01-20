@@ -42,8 +42,15 @@ CREATE POLICY "Anyone can view active rooms by code" ON rooms
 -- ============================================
 
 -- Пользователи могут управлять таймерами в своих комнатах
+-- ИЛИ в анонимных комнатах (user_id IS NULL)
 CREATE POLICY "Users can manage timers in own rooms" ON timers
-  FOR ALL USING (room_id IN (SELECT id FROM rooms WHERE user_id = auth.uid()));
+  FOR ALL USING (
+    room_id IN (
+      SELECT id FROM rooms
+      WHERE user_id = auth.uid()
+         OR user_id IS NULL
+    )
+  );
 
 -- Viewer доступ к таймерам активных комнат
 CREATE POLICY "Anyone can view timers in active rooms" ON timers
@@ -54,8 +61,15 @@ CREATE POLICY "Anyone can view timers in active rooms" ON timers
 -- ============================================
 
 -- Пользователи могут управлять сессиями в своих комнатах
+-- ИЛИ в анонимных комнатах (user_id IS NULL)
 CREATE POLICY "Users can manage sessions in own rooms" ON sessions
-  FOR ALL USING (room_id IN (SELECT id FROM rooms WHERE user_id = auth.uid()));
+  FOR ALL USING (
+    room_id IN (
+      SELECT id FROM rooms
+      WHERE user_id = auth.uid()
+         OR user_id IS NULL
+    )
+  );
 
 -- ============================================
 -- ПРИМЕЧАНИЕ: Сервер использует service role key,
