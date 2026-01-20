@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Users, Trash2, LogOut } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut } from 'lucide-vue-next'
 
 interface Room {
   id: string
