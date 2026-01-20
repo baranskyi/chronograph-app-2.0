@@ -1,5 +1,12 @@
 <script setup lang="ts">
-// App shell with router
+import { onMounted } from 'vue'
+import { useAuthStore } from './stores/authStore'
+
+const authStore = useAuthStore()
+
+onMounted(() => {
+  authStore.initialize()
+})
 </script>
 
 <template>
