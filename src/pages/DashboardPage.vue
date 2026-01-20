@@ -328,6 +328,22 @@ const colorClass = (id: string) => {
                 <span>00:00</span>
                 <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
               </div>
+
+              <!-- Color Legend -->
+              <div class="flex justify-center gap-6 mt-4 text-xs">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-sm bg-emerald-500"></div>
+                  <span class="text-gray-400">On time</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-sm bg-amber-500"></div>
+                  <span class="text-gray-400">Warning</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-sm bg-red-500"></div>
+                  <span class="text-gray-400">Wrap up</span>
+                </div>
+              </div>
             </div>
           </div>
 
