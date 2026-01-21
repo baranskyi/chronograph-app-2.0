@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
@@ -35,9 +35,36 @@ const editingRoomId = ref<string | null>(null)
 const editingName = ref('')
 const openMenuId = ref<string | null>(null)
 
+// Timer ticking interval
+let tickInterval: ReturnType<typeof setInterval> | null = null
+
+function startTicking() {
+  if (tickInterval) return
+  tickInterval = setInterval(() => {
+    rooms.value.forEach(room => {
+      if (room.active_timer && room.active_timer.status === 'running' && room.active_timer.remaining_seconds > 0) {
+        room.active_timer.remaining_seconds--
+      }
+    })
+  }, 1000)
+}
+
+function stopTicking() {
+  if (tickInterval) {
+    clearInterval(tickInterval)
+    tickInterval = null
+  }
+}
+
 onMounted(async () => {
   await loadRooms()
+  startTicking()
   document.addEventListener('click', closeMenu)
+})
+
+onUnmounted(() => {
+  stopTicking()
+  document.removeEventListener('click', closeMenu)
 })
 
 function closeMenu() {
