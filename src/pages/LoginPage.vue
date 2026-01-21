@@ -19,13 +19,14 @@ const isHovering = ref(false)
 // Canvas animation
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationId: number | null = null
-let ctx: CanvasRenderingContext2D | null = null
 
-// Wave parameters - 5x slower (slow motion effect)
-const WAVE_FREQUENCY = 0.6 // 5x slower (was 3 Hz)
-const GRID_COLS = 300 // Extended grid for full screen coverage
-const GRID_ROWS = 160
+// Wave animation constants - EXACT SAME AS MY-ROOMS
+const WAVE_FREQUENCY = 0.6
+const WAVE_AMPLITUDE = 0.4
+const PERSPECTIVE_FACTOR = 0.7
 const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
+const GRID_COLS = 450
+const GRID_ROWS = 280
 
 interface Distortion {
   x: number
@@ -35,151 +36,121 @@ interface Distortion {
   time: number
 }
 
-let distortions: Distortion[] = []
-let lastDistortionTime = 0
-
 function initCanvas() {
-  if (!canvasRef.value) return
-  ctx = canvasRef.value.getContext('2d')
-  resizeCanvas()
+  const canvas = canvasRef.value
+  if (!canvas) return
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
 
   // Check for reduced motion preference
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!prefersReducedMotion) {
-    animate(0)
-  } else {
-    // Draw static frame
-    drawFrame(0)
-  }
-}
-
-function resizeCanvas() {
-  if (!canvasRef.value) return
-  canvasRef.value.width = window.innerWidth
-  canvasRef.value.height = window.innerHeight
-}
-
-function drawFrame(time: number) {
-  if (!ctx || !canvasRef.value) return
-
-  const width = canvasRef.value.width
-  const height = canvasRef.value.height
-
-  // Clear canvas
-  ctx.fillStyle = '#080808'
-  ctx.fillRect(0, 0, width, height)
-
-  const cellHeight = height / GRID_ROWS
-
-  // Time in seconds
-  const t = time / 1000
-
-  // Maybe add new distortion - 5x slower timing
-  if (time - lastDistortionTime > 10000 + Math.random() * 15000) {
-    distortions.push({
-      x: Math.random() * GRID_COLS,
-      y: Math.random() * GRID_ROWS,
-      intensity: 0.8 + Math.random() * 0.4,
-      decay: 0.994, // 5x slower decay
-      time: time
-    })
-    lastDistortionTime = time
+  if (prefersReducedMotion) {
+    canvas.style.display = 'none'
+    return
   }
 
-  // Update and filter distortions
-  distortions = distortions.filter(d => {
-    d.intensity *= d.decay
-    return d.intensity > 0.01
-  })
+  let width = window.innerWidth
+  let height = window.innerHeight
 
-  // Draw dots with perspective and waves - FULL SCREEN, SLOW MOTION
-  // Extended bounds to cover entire viewport and beyond
-  const extendX = 0.3 // 30% extension on each side
-  const extendY = 0.2 // 20% extension top/bottom
+  const resizeCanvas = () => {
+    width = window.innerWidth
+    height = window.innerHeight
+    canvas.width = width
+    canvas.height = height
+  }
 
-  for (let row = 0; row < GRID_ROWS; row++) {
-    for (let col = 0; col < GRID_COLS; col++) {
-      // Normalize positions with extension beyond viewport
-      const nx = -extendX + (col / GRID_COLS) * (1 + extendX * 2)
-      const ny = -extendY + (row / GRID_ROWS) * (1 + extendY * 2)
+  resizeCanvas()
+  window.addEventListener('resize', resizeCanvas)
 
-      // Perspective transformation - extended to fill screen
-      const perspectiveScale = 0.2 + Math.max(0, ny + extendY) * 0.8
-      const perspectiveY = height * (-0.1) + Math.pow(Math.max(0, ny + extendY), 1.5) * height * 1.2
-      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale * 1.4
+  const distortions: Distortion[] = []
+  let lastDistortionTime = 0
 
-      // Wave calculation - 5x slower
-      const wavePhase = nx * 8 + ny * 4
-      const wave1 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.3 + wavePhase) * 0.5
-      const wave2 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.2 + wavePhase * 0.7) * 0.3
-      const wave3 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.15 + wavePhase * 1.3) * 0.2
-      const waveHeight = (wave1 + wave2 + wave3) * cellHeight * perspectiveScale * 2
+  function animate(time: number) {
+    ctx!.clearRect(0, 0, width, height)
 
-      // Apply distortions - 5x slower propagation
-      let distortionOffset = 0
-      let distortionGlow = 0
-      for (const d of distortions) {
-        const dx = col - d.x
-        const dy = row - d.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        const distEffect = Math.exp(-dist * dist / 20) * d.intensity
+    // Slower distortion spawning
+    if (time - lastDistortionTime > 10000 + Math.random() * 15000) {
+      distortions.push({
+        x: Math.random() * GRID_COLS,
+        y: Math.random() * GRID_ROWS,
+        intensity: 0.8 + Math.random() * 0.4,
+        decay: 0.994,
+        time: time
+      })
+      lastDistortionTime = time
+    }
 
-        // Electric shock wave effect - 5x slower (0.004 instead of 0.02)
-        const shockWave = Math.sin(dist * 2 - (time - d.time) * 0.004) * distEffect * 15
-        distortionOffset += shockWave
-        distortionGlow += distEffect
-      }
-
-      // Final position
-      const x = perspectiveX
-      const y = perspectiveY + waveHeight + distortionOffset
-
-      // Skip if outside viewport with margin
-      if (x < -50 || x > width + 50 || y < -50 || y > height + 50) continue
-
-      // Depth of field effect
-      const depthFactor = Math.max(0, Math.min(1, (ny + extendY) / (1 + extendY)))
-      const focusZone = 0.5
-      const depthBlur = Math.abs(depthFactor - focusZone) * 2
-
-      // Base opacity with depth fade
-      const farFade = Math.pow(depthFactor, 0.5)
-      const nearFade = 1 - Math.pow(Math.max(0, depthFactor - 0.85) * 6.67, 2)
-      const baseOpacity = farFade * nearFade * (0.15 + wave1 * 0.05)
-
-      // Add distortion glow
-      const finalOpacity = Math.min(1, baseOpacity + distortionGlow * 0.5)
-
-      // Dot size - small dots
-      const baseSize = 0.5 + perspectiveScale * 1.25
-      const waveSize = 1 + (wave1 + 1) * 0.2
-      const distortionSize = 1 + distortionGlow * 2
-      const size = baseSize * waveSize * distortionSize * (1 - depthBlur * 0.3)
-
-      // Color with distortion highlight
-      const r = DOT_COLOR.r
-      const g = DOT_COLOR.g + distortionGlow * 100
-      const b = DOT_COLOR.b + distortionGlow * 150
-
-      // Draw dot
-      ctx.beginPath()
-      ctx.arc(x, y, Math.max(0.25, size), 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
-      ctx.fill()
-
-      // Add glow for distorted points
-      if (distortionGlow > 0.1) {
-        ctx.beginPath()
-        ctx.arc(x, y, size * 3, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${r}, ${g + 50}, ${b + 100}, ${distortionGlow * 0.15})`
-        ctx.fill()
+    // Update and filter distortions
+    for (let i = distortions.length - 1; i >= 0; i--) {
+      const d = distortions[i]
+      if (d) {
+        d.intensity *= d.decay
+        if (d.intensity < 0.01) {
+          distortions.splice(i, 1)
+        }
       }
     }
-  }
-}
 
-function animate(time: number) {
-  drawFrame(time)
+    // EXPANDED coverage - extend far beyond viewport (same as my-rooms, but starts from top)
+    const extendX = 0.8
+    const extendYTop = 0.1
+    const extendYBottom = 0.8
+    const startX = -width * extendX
+    const endX = width * (1 + extendX)
+    const startY = -height * extendYTop // Start from top
+    const endY = height * (1 + extendYBottom)
+    const totalWidth = endX - startX
+    const totalHeight = endY - startY
+
+    // Draw dots
+    for (let row = 0; row < GRID_ROWS; row++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        const baseX = startX + (col / GRID_COLS) * totalWidth
+        const baseY = startY + (row / GRID_ROWS) * totalHeight
+
+        // Calculate wave height
+        const wavePhase = (col / GRID_COLS) * Math.PI * 4 + (row / GRID_ROWS) * Math.PI * 2
+        let waveHeight = Math.sin(wavePhase + time * 0.001 * WAVE_FREQUENCY) * WAVE_AMPLITUDE
+
+        // Apply distortions
+        for (const d of distortions) {
+          const dx = col - d.x
+          const dy = row - d.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const maxDist = 40
+          if (dist < maxDist) {
+            const factor = (1 - dist / maxDist) * d.intensity
+            waveHeight += Math.sin(dist * 0.3 - time * 0.002) * factor * 0.5
+          }
+        }
+
+        // Perspective transformation
+        const depth = row / GRID_ROWS
+        const perspectiveScale = 0.3 + depth * PERSPECTIVE_FACTOR
+        const centerX = width / 2
+        const screenX = centerX + (baseX - centerX) * perspectiveScale
+        const screenY = baseY * perspectiveScale + height * (1 - perspectiveScale) * 0.5 + waveHeight * 30 * perspectiveScale
+
+        // Skip if outside viewport (with margin)
+        if (screenX < -20 || screenX > width + 20 || screenY < -20 || screenY > height + 20) continue
+
+        // Depth-based properties
+        const baseOpacity = 0.15 + depth * 0.5
+        const heightBonus = (waveHeight + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.3
+        const opacity = Math.min(0.9, baseOpacity + heightBonus)
+        const dotSize = (0.8 + depth * 1.5) * 0.5
+
+        ctx!.beginPath()
+        ctx!.arc(screenX, screenY, dotSize, 0, Math.PI * 2)
+        ctx!.fillStyle = `rgba(${DOT_COLOR.r}, ${DOT_COLOR.g}, ${DOT_COLOR.b}, ${opacity})`
+        ctx!.fill()
+      }
+    }
+
+    animationId = requestAnimationFrame(animate)
+  }
+
   animationId = requestAnimationFrame(animate)
 }
 
@@ -213,20 +184,18 @@ function goToRegister() {
 
 onMounted(() => {
   initCanvas()
-  window.addEventListener('resize', resizeCanvas)
 })
 
 onUnmounted(() => {
   if (animationId) {
     cancelAnimationFrame(animationId)
   }
-  window.removeEventListener('resize', resizeCanvas)
 })
 </script>
 
 <template>
   <div class="login-page">
-    <!-- Animated dot wave background -->
+    <!-- Animated dot wave background - SAME AS MY-ROOMS -->
     <canvas ref="canvasRef" class="wave-canvas"></canvas>
 
     <!-- Gradient overlay for depth -->
@@ -376,11 +345,11 @@ onUnmounted(() => {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(8, 8, 8, 0.7) 0%,
-    rgba(8, 8, 8, 0.3) 30%,
-    rgba(8, 8, 8, 0.1) 50%,
-    rgba(8, 8, 8, 0.5) 80%,
-    rgba(8, 8, 8, 0.9) 100%
+    rgba(8, 8, 8, 0.5) 0%,
+    rgba(8, 8, 8, 0.2) 30%,
+    rgba(8, 8, 8, 0) 50%,
+    rgba(8, 8, 8, 0.3) 80%,
+    rgba(8, 8, 8, 0.7) 100%
   );
   pointer-events: none;
 }
