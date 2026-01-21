@@ -514,23 +514,24 @@ function hasRunningTimer(room: Room): boolean {
   }
 }
 
-/* Logo pulse - subtle red circle */
+/* Logo pulse - bright red circle */
 .logo-pulse {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background-color: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
   animation: logo-pulse 3s ease-in-out infinite;
 }
 
 @keyframes logo-pulse {
   0%, 100% {
-    opacity: 0.8;
+    opacity: 1;
     transform: scale(1);
   }
   50% {
-    opacity: 0.5;
-    transform: scale(0.9);
+    opacity: 0.7;
+    transform: scale(0.95);
   }
 }
 </style>
