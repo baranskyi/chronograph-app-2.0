@@ -652,7 +652,7 @@ const colorClass = (id: string) => {
         <!-- CENTER: Timers Panel -->
         <div class="flex-1 flex flex-col py-4" style="padding-left: 24px; padding-right: 24px;">
           <!-- Timers Header - with double spacing from header, aligned with left panel timer name -->
-          <div class="flex items-center gap-4 mb-8" style="margin-top: 24px;">
+          <div class="flex items-center gap-4 mb-16" style="margin-top: 24px;">
             <span class="font-semibold text-lg leading-none">Timers</span>
             <button
               class="glass-button-red flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
