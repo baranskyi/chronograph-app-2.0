@@ -71,7 +71,7 @@ function goToLogin() {
           <span class="logo-dot"></span>
           <h1 class="logo-text">Chronograph <span class="logo-accent">Pro</span></h1>
         </div>
-        <p class="logo-subtitle">Professional timer management for events</p>
+        <p class="logo-subtitle">All eyes on you when you're in time</p>
       </div>
 
       <!-- Register Form with Glow Effect -->
