@@ -163,10 +163,10 @@ function handleKeydown(e: KeyboardEvent) {
       <!-- Branding - always visible, larger in fullscreen -->
       <div
         class="fixed z-10 flex items-center"
-        :class="isFullscreen ? 'top-6 left-6 gap-3' : 'top-4 left-4 gap-2'"
+        :class="isFullscreen ? 'top-8 left-8 gap-4' : 'top-4 left-4 gap-2'"
       >
         <span class="logo-pulse" :class="isFullscreen ? 'logo-pulse-large' : ''"></span>
-        <span class="font-bold text-white" :class="isFullscreen ? 'text-3xl' : 'text-xl'">Chronograph <span class="text-red-500">Pro</span></span>
+        <span class="font-bold text-white" :class="isFullscreen ? 'text-5xl' : 'text-xl'">Chronograph <span class="text-red-500">Pro</span></span>
       </div>
 
       <!-- No timer to display -->
@@ -358,9 +358,9 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 .logo-pulse-large {
-  width: 14px;
-  height: 14px;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.8);
 }
 
 @keyframes logo-pulse {
