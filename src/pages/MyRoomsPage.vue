@@ -38,6 +38,27 @@ const editingRoomId = ref<string | null>(null)
 const editingName = ref('')
 const openMenuId = ref<string | null>(null)
 
+// Glow effect state for room cards
+const hoveredRoomId = ref<string | null>(null)
+const roomGlowPos = ref<{ [key: string]: { x: number; y: number } }>({})
+
+function handleRoomMouseMove(roomId: string, e: MouseEvent) {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  roomGlowPos.value[roomId] = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  }
+}
+
+function handleRoomMouseEnter(roomId: string) {
+  hoveredRoomId.value = roomId
+}
+
+function handleRoomMouseLeave() {
+  hoveredRoomId.value = null
+}
+
 // Canvas animation refs
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationId: number | null = null
@@ -626,8 +647,20 @@ function getDropdownStyle(roomId: string) {
               :key="room.id"
               class="glass-card-room group"
               :class="{ 'glass-card-room-active': hasRunningTimer(room) }"
+              @mousemove="handleRoomMouseMove(room.id, $event)"
+              @mouseenter="handleRoomMouseEnter(room.id)"
+              @mouseleave="handleRoomMouseLeave"
             >
-              <div class="flex items-start" style="padding: 24px; gap: 24px;">
+              <!-- Glow effect -->
+              <div
+                class="room-glow-effect"
+                :class="{ active: hoveredRoomId === room.id }"
+                :style="{
+                  '--glow-x': (roomGlowPos[room.id]?.x || 0) + 'px',
+                  '--glow-y': (roomGlowPos[room.id]?.y || 0) + 'px'
+                }"
+              ></div>
+              <div class="flex items-start relative z-10" style="padding: 24px; gap: 24px;">
                 <!-- LEFT: Room Info -->
                 <div style="width: 180px; flex-shrink: 0;">
                   <!-- LIVE indicator -->
@@ -809,6 +842,8 @@ function getDropdownStyle(roomId: string) {
 }
 
 .glass-card-room {
+  position: relative;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -829,6 +864,25 @@ function getDropdownStyle(roomId: string) {
 
 .glass-card-room-active:hover {
   border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Room card glow effect */
+.room-glow-effect {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  background: radial-gradient(
+    500px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(239, 68, 68, 0.15),
+    transparent 40%
+  );
+  z-index: 1;
+}
+
+.room-glow-effect.active {
+  opacity: 1;
 }
 
 /* Timer bars with glass effect - CLICKABLE */
