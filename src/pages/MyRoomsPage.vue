@@ -5,6 +5,9 @@ import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
 import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3 } from 'lucide-vue-next'
 
+declare const __APP_VERSION__: string
+const APP_VERSION = __APP_VERSION__
+
 interface Timer {
   id: string
   name: string
@@ -281,9 +284,9 @@ function hasRunningTimer(room: Room): boolean {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0a0a0f] text-white">
+  <div class="h-screen bg-[#0a0a0f] text-white flex flex-col overflow-hidden">
     <!-- Header -->
-    <header class="border-b border-[#2a2a2a] bg-[#0f0f0f]">
+    <header class="flex-shrink-0 border-b border-[#2a2a2a] bg-[#0f0f0f]">
       <div class="max-w-6xl mx-auto" style="padding: 16px 24px;">
         <div class="flex items-center justify-between">
           <h1 class="text-xl font-bold flex items-center gap-2">
@@ -306,7 +309,8 @@ function hasRunningTimer(room: Room): boolean {
     </header>
 
     <!-- Main -->
-    <main class="max-w-6xl mx-auto" style="padding: 32px 24px;">
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-6xl mx-auto" style="padding: 32px 24px;">
       <!-- Title Row -->
       <div class="flex items-center justify-between" style="margin-bottom: 32px;">
         <div>
@@ -472,7 +476,15 @@ function hasRunningTimer(room: Room): boolean {
           </div>
         </div>
       </div>
+      </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="h-12 flex-shrink-0 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4">
+      <span class="text-xs text-gray-500 leading-none">
+        chronograph.pro · v{{ APP_VERSION }}
+      </span>
+    </footer>
   </div>
 </template>
 
