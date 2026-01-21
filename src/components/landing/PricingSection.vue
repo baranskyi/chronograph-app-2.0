@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { Check, X } from 'lucide-vue-next'
+import { Check, Sparkles } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
-import { Button } from '@/components/ui/button'
 
 const plans = [
   {
@@ -10,13 +9,11 @@ const plans = [
     period: 'forever',
     description: 'Perfect for getting started',
     features: [
-      { text: '1 room', included: true },
-      { text: '3 timers per room', included: true },
-      { text: 'All timer types', included: true },
-      { text: 'QR code sharing', included: true },
-      { text: 'Real-time sync', included: true },
-      { text: 'Custom branding', included: false },
-      { text: 'Priority support', included: false }
+      '1 room',
+      '3 timers per room',
+      'All timer types',
+      'QR code sharing',
+      'Real-time sync'
     ],
     cta: 'Get Started',
     ctaLink: '/register',
@@ -28,13 +25,13 @@ const plans = [
     period: '/month',
     description: 'For professional coaches',
     features: [
-      { text: 'Unlimited rooms', included: true },
-      { text: 'Unlimited timers', included: true },
-      { text: 'All timer types', included: true },
-      { text: 'QR code sharing', included: true },
-      { text: 'Real-time sync', included: true },
-      { text: 'Custom branding', included: true },
-      { text: 'Priority support', included: true }
+      'Unlimited rooms',
+      'Unlimited timers',
+      'All timer types',
+      'QR code sharing',
+      'Real-time sync',
+      'Custom branding',
+      'Priority support'
     ],
     cta: 'Coming Soon',
     ctaLink: null,
@@ -44,81 +41,96 @@ const plans = [
 </script>
 
 <template>
-  <section id="pricing" class="py-20 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
+  <section id="pricing" class="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <!-- Background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent" />
+
+    <div class="relative max-w-7xl mx-auto">
       <!-- Section Header -->
       <div class="text-center max-w-2xl mx-auto mb-16">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4">
-          Simple, transparent pricing
+        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+          <span class="text-white">Simple</span>
+          <span class="text-gray-400"> pricing</span>
         </h2>
-        <p class="text-muted-foreground text-lg">
-          Start free and upgrade when you need more.
+        <p class="text-gray-400 text-lg">
+          Start free. Upgrade when you need more.
         </p>
       </div>
 
       <!-- Pricing Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         <div
           v-for="plan in plans"
           :key="plan.name"
-          class="relative rounded-xl border p-8"
-          :class="plan.highlighted
-            ? 'border-primary bg-primary/5'
-            : 'border-border bg-card/50'"
+          class="relative group"
         >
-          <!-- Popular badge -->
+          <!-- Glow effect for highlighted plan -->
           <div
             v-if="plan.highlighted"
-            class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full"
+            class="absolute -inset-px bg-gradient-to-r from-blue-500 to-purple-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"
+          />
+
+          <!-- Card -->
+          <div
+            class="relative h-full p-8 rounded-3xl border transition-all duration-300"
+            :class="plan.highlighted
+              ? 'bg-white/[0.03] border-white/10 hover:border-white/20'
+              : 'bg-white/[0.02] border-white/5 hover:border-white/10'"
           >
-            Coming Soon
-          </div>
-
-          <div class="text-center mb-8">
-            <h3 class="text-xl font-semibold mb-2">{{ plan.name }}</h3>
-            <div class="flex items-baseline justify-center gap-1">
-              <span class="text-4xl font-bold">{{ plan.price }}</span>
-              <span class="text-muted-foreground">{{ plan.period }}</span>
-            </div>
-            <p class="mt-2 text-sm text-muted-foreground">{{ plan.description }}</p>
-          </div>
-
-          <ul class="space-y-3 mb-8">
-            <li
-              v-for="feature in plan.features"
-              :key="feature.text"
-              class="flex items-center gap-3"
+            <!-- Popular badge -->
+            <div
+              v-if="plan.highlighted"
+              class="absolute -top-4 left-1/2 -translate-x-1/2"
             >
-              <Check
-                v-if="feature.included"
-                class="w-5 h-5 text-green-500 flex-shrink-0"
-              />
-              <X
-                v-else
-                class="w-5 h-5 text-muted-foreground/50 flex-shrink-0"
-              />
-              <span :class="feature.included ? 'text-foreground' : 'text-muted-foreground/50'">
-                {{ feature.text }}
-              </span>
-            </li>
-          </ul>
+              <div class="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white text-xs font-medium">
+                <Sparkles class="w-3.5 h-3.5" />
+                Coming Soon
+              </div>
+            </div>
 
-          <Button
-            v-if="plan.ctaLink"
-            :variant="plan.highlighted ? 'default' : 'outline'"
-            class="w-full"
-            as-child
-          >
-            <RouterLink :to="plan.ctaLink">{{ plan.cta }}</RouterLink>
-          </Button>
-          <Button
-            v-else
-            :variant="plan.highlighted ? 'default' : 'outline'"
-            class="w-full"
-            disabled
-          >
-            {{ plan.cta }}
-          </Button>
+            <!-- Header -->
+            <div class="text-center mb-8 pt-4">
+              <h3 class="text-xl font-semibold text-white mb-2">{{ plan.name }}</h3>
+              <div class="flex items-baseline justify-center gap-1 mb-2">
+                <span class="text-5xl font-bold text-white">{{ plan.price }}</span>
+                <span class="text-gray-500">{{ plan.period }}</span>
+              </div>
+              <p class="text-sm text-gray-500">{{ plan.description }}</p>
+            </div>
+
+            <!-- Features -->
+            <ul class="space-y-4 mb-8">
+              <li
+                v-for="feature in plan.features"
+                :key="feature"
+                class="flex items-center gap-3"
+              >
+                <div class="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <Check class="w-3 h-3 text-green-400" />
+                </div>
+                <span class="text-gray-300 text-sm">{{ feature }}</span>
+              </li>
+            </ul>
+
+            <!-- CTA -->
+            <RouterLink
+              v-if="plan.ctaLink"
+              :to="plan.ctaLink"
+              class="block w-full py-4 text-center font-medium rounded-xl transition-all duration-300 cursor-pointer"
+              :class="plan.highlighted
+                ? 'bg-blue-600 hover:bg-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25'
+                : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20'"
+            >
+              {{ plan.cta }}
+            </RouterLink>
+            <button
+              v-else
+              disabled
+              class="block w-full py-4 text-center font-medium rounded-xl bg-white/5 text-gray-500 border border-white/5 cursor-not-allowed"
+            >
+              {{ plan.cta }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

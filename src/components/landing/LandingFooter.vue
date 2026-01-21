@@ -20,16 +20,24 @@ const links = {
 </script>
 
 <template>
-  <footer class="border-t border-border bg-card/30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+  <footer class="relative border-t border-white/5">
+    <!-- Gradient top border effect -->
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
         <!-- Brand -->
         <div class="md:col-span-2">
-          <RouterLink to="/" class="flex items-center gap-2 text-xl font-bold mb-4">
-            <Timer class="w-6 h-6 text-primary" />
-            <span>Chronograph.Pro</span>
+          <RouterLink to="/" class="flex items-center gap-3 mb-6 cursor-pointer group">
+            <div class="relative">
+              <div class="absolute inset-0 bg-blue-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Timer class="relative w-7 h-7 text-blue-400" />
+            </div>
+            <span class="text-xl font-semibold">
+              <span class="text-white">Chrono</span><span class="text-blue-400">graph</span>
+            </span>
           </RouterLink>
-          <p class="text-muted-foreground max-w-sm">
+          <p class="text-gray-500 max-w-sm leading-relaxed">
             Professional timer application for coaches, trainers, and fitness professionals.
             Create, share, and control timers remotely.
           </p>
@@ -37,12 +45,12 @@ const links = {
 
         <!-- Product Links -->
         <div>
-          <h4 class="font-semibold mb-4">Product</h4>
-          <ul class="space-y-2">
+          <h4 class="text-sm font-semibold text-white uppercase tracking-wider mb-6">Product</h4>
+          <ul class="space-y-4">
             <li v-for="link in links.product" :key="link.label">
               <a
                 :href="link.href"
-                class="text-muted-foreground hover:text-foreground transition-colors"
+                class="text-gray-500 hover:text-white transition-colors cursor-pointer"
               >
                 {{ link.label }}
               </a>
@@ -52,12 +60,12 @@ const links = {
 
         <!-- Account Links -->
         <div>
-          <h4 class="font-semibold mb-4">Account</h4>
-          <ul class="space-y-2">
+          <h4 class="text-sm font-semibold text-white uppercase tracking-wider mb-6">Account</h4>
+          <ul class="space-y-4">
             <li v-for="link in links.account" :key="link.label">
               <RouterLink
                 :to="link.to"
-                class="text-muted-foreground hover:text-foreground transition-colors"
+                class="text-gray-500 hover:text-white transition-colors cursor-pointer"
               >
                 {{ link.label }}
               </RouterLink>
@@ -67,11 +75,11 @@ const links = {
       </div>
 
       <!-- Bottom bar -->
-      <div class="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-        <p class="text-sm text-muted-foreground">
+      <div class="mt-16 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p class="text-sm text-gray-600">
           &copy; {{ currentYear }} Chronograph.Pro. All rights reserved.
         </p>
-        <p class="text-sm text-muted-foreground">
+        <p class="text-sm text-gray-600">
           Made for coaches, by coaches.
         </p>
       </div>
