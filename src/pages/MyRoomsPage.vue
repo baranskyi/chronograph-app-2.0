@@ -48,7 +48,7 @@ async function loadRooms() {
         name,
         created_at,
         last_used_at,
-        timers(count)
+        timers!timers_room_id_fkey(count)
       `)
       .eq('user_id', authStore.userId)
       .eq('is_active', true)
