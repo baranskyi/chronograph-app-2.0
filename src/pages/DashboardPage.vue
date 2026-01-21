@@ -283,7 +283,7 @@ const colorClass = (id: string) => {
     <!-- Main Dashboard -->
     <template v-else>
       <!-- Top Header -->
-      <header class="h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center gap-4" style="padding: 0 16px;">
+      <header class="h-14 bg-[#0f0f0f] border-b border-[#2a2a2a] flex items-center gap-4" style="padding: 0 24px;">
         <button
           class="p-2 bg-[#2a2a2a] rounded hover:bg-[#333] transition-colors"
           @click="router.push('/my-rooms')"
@@ -291,8 +291,13 @@ const colorClass = (id: string) => {
         >
           <ArrowLeft class="w-4 h-4" />
         </button>
+        <h1 class="text-xl font-bold flex items-center gap-2">
+          <span class="logo-pulse"></span>
+          <span>Chronograph <span class="text-red-500">Pro</span></span>
+        </h1>
+        <div class="text-gray-500 text-sm">|</div>
         <div class="flex flex-col">
-          <div class="font-semibold text-lg leading-tight">{{ roomStore.roomName || 'Chronograph' }}</div>
+          <div class="font-medium text-sm leading-tight">{{ roomStore.roomName || 'Room' }}</div>
           <div class="text-xs text-gray-500 font-mono">{{ roomStore.roomId }}</div>
         </div>
         <div class="flex-1" />
@@ -677,6 +682,26 @@ const colorClass = (id: string) => {
   50% {
     opacity: 0.7;
     box-shadow: 0 0 16px rgba(220, 38, 38, 0.9);
+  }
+}
+
+/* Logo pulse - subtle red circle */
+.logo-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
   }
 }
 </style>

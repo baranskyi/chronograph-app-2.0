@@ -286,7 +286,10 @@ function hasRunningTimer(room: Room): boolean {
     <header class="border-b border-[#2a2a2a] bg-[#0f0f0f]">
       <div class="max-w-6xl mx-auto" style="padding: 16px 24px;">
         <div class="flex items-center justify-between">
-          <h1 class="text-xl font-bold">Chronograph</h1>
+          <h1 class="text-xl font-bold flex items-center gap-2">
+            <span class="logo-pulse"></span>
+            <span>Chronograph <span class="text-red-500">Pro</span></span>
+          </h1>
           <div class="flex items-center gap-4">
             <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
             <button
@@ -508,6 +511,26 @@ function hasRunningTimer(room: Room): boolean {
   50% {
     opacity: 0.7;
     box-shadow: 0 0 16px rgba(220, 38, 38, 0.9);
+  }
+}
+
+/* Logo pulse - subtle red circle */
+.logo-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.9);
   }
 }
 </style>
