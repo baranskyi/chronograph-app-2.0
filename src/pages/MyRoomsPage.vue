@@ -120,11 +120,12 @@ function initCanvas() {
 
     // EXPANDED coverage - extend far beyond viewport
     const extendX = 0.8 // 80% extension on each side
-    const extendY = 0.6 // 60% extension top/bottom (for horizon effect)
+    const extendYTop = 0.05 // Small extension at top - ocean starts just below header (~60px)
+    const extendYBottom = 0.8 // Large extension at bottom for horizon effect
     const startX = -width * extendX
     const endX = width * (1 + extendX)
-    const startY = -height * extendY
-    const endY = height * (1 + extendY)
+    const startY = 60 - height * extendYTop // Start at header height (60px)
+    const endY = height * (1 + extendYBottom)
     const totalWidth = endX - startX
     const totalHeight = endY - startY
 
@@ -798,17 +799,17 @@ function getDropdownStyle(roomId: string) {
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* MUTED Glass buttons - subdued colors */
+/* Glass buttons - balanced brightness */
 .glass-button-muted {
-  background: rgba(180, 80, 80, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  background: rgba(210, 70, 70, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .glass-button-muted:hover {
-  background: rgba(200, 90, 90, 0.5);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  background: rgba(230, 80, 80, 0.7);
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.3);
   transform: translateY(-1px);
 }
 
@@ -828,14 +829,14 @@ function getDropdownStyle(roomId: string) {
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Glass dropdown menu - FIXED glassmorphism, high z-index */
+/* Glass dropdown menu - true glassmorphism, high z-index */
 .glass-dropdown {
-  background: rgba(20, 15, 20, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(40, 30, 45, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(239, 68, 68, 0.08);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(239, 68, 68, 0.06);
   padding: 6px;
   width: 160px;
   z-index: 99999 !important;
