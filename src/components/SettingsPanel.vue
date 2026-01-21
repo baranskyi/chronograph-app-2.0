@@ -312,7 +312,7 @@ function handleBackdropClick(e: MouseEvent) {
                 <div class="threshold-row">
                   <div class="threshold-label">
                     <div class="threshold-dot yellow"></div>
-                    <span>Yellow</span>
+                    <span>Warning time left</span>
                   </div>
                   <div class="threshold-controls">
                     <div class="mini-spinner">
@@ -333,7 +333,7 @@ function handleBackdropClick(e: MouseEvent) {
                 <div class="threshold-row">
                   <div class="threshold-label">
                     <div class="threshold-dot red"></div>
-                    <span>Red</span>
+                    <span>Wrap-up time left</span>
                   </div>
                   <div class="threshold-controls">
                     <div class="mini-spinner">
