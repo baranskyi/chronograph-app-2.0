@@ -365,6 +365,10 @@ function hasRunningTimer(room: Room): boolean {
           <div class="flex items-start" style="padding: 20px 24px; gap: 24px;">
             <!-- LEFT: Room Info -->
             <div style="width: 160px; flex-shrink: 0;">
+              <!-- LIVE indicator -->
+              <div v-if="hasRunningTimer(room)" class="mb-2">
+                <span class="live-badge">LIVE</span>
+              </div>
               <input
                 v-if="editingRoomId === room.id"
                 v-model="editingName"
@@ -481,5 +485,29 @@ function hasRunningTimer(room: Room): boolean {
 
 .room-card-inactive:hover {
   border-color: #3a3a3a;
+}
+
+/* LIVE badge with smooth pulse animation */
+.live-badge {
+  display: inline-block;
+  background-color: #dc2626;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 16px rgba(220, 38, 38, 0.9);
+  }
 }
 </style>
