@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3 } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, Play, Pause } from 'lucide-vue-next'
 
 declare const __APP_VERSION__: string
 const APP_VERSION = __APP_VERSION__
@@ -38,8 +38,144 @@ const editingRoomId = ref<string | null>(null)
 const editingName = ref('')
 const openMenuId = ref<string | null>(null)
 
+// Canvas animation refs
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+let animationId: number | null = null
+
 // Timer ticking interval
 let tickInterval: ReturnType<typeof setInterval> | null = null
+
+// Wave animation constants (matching Login/Register)
+const WAVE_FREQUENCY = 0.6
+const WAVE_AMPLITUDE = 0.4
+const PERSPECTIVE_FACTOR = 0.7
+const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
+const GRID_COLS = 300
+const GRID_ROWS = 160
+
+interface Distortion {
+  x: number
+  y: number
+  intensity: number
+  decay: number
+  time: number
+}
+
+function initCanvas() {
+  const canvas = canvasRef.value
+  if (!canvas) return
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (prefersReducedMotion) {
+    canvas.style.display = 'none'
+    return
+  }
+
+  let width = window.innerWidth
+  let height = window.innerHeight
+
+  const resizeCanvas = () => {
+    width = window.innerWidth
+    height = window.innerHeight
+    canvas.width = width
+    canvas.height = height
+  }
+
+  resizeCanvas()
+  window.addEventListener('resize', resizeCanvas)
+
+  const distortions: Distortion[] = []
+  let lastDistortionTime = 0
+
+  function animate(time: number) {
+    ctx!.clearRect(0, 0, width, height)
+
+    // Slower distortion spawning
+    if (time - lastDistortionTime > 10000 + Math.random() * 15000) {
+      distortions.push({
+        x: Math.random() * GRID_COLS,
+        y: Math.random() * GRID_ROWS,
+        intensity: 0.8 + Math.random() * 0.4,
+        decay: 0.994,
+        time: time
+      })
+      lastDistortionTime = time
+    }
+
+    // Update and filter distortions
+    for (let i = distortions.length - 1; i >= 0; i--) {
+      const d = distortions[i]
+      if (d) {
+        d.intensity *= d.decay
+        if (d.intensity < 0.01) {
+          distortions.splice(i, 1)
+        }
+      }
+    }
+
+    const extendX = 0.3
+    const extendY = 0.2
+    const startX = -width * extendX
+    const endX = width * (1 + extendX)
+    const startY = -height * extendY
+    const endY = height * (1 + extendY)
+    const totalWidth = endX - startX
+    const totalHeight = endY - startY
+
+    // Draw dots
+    for (let row = 0; row < GRID_ROWS; row++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        const baseX = startX + (col / GRID_COLS) * totalWidth
+        const baseY = startY + (row / GRID_ROWS) * totalHeight
+
+        // Calculate wave height
+        const wavePhase = (col / GRID_COLS) * Math.PI * 4 + (row / GRID_ROWS) * Math.PI * 2
+        let waveHeight = Math.sin(wavePhase + time * 0.001 * WAVE_FREQUENCY) * WAVE_AMPLITUDE
+
+        // Apply distortions
+        for (const d of distortions) {
+          const dx = col - d.x
+          const dy = row - d.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const maxDist = 40
+          if (dist < maxDist) {
+            const factor = (1 - dist / maxDist) * d.intensity
+            waveHeight += Math.sin(dist * 0.3 - time * 0.002) * factor * 0.5
+          }
+        }
+
+        // Perspective transformation
+        const depth = row / GRID_ROWS
+        const perspectiveScale = 0.3 + depth * PERSPECTIVE_FACTOR
+        const centerX = width / 2
+        const screenX = centerX + (baseX - centerX) * perspectiveScale
+        const screenY = baseY * perspectiveScale + height * (1 - perspectiveScale) * 0.5 + waveHeight * 30 * perspectiveScale
+
+        // Skip if outside viewport
+        if (screenX < -10 || screenX > width + 10 || screenY < -10 || screenY > height + 10) continue
+
+        // Depth-based properties
+        const baseOpacity = 0.15 + depth * 0.5
+        const heightBonus = (waveHeight + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.3
+        const opacity = Math.min(0.9, baseOpacity + heightBonus)
+        const dotSize = (0.8 + depth * 1.5) * 0.5
+
+        ctx!.beginPath()
+        ctx!.arc(screenX, screenY, dotSize, 0, Math.PI * 2)
+        ctx!.fillStyle = `rgba(${DOT_COLOR.r}, ${DOT_COLOR.g}, ${DOT_COLOR.b}, ${opacity})`
+        ctx!.fill()
+      }
+    }
+
+    animationId = requestAnimationFrame(animate)
+  }
+
+  animationId = requestAnimationFrame(animate)
+}
 
 function startTicking() {
   if (tickInterval) return
@@ -65,11 +201,15 @@ onMounted(async () => {
   await loadRooms()
   startTicking()
   document.addEventListener('click', closeMenu)
+  initCanvas()
 })
 
 onUnmounted(() => {
   stopTicking()
   document.removeEventListener('click', closeMenu)
+  if (animationId) {
+    cancelAnimationFrame(animationId)
+  }
 })
 
 function closeMenu() {
@@ -105,7 +245,6 @@ async function loadRooms() {
 
     rooms.value = (data || []).map((room: any) => {
       const timers = Array.isArray(room.timers) ? room.timers : []
-      // Sort by position
       timers.sort((a: any, b: any) => (a.position || 0) - (b.position || 0))
 
       return {
@@ -264,8 +403,12 @@ function formatTime(seconds: number): string {
   return `${sign}${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-function formatTimerDisplay(timer: Timer): string {
-  return `${formatTime(timer.remaining_seconds)} / ${formatTime(timer.duration)}`
+function getTimerColorClass(timer: Timer): string {
+  if (timer.status !== 'running') return 'text-gray-400'
+  const percentage = timer.remaining_seconds / timer.duration
+  if (percentage > 0.5) return 'text-emerald-400'
+  if (percentage > 0.2) return 'text-amber-400'
+  return 'text-red-400'
 }
 
 function getTimerProgress(timer: Timer): number {
@@ -281,258 +424,425 @@ function isTimerSelected(room: Room, timer: Timer): boolean {
 function hasRunningTimer(room: Room): boolean {
   return room.timers.some(t => t.status === 'running')
 }
+
+function getTimerCount(room: Room): number {
+  return room.timers.length
+}
 </script>
 
 <template>
-  <div class="h-screen bg-[#0a0a0f] text-white flex flex-col overflow-hidden">
-    <!-- Header -->
-    <header class="flex-shrink-0 border-b border-[#2a2a2a] bg-[#0f0f0f]">
-      <div class="max-w-6xl mx-auto" style="padding: 16px 24px;">
-        <div class="flex items-center justify-between">
-          <h1 class="text-xl font-bold flex items-center gap-2">
-            <span class="logo-pulse"></span>
-            <span>Chronograph <span class="text-red-500">Pro</span></span>
-          </h1>
-          <div class="flex items-center gap-4">
-            <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
+  <div class="min-h-screen bg-[#080808] text-white relative overflow-hidden">
+    <!-- Animated Background Canvas -->
+    <canvas
+      ref="canvasRef"
+      class="fixed inset-0 w-full h-full pointer-events-none"
+      style="z-index: 0;"
+    ></canvas>
+
+    <!-- Depth overlay for better readability -->
+    <div class="fixed inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none" style="z-index: 1;"></div>
+
+    <!-- Content -->
+    <div class="relative flex flex-col min-h-screen" style="z-index: 2;">
+      <!-- Header - Glassmorphism -->
+      <header class="flex-shrink-0 glass-header">
+        <div class="max-w-6xl mx-auto" style="padding: 16px 24px;">
+          <div class="flex items-center justify-between">
+            <h1 class="text-xl font-bold flex items-center gap-3">
+              <span class="logo-pulse"></span>
+              <span class="tracking-tight">Chronograph <span class="text-red-500">Pro</span></span>
+            </h1>
+            <div class="flex items-center gap-4">
+              <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
+              <button
+                class="flex items-center gap-2 text-gray-400 hover:text-white glass-button-subtle rounded-lg transition-all duration-200"
+                style="padding: 8px 14px;"
+                @click="handleSignOut"
+              >
+                <LogOut class="w-4 h-4" />
+                <span class="text-sm hidden sm:inline">Sign out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main -->
+      <main class="flex-1" style="padding: 40px 24px;">
+        <div class="max-w-6xl mx-auto">
+          <!-- Title Row -->
+          <div class="flex items-center justify-between" style="margin-bottom: 40px;">
+            <div>
+              <h2 class="text-3xl font-bold tracking-tight" style="margin-bottom: 8px;">My Rooms</h2>
+              <p class="text-gray-500">Manage your timer rooms</p>
+            </div>
             <button
-              class="flex items-center gap-2 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
-              style="padding: 8px 12px;"
-              @click="handleSignOut"
+              :disabled="creating"
+              class="flex items-center gap-2 glass-button-primary rounded-xl transition-all duration-200 font-semibold cursor-pointer"
+              style="padding: 12px 24px;"
+              @click="createRoom"
             >
-              <LogOut class="w-4 h-4" />
-              <span class="text-sm hidden sm:inline">Sign out</span>
+              <Plus class="w-5 h-5" />
+              <span>{{ creating ? 'Creating...' : 'New Room' }}</span>
             </button>
           </div>
-        </div>
-      </div>
-    </header>
 
-    <!-- Main -->
-    <main class="flex-1 overflow-y-auto">
-      <div class="max-w-6xl mx-auto" style="padding: 32px 24px;">
-      <!-- Title Row -->
-      <div class="flex items-center justify-between" style="margin-bottom: 32px;">
-        <div>
-          <h2 class="text-2xl font-semibold" style="margin-bottom: 4px;">My Rooms</h2>
-          <p class="text-gray-500 text-sm">Manage your timer rooms</p>
-        </div>
-        <button
-          :disabled="creating"
-          class="flex items-center gap-2 bg-[#145BF6] hover:bg-[#1048CC] disabled:opacity-50 rounded-lg transition-colors font-medium"
-          style="padding: 10px 20px;"
-          @click="createRoom"
-        >
-          <Plus class="w-5 h-5" />
-          <span>{{ creating ? 'Creating...' : 'New Room' }}</span>
-        </button>
-      </div>
+          <!-- Error -->
+          <div v-if="error" class="glass-error rounded-xl" style="padding: 16px; margin-bottom: 24px;">
+            <p class="text-red-400">{{ error }}</p>
+          </div>
 
-      <!-- Error -->
-      <div v-if="error" class="bg-red-500/10 border border-red-500/30 rounded-lg" style="padding: 16px; margin-bottom: 24px;">
-        <p class="text-red-400">{{ error }}</p>
-      </div>
-
-      <!-- Loading -->
-      <div v-if="loading" class="flex items-center justify-center" style="padding: 80px 0;">
-        <div class="flex flex-col items-center gap-3">
-          <div class="w-8 h-8 border-2 border-gray-600 border-t-[#145BF6] rounded-full animate-spin"></div>
-          <span class="text-gray-400">Loading rooms...</span>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div v-else-if="rooms.length === 0" class="flex flex-col items-center justify-center" style="padding: 80px 0;">
-        <div class="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center border border-[#2a2a2a]" style="margin-bottom: 20px;">
-          <Clock class="w-10 h-10 text-gray-600" />
-        </div>
-        <h3 class="text-xl font-medium text-gray-300" style="margin-bottom: 8px;">No rooms yet</h3>
-        <p class="text-gray-500 text-center max-w-md" style="margin-bottom: 24px;">
-          Create your first room to start managing timers.
-        </p>
-        <button
-          :disabled="creating"
-          class="flex items-center gap-2 bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium"
-          style="padding: 10px 20px;"
-          @click="createRoom"
-        >
-          <Plus class="w-5 h-5" />
-          <span>Create Room</span>
-        </button>
-      </div>
-
-      <!-- ROOMS LIST -->
-      <div v-else class="flex flex-col" style="gap: 16px;">
-        <div
-          v-for="room in rooms"
-          :key="room.id"
-          class="bg-[#151518] rounded-xl transition-all"
-          :class="hasRunningTimer(room) ? 'room-card-active' : 'room-card-inactive'"
-        >
-          <div class="flex items-start" style="padding: 20px 24px; gap: 24px;">
-            <!-- LEFT: Room Info -->
-            <div style="width: 160px; flex-shrink: 0;">
-              <!-- LIVE indicator -->
-              <div v-if="hasRunningTimer(room)" class="mb-2">
-                <span class="live-badge">LIVE</span>
-              </div>
-              <input
-                v-if="editingRoomId === room.id"
-                v-model="editingName"
-                type="text"
-                class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded text-lg font-semibold focus:outline-none focus:border-[#145BF6]"
-                style="padding: 4px 8px;"
-                @click.stop
-                @keydown.enter="saveRoomName(room.id)"
-                @keydown.escape="cancelEditing"
-                @blur="saveRoomName(room.id)"
-                autofocus
-              />
-              <h3 v-else class="font-semibold text-lg text-white truncate">{{ room.name }}</h3>
-              <div class="text-xs font-mono text-gray-500" style="margin-top: 4px;">{{ room.room_code }}</div>
+          <!-- Loading -->
+          <div v-if="loading" class="flex items-center justify-center" style="padding: 120px 0;">
+            <div class="flex flex-col items-center gap-4">
+              <div class="w-10 h-10 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"></div>
+              <span class="text-gray-400">Loading rooms...</span>
             </div>
+          </div>
 
-            <!-- CENTER: Timer Bars (centered) -->
-            <div class="flex-1 flex justify-center">
-              <div class="flex flex-col" style="gap: 4px; width: 100%; max-width: 400px;">
-                <div
-                  v-for="timer in room.timers"
-                  :key="timer.id"
-                  class="relative flex items-center rounded overflow-hidden"
-                  :class="isTimerSelected(room, timer) ? 'bg-blue-600' : 'bg-[#1a1a1a]'"
-                  style="height: 24px;"
-                >
-                  <!-- Progress overlay for running timers -->
-                  <div
-                    v-if="timer.status === 'running'"
-                    class="absolute inset-0 transition-all duration-200 pointer-events-none"
-                    :class="isTimerSelected(room, timer) ? 'bg-blue-500' : 'bg-blue-600/50'"
-                    :style="{ width: getTimerProgress(timer) + '%' }"
-                  ></div>
+          <!-- Empty State -->
+          <div v-else-if="rooms.length === 0" class="flex flex-col items-center justify-center" style="padding: 100px 0;">
+            <div class="glass-card w-24 h-24 rounded-2xl flex items-center justify-center" style="margin-bottom: 24px;">
+              <Clock class="w-12 h-12 text-red-500/60" />
+            </div>
+            <h3 class="text-2xl font-semibold text-white" style="margin-bottom: 8px;">No rooms yet</h3>
+            <p class="text-gray-500 text-center max-w-md" style="margin-bottom: 32px;">
+              Create your first room to start managing timers for your events.
+            </p>
+            <button
+              :disabled="creating"
+              class="flex items-center gap-2 glass-button-primary rounded-xl transition-all duration-200 font-semibold cursor-pointer"
+              style="padding: 14px 28px;"
+              @click="createRoom"
+            >
+              <Plus class="w-5 h-5" />
+              <span>Create Room</span>
+            </button>
+          </div>
 
-                  <!-- Timer Name -->
-                  <div class="relative z-10 text-xs font-medium flex-1 truncate" style="padding-left: 8px;">
-                    {{ timer.name }}
+          <!-- ROOMS LIST -->
+          <div v-else class="grid gap-5">
+            <div
+              v-for="room in rooms"
+              :key="room.id"
+              class="glass-card-room group cursor-pointer"
+              :class="{ 'glass-card-room-active': hasRunningTimer(room) }"
+              @click="openRoom(room.room_code)"
+            >
+              <div class="flex items-start" style="padding: 24px; gap: 24px;">
+                <!-- LEFT: Room Info -->
+                <div style="width: 180px; flex-shrink: 0;">
+                  <!-- LIVE indicator -->
+                  <div v-if="hasRunningTimer(room)" class="mb-3">
+                    <span class="live-badge">
+                      <span class="live-dot"></span>
+                      LIVE
+                    </span>
                   </div>
-
-                  <!-- Time: current / total -->
-                  <div class="relative z-10 text-xs font-mono text-gray-300" style="padding-right: 8px;">
-                    {{ formatTimerDisplay(timer) }}
+                  <input
+                    v-if="editingRoomId === room.id"
+                    v-model="editingName"
+                    type="text"
+                    class="w-full bg-white/5 border border-white/20 rounded-lg text-lg font-semibold focus:outline-none focus:border-red-500/50 backdrop-blur-sm"
+                    style="padding: 6px 10px;"
+                    @click.stop
+                    @keydown.enter="saveRoomName(room.id)"
+                    @keydown.escape="cancelEditing"
+                    @blur="saveRoomName(room.id)"
+                    autofocus
+                  />
+                  <h3 v-else class="font-semibold text-xl text-white truncate group-hover:text-red-400 transition-colors">{{ room.name }}</h3>
+                  <div class="flex items-center gap-2" style="margin-top: 8px;">
+                    <span class="text-xs font-mono text-gray-500 bg-white/5 rounded px-2 py-1">{{ room.room_code }}</span>
+                  </div>
+                  <div class="text-xs text-gray-600" style="margin-top: 8px;">
+                    {{ getTimerCount(room) }} timer{{ getTimerCount(room) !== 1 ? 's' : '' }}
                   </div>
                 </div>
 
-                <!-- No timers message -->
-                <div v-if="room.timers.length === 0" class="text-gray-500 text-xs italic">
-                  No timers
+                <!-- CENTER: Timer Bars with glass effect -->
+                <div class="flex-1 flex justify-center">
+                  <div class="flex flex-col w-full" style="gap: 6px; max-width: 450px;">
+                    <div
+                      v-for="timer in room.timers"
+                      :key="timer.id"
+                      class="glass-timer-bar relative flex items-center rounded-lg overflow-hidden"
+                      :class="{
+                        'glass-timer-selected': isTimerSelected(room, timer),
+                        'glass-timer-running': timer.status === 'running'
+                      }"
+                      style="height: 36px;"
+                      @click.stop
+                    >
+                      <!-- Progress overlay -->
+                      <div
+                        class="absolute inset-0 transition-all duration-500 pointer-events-none"
+                        :class="timer.status === 'running' ? 'timer-progress-running' : 'timer-progress-idle'"
+                        :style="{ width: getTimerProgress(timer) + '%' }"
+                      ></div>
+
+                      <!-- Status icon -->
+                      <div class="relative z-10 flex items-center justify-center w-8">
+                        <Play v-if="timer.status !== 'running'" class="w-3 h-3 text-gray-500" />
+                        <Pause v-else class="w-3 h-3 text-red-400" />
+                      </div>
+
+                      <!-- Timer Name -->
+                      <div class="relative z-10 text-sm font-medium flex-1 truncate">
+                        {{ timer.name }}
+                      </div>
+
+                      <!-- Time display -->
+                      <div
+                        class="relative z-10 text-sm font-mono font-semibold tabular-nums"
+                        :class="getTimerColorClass(timer)"
+                        style="padding-right: 12px;"
+                      >
+                        {{ formatTime(timer.remaining_seconds) }}
+                      </div>
+                    </div>
+
+                    <!-- No timers message -->
+                    <div v-if="room.timers.length === 0" class="text-gray-600 text-sm italic text-center" style="padding: 12px;">
+                      No timers configured
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <!-- RIGHT: Actions -->
-            <div class="flex items-center" style="gap: 12px; flex-shrink: 0;">
-              <!-- Enter Room -->
-              <button
-                class="bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium text-sm"
-                style="padding: 10px 20px;"
-                @click="openRoom(room.room_code)"
-              >
-                Enter Room
-              </button>
-
-              <!-- Menu -->
-              <div class="relative">
-                <button
-                  class="text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
-                  style="padding: 8px;"
-                  @click.stop="toggleMenu(room.id, $event)"
-                >
-                  <MoreVertical class="w-5 h-5" />
-                </button>
-
-                <div
-                  v-if="openMenuId === room.id"
-                  class="absolute right-0 bg-[#1a1a1f] border border-[#2a2a2a] rounded-lg shadow-xl z-10"
-                  style="top: 40px; width: 144px; padding: 4px 0;"
-                >
+                <!-- RIGHT: Actions -->
+                <div class="flex items-center" style="gap: 12px; flex-shrink: 0;">
+                  <!-- Enter Room -->
                   <button
-                    class="w-full text-left text-sm text-gray-300 hover:bg-[#2a2a2a] flex items-center gap-2"
-                    style="padding: 8px 12px;"
-                    @click="startEditing(room, $event)"
+                    class="glass-button-primary rounded-xl transition-all duration-200 font-medium text-sm cursor-pointer"
+                    style="padding: 12px 24px;"
+                    @click.stop="openRoom(room.room_code)"
                   >
-                    <Edit3 class="w-4 h-4" />
-                    Rename
+                    Enter Room
                   </button>
-                  <button
-                    class="w-full text-left text-sm text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2"
-                    style="padding: 8px 12px;"
-                    @click="deleteRoom(room.id, $event)"
-                  >
-                    <Trash2 class="w-4 h-4" />
-                    Delete
-                  </button>
+
+                  <!-- Menu -->
+                  <div class="relative">
+                    <button
+                      class="text-gray-500 hover:text-white glass-button-subtle rounded-lg transition-all duration-200 cursor-pointer"
+                      style="padding: 10px;"
+                      @click.stop="toggleMenu(room.id, $event)"
+                    >
+                      <MoreVertical class="w-5 h-5" />
+                    </button>
+
+                    <Transition name="menu">
+                      <div
+                        v-if="openMenuId === room.id"
+                        class="absolute right-0 glass-menu rounded-xl shadow-2xl z-20"
+                        style="top: 48px; width: 160px; padding: 6px;"
+                      >
+                        <button
+                          class="w-full text-left text-sm text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-3 rounded-lg transition-colors cursor-pointer"
+                          style="padding: 10px 14px;"
+                          @click="startEditing(room, $event)"
+                        >
+                          <Edit3 class="w-4 h-4" />
+                          Rename
+                        </button>
+                        <button
+                          class="w-full text-left text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-3 rounded-lg transition-colors cursor-pointer"
+                          style="padding: 10px 14px;"
+                          @click="deleteRoom(room.id, $event)"
+                        >
+                          <Trash2 class="w-4 h-4" />
+                          Delete
+                        </button>
+                      </div>
+                    </Transition>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      </div>
-    </main>
+      </main>
 
-    <!-- Footer -->
-    <footer class="h-12 flex-shrink-0 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4">
-      <span class="text-xs text-gray-500 leading-none">
-        chronograph.pro · v{{ APP_VERSION }}
-      </span>
-    </footer>
+      <!-- Footer - Glassmorphism -->
+      <footer class="flex-shrink-0 glass-footer flex items-center justify-center" style="padding: 16px;">
+        <span class="text-xs text-gray-500">
+          chronograph.pro · v{{ APP_VERSION }}
+        </span>
+      </footer>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.room-card-active {
-  border: 2px solid #22c55e;
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1);
+/* Glassmorphism base styles */
+.glass-header {
+  background: rgba(8, 8, 8, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.room-card-inactive {
-  border: 1px solid #2a2a2a;
+.glass-footer {
+  background: rgba(8, 8, 8, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.room-card-inactive:hover {
-  border-color: #3a3a3a;
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* LIVE badge with smooth pulse animation */
+.glass-card-room {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.glass-card-room:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(239, 68, 68, 0.1);
+}
+
+.glass-card-room-active {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), 0 0 60px rgba(239, 68, 68, 0.08);
+}
+
+.glass-card-room-active:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 80px rgba(239, 68, 68, 0.2);
+}
+
+/* Timer bars with glass effect */
+.glass-timer-bar {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+}
+
+.glass-timer-bar:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.glass-timer-selected {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.glass-timer-running {
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.timer-progress-running {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.15));
+}
+
+.timer-progress-idle {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Glass buttons */
+.glass-button-primary {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+}
+
+.glass-button-primary:hover {
+  background: linear-gradient(135deg, rgba(248, 88, 88, 0.95), rgba(239, 68, 68, 0.95));
+  box-shadow: 0 6px 30px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.glass-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.glass-button-subtle {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-button-subtle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Glass menu */
+.glass-menu {
+  background: rgba(20, 20, 25, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Glass error */
+.glass-error {
+  background: rgba(239, 68, 68, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* LIVE badge with glow */
 .live-badge {
-  display: inline-block;
-  background-color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
   color: white;
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
   letter-spacing: 0.5px;
-  animation: live-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  animation: live-glow 2s ease-in-out infinite;
 }
 
-@keyframes live-pulse {
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: white;
+  animation: live-dot-pulse 1s ease-in-out infinite;
+}
+
+@keyframes live-glow {
   0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
   }
   50% {
-    opacity: 0.7;
-    box-shadow: 0 0 16px rgba(220, 38, 38, 0.9);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.7);
   }
 }
 
-/* Logo pulse - bright red circle */
+@keyframes live-dot-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Logo pulse - red circle */
 .logo-pulse {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background-color: #ef4444;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.4);
   animation: logo-pulse 3s ease-in-out infinite;
 }
 
@@ -540,10 +850,24 @@ function hasRunningTimer(room: Room): boolean {
   0%, 100% {
     opacity: 1;
     transform: scale(1);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.4);
   }
   50% {
-    opacity: 0.7;
+    opacity: 0.8;
     transform: scale(0.95);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 1), 0 0 30px rgba(239, 68, 68, 0.6);
   }
+}
+
+/* Menu transition */
+.menu-enter-active,
+.menu-leave-active {
+  transition: all 0.2s ease;
+}
+
+.menu-enter-from,
+.menu-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
 }
 </style>
