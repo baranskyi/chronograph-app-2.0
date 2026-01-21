@@ -408,7 +408,7 @@ function handleShareClick(timerId: string, event: Event) {
   showShareToast.value = true
   setTimeout(() => {
     showShareToast.value = false
-  }, 3000)
+  }, 5000)
 }
 
 // Calculate progress percentage for timer row
@@ -905,14 +905,18 @@ const colorClass = (id: string) => {
       </Transition>
     </Teleport>
 
-    <!-- Global Toast - bottom center -->
+    <!-- Global Toast - Black Bottle Glass Effect -->
     <Teleport to="body">
-      <Transition name="toast">
+      <Transition name="glass-toast">
         <div
           v-if="showShareToast"
-          class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] bg-black/80 text-white text-sm font-medium px-6 py-3 rounded-xl shadow-lg"
+          class="glass-toast-container fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999]"
         >
-          Link copied
+          <div class="glass-toast">
+            <span class="glass-toast-text">Link copied</span>
+            <span class="glass-toast-highlight"></span>
+            <span class="glass-toast-reflection"></span>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -1223,15 +1227,108 @@ const colorClass = (id: string) => {
   opacity: 0;
 }
 
-/* Toast animation */
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
+/* Black Bottle Glass Toast */
+.glass-toast-container {
+  perspective: 300px;
 }
-.toast-enter-from,
-.toast-leave-to {
+
+.glass-toast {
+  position: relative;
+  padding: 14px 28px;
+  border-radius: 12px;
+  overflow: hidden;
+
+  /* Black bottle glass - translucent but clearly black */
+  background: linear-gradient(
+    180deg,
+    rgba(40, 45, 50, 0.75) 0%,
+    rgba(25, 28, 32, 0.82) 30%,
+    rgba(15, 18, 22, 0.88) 60%,
+    rgba(10, 12, 15, 0.92) 100%
+  );
+
+  /* Glass border - subtle light edges */
+  border: 1px solid transparent;
+  border-top-color: rgba(255, 255, 255, 0.15);
+  border-left-color: rgba(255, 255, 255, 0.08);
+  border-right-color: rgba(0, 0, 0, 0.3);
+  border-bottom-color: rgba(0, 0, 0, 0.4);
+
+  /* Glass depth and glow */
+  box-shadow:
+    /* Inner top light - refraction */
+    inset 0 1px 2px rgba(255, 255, 255, 0.1),
+    /* Inner bottom shadow */
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3),
+    /* Outer shadow for depth */
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    /* Subtle edge glow */
+    0 0 1px rgba(255, 255, 255, 0.1);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-toast-text {
+  position: relative;
+  z-index: 2;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+/* Top glossy highlight - light on glass */
+.glass-toast-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  border-radius: 11px 11px 50% 50%;
+  pointer-events: none;
+}
+
+/* Small reflection spot */
+.glass-toast-reflection {
+  position: absolute;
+  top: 5px;
+  left: 16px;
+  width: 12px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* Smooth glass toast animation */
+.glass-toast-enter-active {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-toast-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-toast-enter-from {
   opacity: 0;
-  transform: translate(-50%, 16px);
+  transform: translateX(-50%) translateY(24px) scale(0.92);
+}
+
+.glass-toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px) scale(0.96);
 }
 
 /* ON AIR Badge - Glass Bead Effect */
