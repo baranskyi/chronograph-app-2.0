@@ -556,13 +556,6 @@ const colorClass = (id: string) => {
           <div class="text-xs text-gray-500 font-mono">{{ roomStore.roomId }}</div>
         </div>
         <div class="flex-1" />
-        <button
-          class="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
-          :class="roomStore.isBlackout ? 'bg-amber-500 text-black' : 'glass-button-subtle hover:bg-white/10'"
-          @click="roomStore.toggleBlackout()"
-        >
-          {{ roomStore.isBlackout ? 'Show' : 'Blackout' }}
-        </button>
         <button class="p-2 glass-button-subtle rounded-lg hover:bg-white/10 cursor-pointer" @click="toggleFullscreen">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -722,15 +715,33 @@ const colorClass = (id: string) => {
             </button>
           </div>
 
-          <!-- Add Timer Button - with 2x spacing (48px) to first timer below -->
-          <button
-            class="glass-button-red flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
-            style="padding: 10px 20px; margin-bottom: 48px;"
-            @click="handleAddTimer"
-          >
-            <Plus class="w-4 h-4" />
-            <span>Add Timer</span>
-          </button>
+          <!-- Blackout + Add Timer Buttons Row -->
+          <div class="flex items-center gap-3" style="margin-bottom: 48px;">
+            <!-- Blackout Button - Dark, less transparent -->
+            <button
+              class="blackout-button flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
+              :class="{ 'blackout-active': roomStore.isBlackout }"
+              style="padding: 10px 20px;"
+              @click="roomStore.toggleBlackout()"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path v-if="!roomStore.isBlackout" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path v-if="roomStore.isBlackout" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span>{{ roomStore.isBlackout ? 'Show' : 'Blackout' }}</span>
+            </button>
+
+            <!-- Add Timer Button -->
+            <button
+              class="glass-button-red flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
+              style="padding: 10px 20px;"
+              @click="handleAddTimer"
+            >
+              <Plus class="w-4 h-4" />
+              <span>Add Timer</span>
+            </button>
+          </div>
 
           <!-- Timer List - Bigger items, more spacing (3x gap) -->
           <div class="flex-1 overflow-y-auto flex flex-col gap-12">
@@ -1813,6 +1824,48 @@ const colorClass = (id: string) => {
 
 .send-button svg {
   opacity: 0.9;
+}
+
+/* Blackout Button - Dark, less transparent */
+.blackout-button {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.blackout-button:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.blackout-button.blackout-active {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 0.85) 0%,
+    rgba(217, 119, 6, 0.9) 100%
+  );
+  border-color: rgba(245, 158, 11, 0.4);
+  color: black;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+}
+
+.blackout-button.blackout-active:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 0.95) 0%,
+    rgba(217, 119, 6, 1) 100%
+  );
 }
 
 /* Ocean toggle button */
