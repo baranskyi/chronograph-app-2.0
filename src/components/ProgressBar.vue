@@ -151,9 +151,9 @@ const markerPosition = computed(() => `${progress.value}%`)
   height: 0;
   border-left: 14px solid transparent;
   border-right: 14px solid transparent;
-  border-top: 18px solid rgba(255, 255, 255, 0.12);
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2))
-          drop-shadow(0 0 12px rgba(255, 255, 255, 0.1));
+  border-top: 18px solid rgba(255, 255, 255, 0.45);
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.35))
+          drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
 }
 
 /* Inner triangle for depth effect */
@@ -165,7 +165,7 @@ const markerPosition = computed(() => `${progress.value}%`)
   height: 0;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
-  border-top: 14px solid rgba(255, 255, 255, 0.08);
+  border-top: 14px solid rgba(255, 255, 255, 0.25);
 }
 
 /* Reflection highlight on glass */
