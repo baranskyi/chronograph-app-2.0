@@ -3,6 +3,14 @@ import { config } from '../config.js'
 
 if (!config.supabase.url || !config.supabase.serviceKey) {
   console.warn('Supabase credentials not configured. Database persistence will be disabled.')
+} else {
+  // Log which key type is being used (for debugging)
+  const keyPrefix = config.supabase.serviceKey.substring(0, 20)
+  console.log(`Supabase configured with key starting with: ${keyPrefix}...`)
+  if (config.supabase.serviceKey === config.supabase.anonKey) {
+    console.warn('WARNING: Using anon key instead of service key! RLS will block server operations.')
+    console.warn('Set SUPABASE_SERVICE_KEY environment variable with the service_role key from Supabase.')
+  }
 }
 
 export const supabase = config.supabase.url && config.supabase.serviceKey

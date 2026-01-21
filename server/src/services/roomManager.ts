@@ -168,16 +168,22 @@ class RoomManager {
 
   async createTimer(roomId: string, name: string, duration?: number): Promise<Timer | null> {
     const normalizedId = roomId.toUpperCase()
+    console.log(`createTimer called: roomId=${roomId}, normalizedId=${normalizedId}, name=${name}`)
 
     if (isSupabaseEnabled() && supabase) {
       // Get room's DB UUID
-      const { data: room } = await supabase
+      const { data: room, error: roomError } = await supabase
         .from('rooms')
         .select('id')
         .eq('room_code', normalizedId)
         .single()
 
-      if (!room) return null
+      console.log(`Room lookup result: room=${JSON.stringify(room)}, error=${JSON.stringify(roomError)}`)
+
+      if (!room) {
+        console.error(`Room not found for code: ${normalizedId}`)
+        return null
+      }
 
       // Count existing timers
       const { count } = await supabase
@@ -193,25 +199,30 @@ class RoomManager {
         duration: duration ?? DEFAULT_TIMER_SETTINGS.duration
       }
 
+      const insertData = {
+        room_id: room.id,
+        name: name || `Timer ${timerCount + 1}`,
+        duration: settings.duration,
+        remaining_seconds: settings.duration,
+        elapsed_seconds: 0,
+        status: 'stopped',
+        is_on_air: isFirstTimer,
+        position: timerCount,
+        settings: settings,
+        started_at: null
+      }
+
+      console.log(`Inserting timer with data:`, JSON.stringify(insertData))
+
       const { data: timer, error } = await supabase
         .from('timers')
-        .insert({
-          room_id: room.id,
-          name: name || `Timer ${timerCount + 1}`,
-          duration: settings.duration,
-          remaining_seconds: settings.duration,
-          elapsed_seconds: 0,
-          status: 'stopped',
-          is_on_air: isFirstTimer,
-          position: timerCount,
-          settings: settings,
-          started_at: null
-        })
+        .insert(insertData)
         .select()
         .single()
 
       if (error || !timer) {
-        console.error('Failed to create timer:', error)
+        console.error('Failed to create timer - Supabase error:', error?.message, error?.code, error?.details)
+        console.error('This may be due to RLS policies. Make sure SUPABASE_SERVICE_KEY is set (not anon key).')
         return null
       }
 

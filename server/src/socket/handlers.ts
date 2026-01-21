@@ -164,14 +164,19 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
     { roomId, name, duration }: { roomId: string; name?: string; duration?: number },
     callback: TimerCallback
   ) => {
+    console.log(`timer:create request: roomId=${roomId}, socket.id=${socket.id}`)
+
     if (!roomManager.isController(roomId, socket.id)) {
+      console.log(`timer:create: Not authorized - socket ${socket.id} is not controller for room ${roomId}`)
       callback({ error: 'Not authorized' })
       return
     }
 
     try {
+      console.log(`timer:create: Creating timer for room ${roomId}`)
       const timer = await roomManager.createTimer(roomId, name || '', duration)
       if (!timer) {
+        console.log(`timer:create: roomManager.createTimer returned null for room ${roomId}`)
         callback({ error: 'Failed to create timer' })
         return
       }
