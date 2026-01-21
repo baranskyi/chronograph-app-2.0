@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useFullscreen } from '@vueuse/core'
 import { useTimerStore } from '../stores/timerStore'
 import { useRoomStore } from '../stores/roomStore'
@@ -39,6 +39,28 @@ const dragOverTimerId = ref<string | null>(null)
 
 // Share button state - global toast at bottom center
 const showShareToast = ref(false)
+
+// Custom dropdown state for "Send to" selector
+const isTargetDropdownOpen = ref(false)
+const targetDropdownRef = ref<HTMLElement | null>(null)
+
+// Computed for selected timer display
+const selectedTargetLabel = computed(() => {
+  if (messageTargetTimerId.value === null) return 'All timers'
+  const timer = timerStore.timerList.find(t => t.id === messageTargetTimerId.value)
+  return timer?.name || 'All timers'
+})
+
+function selectTarget(timerId: string | null) {
+  messageTargetTimerId.value = timerId
+  isTargetDropdownOpen.value = false
+}
+
+function handleTargetDropdownClickOutside(e: MouseEvent) {
+  if (targetDropdownRef.value && !targetDropdownRef.value.contains(e.target as Node)) {
+    isTargetDropdownOpen.value = false
+  }
+}
 
 // Canvas animation for ocean background
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -273,6 +295,7 @@ onMounted(async () => {
     isInitializing.value = false
   }
   document.addEventListener('keydown', handleKeydown)
+  document.addEventListener('click', handleTargetDropdownClickOutside)
 
   // Update clock every second
   clockInterval = window.setInterval(() => {
@@ -298,6 +321,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  document.removeEventListener('click', handleTargetDropdownClickOutside)
   roomStore.disconnect()
   if (clockInterval) clearInterval(clockInterval)
   if (animationId) cancelAnimationFrame(animationId)
@@ -799,24 +823,54 @@ const colorClass = (id: string) => {
 
           <!-- Message Form - Redesigned -->
           <div class="flex-1 flex flex-col relative z-10">
-            <!-- Timer Target Selector - Glassmorphism -->
+            <!-- Timer Target Selector - Custom Glassmorphism Dropdown -->
             <div class="form-group">
               <label class="form-label">Send to</label>
-              <div class="glass-select-wrapper">
-                <select
-                  v-model="messageTargetTimerId"
-                  class="glass-select"
+              <div ref="targetDropdownRef" class="custom-dropdown">
+                <!-- Dropdown Trigger -->
+                <button
+                  type="button"
+                  class="dropdown-trigger"
+                  :class="{ open: isTargetDropdownOpen }"
+                  @click.stop="isTargetDropdownOpen = !isTargetDropdownOpen"
                 >
-                  <option :value="null">All timers</option>
-                  <option v-for="timer in timerStore.orderedTimerList" :key="timer.id" :value="timer.id">
-                    {{ timer.name }}
-                  </option>
-                </select>
-                <div class="glass-select-arrow">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
+                  <span class="dropdown-value">{{ selectedTargetLabel }}</span>
+                  <span class="dropdown-arrow" :class="{ rotated: isTargetDropdownOpen }">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <Transition name="dropdown">
+                  <div v-if="isTargetDropdownOpen" class="dropdown-menu">
+                    <button
+                      type="button"
+                      class="dropdown-option"
+                      :class="{ selected: messageTargetTimerId === null }"
+                      @click="selectTarget(null)"
+                    >
+                      <span>All timers</span>
+                      <svg v-if="messageTargetTimerId === null" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <button
+                      v-for="timer in timerStore.orderedTimerList"
+                      :key="timer.id"
+                      type="button"
+                      class="dropdown-option"
+                      :class="{ selected: messageTargetTimerId === timer.id }"
+                      @click="selectTarget(timer.id)"
+                    >
+                      <span>{{ timer.name }}</span>
+                      <svg v-if="messageTargetTimerId === timer.id" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </Transition>
               </div>
             </div>
 
@@ -1401,14 +1455,18 @@ const colorClass = (id: string) => {
   margin-bottom: 10px;
 }
 
-/* Glassmorphism Select Dropdown */
-.glass-select-wrapper {
+/* Custom Glassmorphism Dropdown */
+.custom-dropdown {
   position: relative;
+  z-index: 20;
 }
 
-.glass-select {
+.dropdown-trigger {
   width: 100%;
-  padding: 14px 40px 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
   font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
@@ -1419,10 +1477,7 @@ const colorClass = (id: string) => {
   );
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
-  outline: none;
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow:
@@ -1431,7 +1486,7 @@ const colorClass = (id: string) => {
   transition: all 0.2s ease;
 }
 
-.glass-select:hover {
+.dropdown-trigger:hover {
   border-color: rgba(255, 255, 255, 0.2);
   background: linear-gradient(
     180deg,
@@ -1440,7 +1495,7 @@ const colorClass = (id: string) => {
   );
 }
 
-.glass-select:focus {
+.dropdown-trigger.open {
   border-color: rgba(239, 68, 68, 0.5);
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.1),
@@ -1448,20 +1503,105 @@ const colorClass = (id: string) => {
     0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 
-.glass-select option {
-  background: #1a1a1a;
-  color: white;
-  padding: 12px;
+.dropdown-value {
+  flex: 1;
+  text-align: left;
 }
 
-.glass-select-arrow {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+.dropdown-arrow {
   color: rgba(255, 255, 255, 0.5);
-  pointer-events: none;
-  transition: transform 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(30, 32, 38, 0.95) 0%,
+    rgba(20, 22, 28, 0.98) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  overflow: hidden;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  z-index: 100;
+}
+
+.dropdown-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.dropdown-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.dropdown-option.selected {
+  background: linear-gradient(
+    90deg,
+    rgba(239, 68, 68, 0.2) 0%,
+    rgba(239, 68, 68, 0.1) 100%
+  );
+  color: #ef4444;
+}
+
+.dropdown-option.selected:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(239, 68, 68, 0.25) 0%,
+    rgba(239, 68, 68, 0.15) 100%
+  );
+}
+
+.dropdown-option:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dropdown-option svg {
+  flex-shrink: 0;
+  color: #ef4444;
+}
+
+/* Dropdown Animation */
+.dropdown-enter-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.96);
 }
 
 /* Glassmorphism Textarea */
