@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
@@ -15,6 +15,167 @@ const formRef = ref<HTMLElement | null>(null)
 const glowX = ref(0)
 const glowY = ref(0)
 const isHovering = ref(false)
+
+// Canvas animation
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+let animationId: number | null = null
+let ctx: CanvasRenderingContext2D | null = null
+
+// Wave parameters
+const WAVE_FREQUENCY = 3 // 3 Hz
+const GRID_COLS = 80
+const GRID_ROWS = 40
+const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
+
+interface Distortion {
+  x: number
+  y: number
+  intensity: number
+  decay: number
+  time: number
+}
+
+let distortions: Distortion[] = []
+let lastDistortionTime = 0
+
+function initCanvas() {
+  if (!canvasRef.value) return
+  ctx = canvasRef.value.getContext('2d')
+  resizeCanvas()
+
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!prefersReducedMotion) {
+    animate(0)
+  } else {
+    // Draw static frame
+    drawFrame(0)
+  }
+}
+
+function resizeCanvas() {
+  if (!canvasRef.value) return
+  canvasRef.value.width = window.innerWidth
+  canvasRef.value.height = window.innerHeight
+}
+
+function drawFrame(time: number) {
+  if (!ctx || !canvasRef.value) return
+
+  const width = canvasRef.value.width
+  const height = canvasRef.value.height
+
+  // Clear canvas
+  ctx.fillStyle = '#080808'
+  ctx.fillRect(0, 0, width, height)
+
+  const cellHeight = height / GRID_ROWS
+
+  // Time in seconds
+  const t = time / 1000
+
+  // Maybe add new distortion
+  if (time - lastDistortionTime > 2000 + Math.random() * 3000) {
+    distortions.push({
+      x: Math.random() * GRID_COLS,
+      y: Math.random() * GRID_ROWS,
+      intensity: 0.8 + Math.random() * 0.4,
+      decay: 0.97,
+      time: time
+    })
+    lastDistortionTime = time
+  }
+
+  // Update and filter distortions
+  distortions = distortions.filter(d => {
+    d.intensity *= d.decay
+    return d.intensity > 0.01
+  })
+
+  // Draw dots with perspective and waves
+  for (let row = 0; row < GRID_ROWS; row++) {
+    for (let col = 0; col < GRID_COLS; col++) {
+      // Normalize positions
+      const nx = col / GRID_COLS
+      const ny = row / GRID_ROWS
+
+      // Perspective transformation (looking at ocean from above at angle)
+      const perspectiveScale = 0.3 + ny * 0.7
+      const perspectiveY = height * 0.2 + ny * ny * height * 0.8
+      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale
+
+      // Wave calculation (3 Hz frequency)
+      const wavePhase = nx * 8 + ny * 4
+      const wave1 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.3 + wavePhase) * 0.5
+      const wave2 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.2 + wavePhase * 0.7) * 0.3
+      const wave3 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.15 + wavePhase * 1.3) * 0.2
+      const waveHeight = (wave1 + wave2 + wave3) * cellHeight * perspectiveScale * 2
+
+      // Apply distortions
+      let distortionOffset = 0
+      let distortionGlow = 0
+      for (const d of distortions) {
+        const dx = col - d.x
+        const dy = row - d.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        const distEffect = Math.exp(-dist * dist / 20) * d.intensity
+
+        // Electric shock wave effect
+        const shockWave = Math.sin(dist * 2 - (time - d.time) * 0.02) * distEffect * 15
+        distortionOffset += shockWave
+        distortionGlow += distEffect
+      }
+
+      // Final position
+      const x = perspectiveX
+      const y = perspectiveY + waveHeight + distortionOffset
+
+      // Depth of field effect
+      // Focus zone in middle, blur near and far
+      const depthFactor = ny // 0 = far, 1 = near
+      const focusZone = 0.5
+      const depthBlur = Math.abs(depthFactor - focusZone) * 2
+
+      // Base opacity with depth fade
+      const farFade = Math.pow(depthFactor, 0.5) // Fade distant points
+      const nearFade = 1 - Math.pow(Math.max(0, depthFactor - 0.85) * 6.67, 2) // Fade very close points
+      const baseOpacity = farFade * nearFade * (0.15 + wave1 * 0.05)
+
+      // Add distortion glow
+      const finalOpacity = Math.min(1, baseOpacity + distortionGlow * 0.5)
+
+      // Dot size based on depth and wave
+      const baseSize = 1 + perspectiveScale * 2.5
+      const waveSize = 1 + (wave1 + 1) * 0.2
+      const distortionSize = 1 + distortionGlow * 2
+      const size = baseSize * waveSize * distortionSize * (1 - depthBlur * 0.3)
+
+      // Color with distortion highlight
+      const r = DOT_COLOR.r
+      const g = DOT_COLOR.g + distortionGlow * 100
+      const b = DOT_COLOR.b + distortionGlow * 150
+
+      // Draw dot
+      ctx.beginPath()
+      ctx.arc(x, y, Math.max(0.5, size), 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
+      ctx.fill()
+
+      // Add glow for distorted points
+      if (distortionGlow > 0.1) {
+        ctx.beginPath()
+        ctx.arc(x, y, size * 3, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r}, ${g + 50}, ${b + 100}, ${distortionGlow * 0.15})`
+        ctx.fill()
+      }
+    }
+  }
+}
+
+function animate(time: number) {
+  drawFrame(time)
+  animationId = requestAnimationFrame(animate)
+}
 
 function handleMouseMove(e: MouseEvent) {
   if (!formRef.value) return
@@ -43,12 +204,27 @@ async function handleLogin() {
 function goToRegister() {
   router.push('/register')
 }
+
+onMounted(() => {
+  initCanvas()
+  window.addEventListener('resize', resizeCanvas)
+})
+
+onUnmounted(() => {
+  if (animationId) {
+    cancelAnimationFrame(animationId)
+  }
+  window.removeEventListener('resize', resizeCanvas)
+})
 </script>
 
 <template>
   <div class="login-page">
-    <!-- Subtle background pattern -->
-    <div class="bg-pattern"></div>
+    <!-- Animated dot wave background -->
+    <canvas ref="canvasRef" class="wave-canvas"></canvas>
+
+    <!-- Gradient overlay for depth -->
+    <div class="depth-overlay"></div>
 
     <div class="login-container">
       <!-- Logo Section -->
@@ -181,12 +357,25 @@ function goToRegister() {
   overflow: hidden;
 }
 
-.bg-pattern {
+.wave-canvas {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(239, 68, 68, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.depth-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 8, 8, 0.7) 0%,
+    rgba(8, 8, 8, 0.3) 30%,
+    rgba(8, 8, 8, 0.1) 50%,
+    rgba(8, 8, 8, 0.5) 80%,
+    rgba(8, 8, 8, 0.9) 100%
+  );
   pointer-events: none;
 }
 
@@ -245,9 +434,10 @@ function goToRegister() {
 /* Form */
 .login-form {
   position: relative;
-  background: #111111;
+  background: rgba(17, 17, 17, 0.9);
+  backdrop-filter: blur(20px);
   border-radius: 20px;
-  border: 1px solid #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.05);
   overflow: hidden;
 }
 
@@ -259,7 +449,7 @@ function goToRegister() {
   pointer-events: none;
   background: radial-gradient(
     600px circle at var(--glow-x, 50%) var(--glow-y, 50%),
-    rgba(239, 68, 68, 0.07),
+    rgba(239, 68, 68, 0.1),
     transparent 40%
   );
 }
@@ -308,7 +498,7 @@ function goToRegister() {
 .input-field {
   width: 100%;
   padding: 16px 20px;
-  background: #0a0a0a;
+  background: rgba(10, 10, 10, 0.8);
   border: 1px solid #252525;
   border-radius: 12px;
   font-size: 16px;
@@ -466,5 +656,15 @@ function goToRegister() {
 .back-icon {
   width: 16px;
   height: 16px;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .logo-dot {
+    animation: none;
+  }
+  .spinner {
+    animation: none;
+  }
 }
 </style>
