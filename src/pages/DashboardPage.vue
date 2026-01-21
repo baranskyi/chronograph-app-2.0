@@ -550,18 +550,15 @@ const colorClass = (id: string) => {
           <!-- Big Time Display - Top aligned with double spacing -->
           <div class="flex flex-col items-center gap-6 relative z-10">
 
-            <!-- Section 1: ON AIR Badge - Glass Bead Effect -->
-            <div v-if="timerStore.selectedTimer" class="on-air-container">
+            <!-- Section 1: ON AIR Badge -->
+            <div v-if="timerStore.selectedTimer">
               <span
-                class="on-air-badge text-xs font-bold tracking-wider"
+                class="text-xs font-bold rounded-md transition-colors"
                 :class="timerStore.selectedTimer.status === 'running'
-                  ? 'on-air-active'
-                  : 'on-air-inactive'"
-              >
-                <span class="on-air-text">ON AIR</span>
-                <span class="on-air-highlight"></span>
-                <span class="on-air-reflection"></span>
-              </span>
+                  ? 'on-air-badge-active'
+                  : 'bg-transparent border border-gray-500 text-gray-500'"
+                style="padding: 8px 16px;"
+              >ON AIR</span>
             </div>
 
             <!-- Section 2: Timer Display -->
@@ -1331,153 +1328,21 @@ const colorClass = (id: string) => {
   transform: translateX(-50%) translateY(-8px) scale(0.96);
 }
 
-/* ON AIR Badge - Glass Bead Effect */
-.on-air-container {
-  perspective: 200px;
-}
-
-.on-air-badge {
-  position: relative;
-  display: inline-block;
-  padding: 10px 20px;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Inactive state - muted glass */
-.on-air-inactive {
-  background: linear-gradient(
-    180deg,
-    rgba(100, 100, 100, 0.3) 0%,
-    rgba(60, 60, 60, 0.4) 50%,
-    rgba(40, 40, 40, 0.5) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.1),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.on-air-inactive .on-air-text {
-  color: rgba(150, 150, 150, 0.8);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
-}
-
-.on-air-inactive .on-air-highlight,
-.on-air-inactive .on-air-reflection {
-  opacity: 0.3;
-}
-
-/* Active state - Glowing red glass bead */
-.on-air-active {
-  /* Multi-layer gradient for glass depth */
-  background: linear-gradient(
-    180deg,
-    rgba(255, 120, 120, 0.85) 0%,
-    rgba(220, 38, 38, 0.9) 25%,
-    rgba(185, 28, 28, 0.95) 50%,
-    rgba(153, 27, 27, 0.98) 75%,
-    rgba(127, 29, 29, 1) 100%
-  );
-
-  /* 3D border - lighter top, darker bottom */
-  border: 1px solid transparent;
-  border-top-color: rgba(255, 180, 180, 0.5);
-  border-left-color: rgba(255, 150, 150, 0.3);
-  border-right-color: rgba(100, 20, 20, 0.4);
-  border-bottom-color: rgba(80, 15, 15, 0.6);
-
-  /* Complex shadow for depth and glow */
-  box-shadow:
-    /* Inner top highlight - light refraction */
-    inset 0 2px 4px rgba(255, 200, 200, 0.4),
-    /* Inner side highlights */
-    inset 2px 0 3px rgba(255, 150, 150, 0.2),
-    inset -2px 0 3px rgba(255, 150, 150, 0.2),
-    /* Inner bottom shadow - depth */
-    inset 0 -3px 6px rgba(100, 0, 0, 0.4),
-    /* Outer glow */
-    0 0 20px rgba(220, 38, 38, 0.5),
-    0 0 40px rgba(220, 38, 38, 0.3),
-    /* Bottom shadow for 3D lift */
-    0 4px 8px rgba(0, 0, 0, 0.4),
-    0 2px 4px rgba(100, 0, 0, 0.3);
-
-  animation: glass-glow 2.5s ease-in-out infinite;
-}
-
-.on-air-active .on-air-text {
-  position: relative;
-  z-index: 2;
+/* ON AIR badge with smooth pulse animation */
+.on-air-badge-active {
+  background-color: #dc2626;
   color: white;
-  text-shadow:
-    0 0 10px rgba(255, 255, 255, 0.8),
-    0 0 20px rgba(255, 200, 200, 0.6),
-    0 1px 2px rgba(0, 0, 0, 0.3);
+  animation: on-air-pulse 2s ease-in-out infinite;
 }
 
-/* Top glossy highlight - like light hitting glass */
-.on-air-highlight {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.15) 40%,
-    transparent 100%
-  );
-  border-radius: 7px 7px 50% 50%;
-  pointer-events: none;
-}
-
-/* Small reflection spot - like on a candy */
-.on-air-reflection {
-  position: absolute;
-  top: 4px;
-  left: 12px;
-  width: 8px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 50%;
-  filter: blur(1px);
-  pointer-events: none;
-}
-
-/* Subtle pulsing glow animation */
-@keyframes glass-glow {
+@keyframes on-air-pulse {
   0%, 100% {
-    box-shadow:
-      inset 0 2px 4px rgba(255, 200, 200, 0.4),
-      inset 2px 0 3px rgba(255, 150, 150, 0.2),
-      inset -2px 0 3px rgba(255, 150, 150, 0.2),
-      inset 0 -3px 6px rgba(100, 0, 0, 0.4),
-      0 0 20px rgba(220, 38, 38, 0.5),
-      0 0 40px rgba(220, 38, 38, 0.3),
-      0 4px 8px rgba(0, 0, 0, 0.4),
-      0 2px 4px rgba(100, 0, 0, 0.3);
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
   }
   50% {
-    box-shadow:
-      inset 0 2px 4px rgba(255, 200, 200, 0.5),
-      inset 2px 0 3px rgba(255, 150, 150, 0.25),
-      inset -2px 0 3px rgba(255, 150, 150, 0.25),
-      inset 0 -3px 6px rgba(100, 0, 0, 0.35),
-      0 0 30px rgba(220, 38, 38, 0.6),
-      0 0 60px rgba(220, 38, 38, 0.35),
-      0 4px 10px rgba(0, 0, 0, 0.45),
-      0 2px 4px rgba(100, 0, 0, 0.35);
-  }
-}
-
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .on-air-active {
-    animation: none;
+    opacity: 0.7;
+    box-shadow: 0 0 16px rgba(220, 38, 38, 0.9);
   }
 }
 
