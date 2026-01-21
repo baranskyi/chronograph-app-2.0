@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, GripVertical } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3 } from 'lucide-vue-next'
 
 interface Timer {
   id: string
@@ -254,11 +254,15 @@ async function handleSignOut() {
   router.push('/')
 }
 
-function formatTimer(seconds: number): string {
+function formatTime(seconds: number): string {
   const mins = Math.floor(Math.abs(seconds) / 60)
   const secs = Math.abs(seconds) % 60
   const sign = seconds < 0 ? '-' : ''
   return `${sign}${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+function formatTimerDisplay(timer: Timer): string {
+  return `${formatTime(timer.remaining_seconds)} / ${formatTime(timer.duration)}`
 }
 
 function getTimerProgress(timer: Timer): number {
@@ -378,39 +382,35 @@ function hasRunningTimer(room: Room): boolean {
             </div>
 
             <!-- CENTER: Timer Bars -->
-            <div class="flex-1 flex flex-col" style="gap: 8px;">
+            <div class="flex flex-col" style="gap: 4px; max-width: 400px;">
               <div
                 v-for="timer in room.timers"
                 :key="timer.id"
-                class="relative flex items-center rounded-lg overflow-hidden"
+                class="relative flex items-center rounded overflow-hidden"
                 :class="isTimerSelected(room, timer) ? 'bg-blue-600' : 'bg-[#1a1a1a]'"
-                style="height: 40px;"
+                style="height: 24px;"
               >
-                <!-- Progress overlay -->
+                <!-- Progress overlay for running timers -->
                 <div
-                  v-if="isTimerSelected(room, timer)"
-                  class="absolute inset-0 bg-blue-500 transition-all duration-200 pointer-events-none"
+                  v-if="timer.status === 'running'"
+                  class="absolute inset-0 transition-all duration-200 pointer-events-none"
+                  :class="isTimerSelected(room, timer) ? 'bg-blue-500' : 'bg-blue-600/50'"
                   :style="{ width: getTimerProgress(timer) + '%' }"
                 ></div>
 
-                <!-- Drag dots (visual only) -->
-                <div class="relative z-10 text-gray-400" style="padding: 0 8px;">
-                  <GripVertical class="w-4 h-4 opacity-50" />
-                </div>
-
                 <!-- Timer Name -->
-                <div class="relative z-10 text-sm font-medium flex-1 truncate">
+                <div class="relative z-10 text-xs font-medium flex-1 truncate" style="padding-left: 8px;">
                   {{ timer.name }}
                 </div>
 
-                <!-- Time -->
-                <div class="relative z-10 text-sm font-mono font-bold text-gray-300" style="padding-right: 12px;">
-                  {{ formatTimer(timer.remaining_seconds) }}
+                <!-- Time: current / total -->
+                <div class="relative z-10 text-xs font-mono text-gray-300" style="padding-right: 8px;">
+                  {{ formatTimerDisplay(timer) }}
                 </div>
               </div>
 
               <!-- No timers message -->
-              <div v-if="room.timers.length === 0" class="text-gray-500 text-sm italic" style="padding: 8px 0;">
+              <div v-if="room.timers.length === 0" class="text-gray-500 text-xs italic">
                 No timers
               </div>
             </div>
