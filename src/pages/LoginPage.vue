@@ -21,12 +21,11 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationId: number | null = null
 let ctx: CanvasRenderingContext2D | null = null
 
-// Wave parameters
-const WAVE_FREQUENCY = 0.3 // Very slow waves
-const GRID_COLS = 200 // Dense grid - lots of tiny dots
-const GRID_ROWS = 100
-const DOT_COLOR = { r: 180, g: 60, b: 60 } // Reddish color
-const MAX_DISTORTIONS = 3 // 2-3 active distortions at once
+// Wave parameters - original design with 10x more dots, 2x smaller
+const WAVE_FREQUENCY = 3 // 3 Hz - original
+const GRID_COLS = 250 // 10x more dots (was 80)
+const GRID_ROWS = 130
+const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent - original
 
 interface Distortion {
   x: number
@@ -75,14 +74,13 @@ function drawFrame(time: number) {
   // Time in seconds
   const t = time / 1000
 
-  // Maintain 2-3 active distortions (bioluminescence effect)
-  const activeDistortions = distortions.filter(d => d.intensity > 0.05).length
-  if (activeDistortions < MAX_DISTORTIONS && time - lastDistortionTime > 1500 + Math.random() * 2000) {
+  // Maybe add new distortion - original timing
+  if (time - lastDistortionTime > 2000 + Math.random() * 3000) {
     distortions.push({
       x: Math.random() * GRID_COLS,
-      y: 0.2 * GRID_ROWS + Math.random() * 0.6 * GRID_ROWS, // Middle area
-      intensity: 1.0,
-      decay: 0.992, // Slow decay for visible glow
+      y: Math.random() * GRID_ROWS,
+      intensity: 0.8 + Math.random() * 0.4,
+      decay: 0.97,
       time: time
     })
     lastDistortionTime = time
@@ -94,109 +92,79 @@ function drawFrame(time: number) {
     return d.intensity > 0.01
   })
 
-  // Draw dots with perspective and waves
-  // Extended bounds to go beyond viewport
-  const extendX = 0.4 // 40% extension on each side
-  const extendY = 0.3 // 30% extension top/bottom
-
+  // Draw dots with perspective and waves - ORIGINAL DESIGN
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
-      // Normalize positions with extension beyond viewport
-      const nx = -extendX + (col / GRID_COLS) * (1 + extendX * 2)
-      const ny = -extendY + (row / GRID_ROWS) * (1 + extendY * 2)
+      // Normalize positions
+      const nx = col / GRID_COLS
+      const ny = row / GRID_ROWS
 
-      // Perspective transformation (panoramic ocean view)
-      const perspectiveScale = 0.15 + Math.max(0, ny + extendY) * 0.85
-      const perspectiveY = height * (-0.15) + Math.pow(Math.max(0, ny + extendY), 1.6) * height * 1.3
-      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale * 1.8
+      // Perspective transformation (looking at ocean from above at angle)
+      const perspectiveScale = 0.3 + ny * 0.7
+      const perspectiveY = height * 0.2 + ny * ny * height * 0.8
+      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale
 
-      // Wave calculation (very slow, gentle ocean waves)
-      const wavePhase = nx * 4 + ny * 2
-      const wave1 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.05 + wavePhase) * 0.5
-      const wave2 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.03 + wavePhase * 0.7) * 0.3
-      const wave3 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.02 + wavePhase * 1.3) * 0.2
-      const baseWaveHeight = (wave1 + wave2 + wave3) * cellHeight * perspectiveScale * 0.8
+      // Wave calculation (3 Hz frequency) - original
+      const wavePhase = nx * 8 + ny * 4
+      const wave1 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.3 + wavePhase) * 0.5
+      const wave2 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.2 + wavePhase * 0.7) * 0.3
+      const wave3 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.15 + wavePhase * 1.3) * 0.2
+      const waveHeight = (wave1 + wave2 + wave3) * cellHeight * perspectiveScale * 2
 
-      // Apply distortions - bioluminescence effect
+      // Apply distortions - original
       let distortionOffset = 0
       let distortionGlow = 0
       for (const d of distortions) {
         const dx = col - d.x
         const dy = row - d.y
         const dist = Math.sqrt(dx * dx + dy * dy)
+        const distEffect = Math.exp(-dist * dist / 20) * d.intensity
 
-        // Central glow (like bioluminescent creature)
-        const centerGlow = Math.exp(-dist * dist / 150) * d.intensity
-
-        // Ripple wave spreading outward
-        const timeSinceStart = time - d.time
-        const waveRadius = timeSinceStart * 0.015 // Spreading wave
-        const ringWidth = 8 + timeSinceStart * 0.005
-        const ringEffect = Math.exp(-Math.pow(dist - waveRadius, 2) / ringWidth) * d.intensity * 0.7
-
-        // Vertical displacement - larger amplitude (bioluminescence pulse upward)
-        const verticalPulse = (centerGlow + ringEffect) * 120 * Math.max(0.3, d.intensity)
-        distortionOffset += verticalPulse
-
-        // Glow intensity for color
-        distortionGlow += centerGlow * 1.2 + ringEffect * 0.8
+        // Electric shock wave effect - original
+        const shockWave = Math.sin(dist * 2 - (time - d.time) * 0.02) * distEffect * 15
+        distortionOffset += shockWave
+        distortionGlow += distEffect
       }
 
       // Final position
       const x = perspectiveX
-      const y = perspectiveY + baseWaveHeight - distortionOffset // Subtract to move UP
+      const y = perspectiveY + waveHeight + distortionOffset
 
-      // Skip if outside viewport with margin
-      if (x < -30 || x > width + 30 || y < -50 || y > height + 50) continue
+      // Depth of field effect - original
+      const depthFactor = ny
+      const focusZone = 0.5
+      const depthBlur = Math.abs(depthFactor - focusZone) * 2
 
-      // Depth of field effect
-      const depthFactor = Math.max(0, Math.min(1, (ny + extendY) / (1 + extendY)))
-      const focusZone = 0.45
-      const depthBlur = Math.abs(depthFactor - focusZone) * 1.2
+      // Base opacity with depth fade - original
+      const farFade = Math.pow(depthFactor, 0.5)
+      const nearFade = 1 - Math.pow(Math.max(0, depthFactor - 0.85) * 6.67, 2)
+      const baseOpacity = farFade * nearFade * (0.15 + wave1 * 0.05)
 
-      // Height-based brightness: higher = brighter (bioluminescence)
-      const heightBrightness = Math.max(0, distortionOffset / 60) // More height = more glow
+      // Add distortion glow
+      const finalOpacity = Math.min(1, baseOpacity + distortionGlow * 0.5)
 
-      // Base opacity with depth fade
-      const farFade = Math.pow(depthFactor, 0.6)
-      const nearFade = 1 - Math.pow(Math.max(0, depthFactor - 0.92) * 12, 2)
-      const baseOpacity = farFade * nearFade * 0.15
+      // Dot size - HALF of original (was 1 + perspectiveScale * 2.5)
+      const baseSize = 0.5 + perspectiveScale * 1.25
+      const waveSize = 1 + (wave1 + 1) * 0.2
+      const distortionSize = 1 + distortionGlow * 2
+      const size = baseSize * waveSize * distortionSize * (1 - depthBlur * 0.3)
 
-      // Final opacity: base + glow + height brightness
-      const glowOpacity = distortionGlow * 0.6 + heightBrightness * 0.4
-      const finalOpacity = Math.min(1, baseOpacity + glowOpacity)
-
-      // Dot size - tiny dots
-      const baseSize = 0.2 + perspectiveScale * 0.4 // Very small
-      const distortionSize = 1 + distortionGlow * 0.8 + heightBrightness * 0.5
-      const size = baseSize * distortionSize * (1 - depthBlur * 0.15)
-
-      // Color - reddish with bright glow on distortion
-      // Higher points are brighter and more saturated
-      const glowIntensity = distortionGlow + heightBrightness
-      const r = Math.min(255, DOT_COLOR.r + glowIntensity * 120)
-      const g = Math.min(255, DOT_COLOR.g + glowIntensity * 60)
-      const b = Math.min(255, DOT_COLOR.b + glowIntensity * 40)
+      // Color with distortion highlight - original
+      const r = DOT_COLOR.r
+      const g = DOT_COLOR.g + distortionGlow * 100
+      const b = DOT_COLOR.b + distortionGlow * 150
 
       // Draw dot
       ctx.beginPath()
-      ctx.arc(x, y, Math.max(0.2, size), 0, Math.PI * 2)
+      ctx.arc(x, y, Math.max(0.25, size), 0, Math.PI * 2)
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
       ctx.fill()
 
-      // Add glow halo for bright distorted points
-      if (glowIntensity > 0.2) {
+      // Add glow for distorted points - original
+      if (distortionGlow > 0.1) {
         ctx.beginPath()
-        ctx.arc(x, y, size * 5, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${r}, ${g * 0.8}, ${b * 0.6}, ${glowIntensity * 0.1})`
-        ctx.fill()
-      }
-
-      // Extra bright core for very high points
-      if (heightBrightness > 0.5) {
-        ctx.beginPath()
-        ctx.arc(x, y, size * 0.6, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255, ${180 + heightBrightness * 50}, ${150 + heightBrightness * 50}, ${Math.min(1, heightBrightness * 0.8)})`
+        ctx.arc(x, y, size * 3, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r}, ${g + 50}, ${b + 100}, ${distortionGlow * 0.15})`
         ctx.fill()
       }
     }
