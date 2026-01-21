@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Trash2, LogOut } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, Timer, Globe, Calendar } from 'lucide-vue-next'
+
+interface ActiveTimer {
+  id: string
+  name: string
+  status: string
+  remaining_seconds: number
+}
 
 interface Room {
   id: string
@@ -11,7 +18,9 @@ interface Room {
   name: string
   created_at: string
   last_used_at: string
-  timer_count?: number
+  timer_count: number
+  active_timer: ActiveTimer | null
+  timezone: string
 }
 
 const router = useRouter()
@@ -22,24 +31,37 @@ const loading = ref(true)
 const creating = ref(false)
 const error = ref<string | null>(null)
 
+// Editing state
+const editingRoomId = ref<string | null>(null)
+const editingName = ref('')
+
+// Menu state
+const openMenuId = ref<string | null>(null)
+
+// Get user's timezone
+const userTimezone = computed(() => Intl.DateTimeFormat().resolvedOptions().timeZone)
+
 onMounted(async () => {
   await loadRooms()
+  // Close menu on outside click
+  document.addEventListener('click', closeMenu)
 })
+
+function closeMenu() {
+  openMenuId.value = null
+}
 
 async function loadRooms() {
   loading.value = true
   error.value = null
 
   try {
-    // Get only rooms owned by current user
-    console.log('loadRooms: userId =', authStore.userId)
-
     if (!authStore.userId) {
       error.value = 'Not authenticated'
-      console.log('loadRooms: Not authenticated, userId is null/undefined')
       return
     }
 
+    // Get rooms with active timer info
     const { data, error: fetchError } = await supabase
       .from('rooms')
       .select(`
@@ -48,26 +70,37 @@ async function loadRooms() {
         name,
         created_at,
         last_used_at,
-        timers!timers_room_id_fkey(count)
+        active_timer_id,
+        timers!timers_room_id_fkey(id, name, status, remaining_seconds)
       `)
       .eq('user_id', authStore.userId)
       .eq('is_active', true)
       .order('last_used_at', { ascending: false, nullsFirst: false })
 
-    console.log('loadRooms: query result =', { data, error: fetchError })
-
     if (fetchError) throw fetchError
 
-    rooms.value = (data || []).map((room: any) => ({
-      id: room.id,
-      room_code: room.room_code,
-      name: room.name,
-      created_at: room.created_at,
-      last_used_at: room.last_used_at,
-      timer_count: Array.isArray(room.timers) ? room.timers.length : room.timers?.count || 0
-    }))
+    rooms.value = (data || []).map((room: any) => {
+      const timers = Array.isArray(room.timers) ? room.timers : []
+      const activeTimer = room.active_timer_id
+        ? timers.find((t: any) => t.id === room.active_timer_id)
+        : timers[0] || null
 
-    console.log('loadRooms: mapped rooms =', rooms.value.length, 'rooms')
+      return {
+        id: room.id,
+        room_code: room.room_code,
+        name: room.name,
+        created_at: room.created_at,
+        last_used_at: room.last_used_at,
+        timer_count: timers.length,
+        active_timer: activeTimer ? {
+          id: activeTimer.id,
+          name: activeTimer.name,
+          status: activeTimer.status,
+          remaining_seconds: activeTimer.remaining_seconds
+        } : null,
+        timezone: userTimezone.value
+      }
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load rooms'
     console.error('Error loading rooms:', err)
@@ -81,7 +114,6 @@ async function createRoom() {
   error.value = null
 
   try {
-    // Generate room code
     const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
     let roomCode = ''
     for (let i = 0; i < 8; i++) {
@@ -108,10 +140,25 @@ async function createRoom() {
         room_id: data.id,
         name: 'Timer 1',
         duration: 300,
-        position: 0
+        remaining_seconds: 300,
+        position: 0,
+        is_on_air: true
       })
 
-    // Navigate to the new room
+    // Update room's active_timer_id
+    const { data: timerData } = await supabase
+      .from('timers')
+      .select('id')
+      .eq('room_id', data.id)
+      .single()
+
+    if (timerData) {
+      await supabase
+        .from('rooms')
+        .update({ active_timer_id: timerData.id })
+        .eq('id', data.id)
+    }
+
     router.push(`/room/${data.room_code}`)
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to create room'
@@ -123,8 +170,9 @@ async function createRoom() {
 
 async function deleteRoom(roomId: string, event: Event) {
   event.stopPropagation()
+  openMenuId.value = null
 
-  if (!confirm('Are you sure you want to delete this room?')) return
+  if (!confirm('Are you sure you want to delete this room? This action cannot be undone.')) return
 
   try {
     const { error: deleteError } = await supabase
@@ -140,6 +188,47 @@ async function deleteRoom(roomId: string, event: Event) {
   }
 }
 
+function startEditing(room: Room, event: Event) {
+  event.stopPropagation()
+  openMenuId.value = null
+  editingRoomId.value = room.id
+  editingName.value = room.name
+}
+
+async function saveRoomName(roomId: string) {
+  if (!editingName.value.trim()) {
+    editingRoomId.value = null
+    return
+  }
+
+  try {
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({ name: editingName.value.trim() })
+      .eq('id', roomId)
+
+    if (updateError) throw updateError
+
+    const room = rooms.value.find(r => r.id === roomId)
+    if (room) {
+      room.name = editingName.value.trim()
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to rename room'
+  } finally {
+    editingRoomId.value = null
+  }
+}
+
+function cancelEditing() {
+  editingRoomId.value = null
+}
+
+function toggleMenu(roomId: string, event: Event) {
+  event.stopPropagation()
+  openMenuId.value = openMenuId.value === roomId ? null : roomId
+}
+
 function openRoom(roomCode: string) {
   router.push(`/room/${roomCode}`)
 }
@@ -150,13 +239,37 @@ async function handleSignOut() {
 }
 
 function formatDate(dateStr: string): string {
+  if (!dateStr) return 'Never'
   const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+
   return date.toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: 'numeric'
   })
+}
+
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+function getStatusColor(status: string): string {
+  switch (status) {
+    case 'running': return 'text-green-400'
+    case 'paused': return 'text-yellow-400'
+    default: return 'text-gray-400'
+  }
 }
 </script>
 
@@ -164,29 +277,32 @@ function formatDate(dateStr: string): string {
   <div class="min-h-screen bg-[#0a0a0f] text-white">
     <!-- Header -->
     <header class="border-b border-[#2a2a2a] bg-[#0f0f0f]">
-      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <h1 class="text-xl font-bold">Chronograph</h1>
         <div class="flex items-center gap-4">
-          <span class="text-gray-400 text-sm">{{ authStore.userEmail }}</span>
+          <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
           <button
             class="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
             @click="handleSignOut"
           >
             <LogOut class="w-4 h-4" />
-            <span class="text-sm">Sign out</span>
+            <span class="text-sm hidden sm:inline">Sign out</span>
           </button>
         </div>
       </div>
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-4 py-8">
+    <main class="max-w-7xl mx-auto px-6 py-8">
       <!-- Page Title -->
       <div class="flex items-center justify-between mb-8">
-        <h2 class="text-2xl font-semibold">My Rooms</h2>
+        <div>
+          <h2 class="text-2xl font-semibold mb-1">My Rooms</h2>
+          <p class="text-gray-500 text-sm">Manage your timer rooms</p>
+        </div>
         <button
           :disabled="creating"
-          class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 rounded-lg transition-colors"
+          class="flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-600/50 rounded-lg transition-colors font-medium"
           @click="createRoom"
         >
           <Plus class="w-5 h-5" />
@@ -200,20 +316,25 @@ function formatDate(dateStr: string): string {
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="flex items-center justify-center py-16">
-        <div class="text-gray-400">Loading rooms...</div>
+      <div v-if="loading" class="flex items-center justify-center py-20">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-8 h-8 border-2 border-gray-600 border-t-rose-500 rounded-full animate-spin"></div>
+          <span class="text-gray-400">Loading rooms...</span>
+        </div>
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="rooms.length === 0" class="flex flex-col items-center justify-center py-16">
-        <div class="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-4">
-          <Clock class="w-8 h-8 text-gray-500" />
+      <div v-else-if="rooms.length === 0" class="flex flex-col items-center justify-center py-20">
+        <div class="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-5 border border-[#2a2a2a]">
+          <Clock class="w-10 h-10 text-gray-600" />
         </div>
-        <h3 class="text-lg font-medium text-gray-300 mb-2">No rooms yet</h3>
-        <p class="text-gray-500 mb-6">Create your first room to get started</p>
+        <h3 class="text-xl font-medium text-gray-300 mb-2">No rooms yet</h3>
+        <p class="text-gray-500 mb-6 text-center max-w-md">
+          Create your first room to start managing timers for your events, presentations, or meetings.
+        </p>
         <button
           :disabled="creating"
-          class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          class="flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors font-medium"
           @click="createRoom"
         >
           <Plus class="w-5 h-5" />
@@ -222,33 +343,104 @@ function formatDate(dateStr: string): string {
       </div>
 
       <!-- Rooms Grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         <div
           v-for="room in rooms"
           :key="room.id"
-          class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5 cursor-pointer hover:border-[#3a3a3a] transition-colors group"
+          class="bg-[#151518] border border-[#2a2a2a] rounded-xl overflow-hidden cursor-pointer hover:border-[#3a3a3a] hover:bg-[#1a1a1f] transition-all group"
           @click="openRoom(room.room_code)"
         >
-          <div class="flex items-start justify-between mb-3">
-            <h3 class="font-medium text-lg">{{ room.name }}</h3>
-            <button
-              class="p-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-              @click="deleteRoom(room.id, $event)"
-              title="Delete room"
-            >
-              <Trash2 class="w-4 h-4" />
-            </button>
+          <!-- Card Header -->
+          <div class="p-5 pb-4">
+            <!-- Top row: Name + Menu -->
+            <div class="flex items-start justify-between mb-3">
+              <!-- Room Name (editable) -->
+              <div class="flex-1 min-w-0 mr-2">
+                <input
+                  v-if="editingRoomId === room.id"
+                  v-model="editingName"
+                  type="text"
+                  class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded px-2 py-1 text-lg font-semibold focus:outline-none focus:border-rose-500"
+                  @click.stop
+                  @keydown.enter="saveRoomName(room.id)"
+                  @keydown.escape="cancelEditing"
+                  @blur="saveRoomName(room.id)"
+                  autofocus
+                />
+                <h3 v-else class="font-semibold text-lg truncate">{{ room.name }}</h3>
+              </div>
+
+              <!-- Menu Button -->
+              <div class="relative">
+                <button
+                  class="p-1.5 text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded transition-colors"
+                  @click="toggleMenu(room.id, $event)"
+                >
+                  <MoreVertical class="w-4 h-4" />
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div
+                  v-if="openMenuId === room.id"
+                  class="absolute right-0 top-8 w-36 bg-[#1a1a1f] border border-[#2a2a2a] rounded-lg shadow-xl z-10 py-1"
+                >
+                  <button
+                    class="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-[#2a2a2a] flex items-center gap-2"
+                    @click="startEditing(room, $event)"
+                  >
+                    <Edit3 class="w-4 h-4" />
+                    Rename
+                  </button>
+                  <button
+                    class="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2"
+                    @click="deleteRoom(room.id, $event)"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Room Code -->
+            <div class="text-xs font-mono text-gray-500 mb-4">{{ room.room_code }}</div>
+
+            <!-- Active Timer -->
+            <div class="mb-4">
+              <div v-if="room.active_timer" class="flex items-center gap-2">
+                <Timer class="w-4 h-4 text-rose-400" />
+                <span class="text-sm font-medium">{{ room.active_timer.name }}</span>
+                <span :class="['text-xs px-1.5 py-0.5 rounded', getStatusColor(room.active_timer.status)]">
+                  {{ formatTime(room.active_timer.remaining_seconds) }}
+                </span>
+              </div>
+              <div v-else class="flex items-center gap-2 text-gray-500">
+                <Timer class="w-4 h-4" />
+                <span class="text-sm italic">No active timers</span>
+              </div>
+            </div>
           </div>
 
-          <div class="text-sm font-mono text-gray-400 mb-4">{{ room.room_code }}</div>
+          <!-- Card Footer -->
+          <div class="px-5 py-3 bg-[#0f0f12] border-t border-[#2a2a2a] flex items-center justify-between text-xs text-gray-500">
+            <div class="flex items-center gap-3">
+              <!-- Timer count -->
+              <div class="flex items-center gap-1" :title="`${room.timer_count} timer${room.timer_count !== 1 ? 's' : ''}`">
+                <Clock class="w-3.5 h-3.5" />
+                <span>{{ room.timer_count }}</span>
+              </div>
 
-          <div class="flex items-center gap-4 text-sm text-gray-500">
-            <div class="flex items-center gap-1">
-              <Clock class="w-4 h-4" />
-              <span>{{ room.timer_count || 0 }} timers</span>
+              <!-- Timezone -->
+              <div class="flex items-center gap-1" :title="room.timezone">
+                <Globe class="w-3.5 h-3.5" />
+                <span class="max-w-[80px] truncate">{{ room.timezone.split('/').pop() }}</span>
+              </div>
             </div>
-            <div class="flex items-center gap-1">
-              <span>Last used {{ formatDate(room.last_used_at) }}</span>
+
+            <!-- Last used -->
+            <div class="flex items-center gap-1" :title="room.last_used_at ? new Date(room.last_used_at).toLocaleString() : 'Never'">
+              <Calendar class="w-3.5 h-3.5" />
+              <span>{{ formatDate(room.last_used_at) }}</span>
             </div>
           </div>
         </div>
