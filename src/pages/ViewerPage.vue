@@ -167,14 +167,13 @@ function handleKeydown(e: KeyboardEvent) {
       <ConnectionStatus v-if="!isFullscreen" />
 
 
-      <!-- Room/Timer badge -->
+      <!-- Branding -->
       <div
         v-if="!isFullscreen"
-        class="fixed top-4 left-4 text-xs text-gray-400 bg-[#1a1a1a]/80 px-3 py-1.5 rounded-full z-10 flex items-center gap-2"
+        class="fixed top-4 left-4 z-10 flex items-center gap-2"
       >
-        <span>{{ roomId }}</span>
-        <span v-if="displayTimer" class="text-gray-500">|</span>
-        <span v-if="displayTimer">{{ timerName }}</span>
+        <span class="logo-pulse"></span>
+        <span class="text-xl font-bold text-white">Chronograph <span class="text-red-500">Pro</span></span>
       </div>
 
       <!-- No timer to display -->
@@ -353,5 +352,26 @@ function handleKeydown(e: KeyboardEvent) {
   81% { background-color: rgba(239, 68, 68, 0.3); }
   96% { background-color: transparent; }
   100% { background-color: transparent; }
+}
+
+/* Logo pulse - bright red circle */
+.logo-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
 }
 </style>
