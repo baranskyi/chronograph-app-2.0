@@ -790,8 +790,8 @@ const colorClass = (id: string) => {
               <!-- Spacer -->
               <div class="relative z-10 flex-1" />
 
-              <!-- Duration -->
-              <div class="relative z-10 text-lg font-mono font-bold mr-3" :class="colorClass(timer.id)">
+              <!-- Duration - 2x larger, more spacing from buttons -->
+              <div class="relative z-10 text-3xl font-mono font-bold mr-8" :class="colorClass(timer.id)">
                 {{ formatDuration(timer.remainingSeconds) }}
               </div>
 
