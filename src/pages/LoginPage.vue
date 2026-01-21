@@ -21,11 +21,11 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationId: number | null = null
 let ctx: CanvasRenderingContext2D | null = null
 
-// Wave parameters - original design with 10x more dots, 2x smaller
-const WAVE_FREQUENCY = 3 // 3 Hz - original
-const GRID_COLS = 250 // 10x more dots (was 80)
-const GRID_ROWS = 130
-const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent - original
+// Wave parameters - 5x slower (slow motion effect)
+const WAVE_FREQUENCY = 0.6 // 5x slower (was 3 Hz)
+const GRID_COLS = 300 // Extended grid for full screen coverage
+const GRID_ROWS = 160
+const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
 
 interface Distortion {
   x: number
@@ -74,13 +74,13 @@ function drawFrame(time: number) {
   // Time in seconds
   const t = time / 1000
 
-  // Maybe add new distortion - original timing
-  if (time - lastDistortionTime > 2000 + Math.random() * 3000) {
+  // Maybe add new distortion - 5x slower timing
+  if (time - lastDistortionTime > 10000 + Math.random() * 15000) {
     distortions.push({
       x: Math.random() * GRID_COLS,
       y: Math.random() * GRID_ROWS,
       intensity: 0.8 + Math.random() * 0.4,
-      decay: 0.97,
+      decay: 0.994, // 5x slower decay
       time: time
     })
     lastDistortionTime = time
@@ -92,26 +92,30 @@ function drawFrame(time: number) {
     return d.intensity > 0.01
   })
 
-  // Draw dots with perspective and waves - ORIGINAL DESIGN
+  // Draw dots with perspective and waves - FULL SCREEN, SLOW MOTION
+  // Extended bounds to cover entire viewport and beyond
+  const extendX = 0.3 // 30% extension on each side
+  const extendY = 0.2 // 20% extension top/bottom
+
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
-      // Normalize positions
-      const nx = col / GRID_COLS
-      const ny = row / GRID_ROWS
+      // Normalize positions with extension beyond viewport
+      const nx = -extendX + (col / GRID_COLS) * (1 + extendX * 2)
+      const ny = -extendY + (row / GRID_ROWS) * (1 + extendY * 2)
 
-      // Perspective transformation (looking at ocean from above at angle)
-      const perspectiveScale = 0.3 + ny * 0.7
-      const perspectiveY = height * 0.2 + ny * ny * height * 0.8
-      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale
+      // Perspective transformation - extended to fill screen
+      const perspectiveScale = 0.2 + Math.max(0, ny + extendY) * 0.8
+      const perspectiveY = height * (-0.1) + Math.pow(Math.max(0, ny + extendY), 1.5) * height * 1.2
+      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale * 1.4
 
-      // Wave calculation (3 Hz frequency) - original
+      // Wave calculation - 5x slower
       const wavePhase = nx * 8 + ny * 4
       const wave1 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.3 + wavePhase) * 0.5
       const wave2 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.2 + wavePhase * 0.7) * 0.3
       const wave3 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.15 + wavePhase * 1.3) * 0.2
       const waveHeight = (wave1 + wave2 + wave3) * cellHeight * perspectiveScale * 2
 
-      // Apply distortions - original
+      // Apply distortions - 5x slower propagation
       let distortionOffset = 0
       let distortionGlow = 0
       for (const d of distortions) {
@@ -120,8 +124,8 @@ function drawFrame(time: number) {
         const dist = Math.sqrt(dx * dx + dy * dy)
         const distEffect = Math.exp(-dist * dist / 20) * d.intensity
 
-        // Electric shock wave effect - original
-        const shockWave = Math.sin(dist * 2 - (time - d.time) * 0.02) * distEffect * 15
+        // Electric shock wave effect - 5x slower (0.004 instead of 0.02)
+        const shockWave = Math.sin(dist * 2 - (time - d.time) * 0.004) * distEffect * 15
         distortionOffset += shockWave
         distortionGlow += distEffect
       }
@@ -130,12 +134,15 @@ function drawFrame(time: number) {
       const x = perspectiveX
       const y = perspectiveY + waveHeight + distortionOffset
 
-      // Depth of field effect - original
-      const depthFactor = ny
+      // Skip if outside viewport with margin
+      if (x < -50 || x > width + 50 || y < -50 || y > height + 50) continue
+
+      // Depth of field effect
+      const depthFactor = Math.max(0, Math.min(1, (ny + extendY) / (1 + extendY)))
       const focusZone = 0.5
       const depthBlur = Math.abs(depthFactor - focusZone) * 2
 
-      // Base opacity with depth fade - original
+      // Base opacity with depth fade
       const farFade = Math.pow(depthFactor, 0.5)
       const nearFade = 1 - Math.pow(Math.max(0, depthFactor - 0.85) * 6.67, 2)
       const baseOpacity = farFade * nearFade * (0.15 + wave1 * 0.05)
@@ -143,13 +150,13 @@ function drawFrame(time: number) {
       // Add distortion glow
       const finalOpacity = Math.min(1, baseOpacity + distortionGlow * 0.5)
 
-      // Dot size - HALF of original (was 1 + perspectiveScale * 2.5)
+      // Dot size - small dots
       const baseSize = 0.5 + perspectiveScale * 1.25
       const waveSize = 1 + (wave1 + 1) * 0.2
       const distortionSize = 1 + distortionGlow * 2
       const size = baseSize * waveSize * distortionSize * (1 - depthBlur * 0.3)
 
-      // Color with distortion highlight - original
+      // Color with distortion highlight
       const r = DOT_COLOR.r
       const g = DOT_COLOR.g + distortionGlow * 100
       const b = DOT_COLOR.b + distortionGlow * 150
@@ -160,7 +167,7 @@ function drawFrame(time: number) {
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
       ctx.fill()
 
-      // Add glow for distorted points - original
+      // Add glow for distorted points
       if (distortionGlow > 0.1) {
         ctx.beginPath()
         ctx.arc(x, y, size * 3, 0, Math.PI * 2)
