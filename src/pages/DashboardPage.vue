@@ -318,7 +318,7 @@ const colorClass = (id: string) => {
       <!-- 3-Column Layout -->
       <div class="flex flex-1 overflow-hidden">
         <!-- LEFT: Preview Panel -->
-        <div class="w-[280px] bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
+        <div class="w-[280px] bg-[#1a1a1a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
           <!-- Timer Name - Large, left-aligned -->
           <h2 class="text-2xl font-bold text-gray-100 truncate" style="margin-bottom: 16px;">
             {{ timerStore.selectedTimer?.name || 'Timer' }}
@@ -545,7 +545,7 @@ const colorClass = (id: string) => {
         </div>
 
         <!-- RIGHT: Messages Panel -->
-        <div class="w-[280px] bg-[#1a1a1a] border-l border-[#2a2a2a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
+        <div class="w-[280px] bg-[#1a1a1a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
           <!-- Messages Header -->
           <div class="h-12 border-b border-[#2a2a2a] flex items-center mb-4">
             <span class="font-medium">Message to Speaker</span>
