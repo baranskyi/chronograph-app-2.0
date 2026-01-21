@@ -23,6 +23,19 @@ const redMinutes = ref(Math.floor(store.settings.redThreshold / 60))
 const redSeconds = ref(store.settings.redThreshold % 60)
 const currentMode = ref<TimerMode>(store.settings.mode)
 
+// Glow effect state
+const panelRef = ref<HTMLElement | null>(null)
+const glowX = ref(0)
+const glowY = ref(0)
+const isHovering = ref(false)
+
+function handlePanelMouseMove(e: MouseEvent) {
+  if (!panelRef.value) return
+  const rect = panelRef.value.getBoundingClientRect()
+  glowX.value = e.clientX - rect.left
+  glowY.value = e.clientY - rect.top
+}
+
 // Sync local state when dialog opens
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
@@ -184,12 +197,28 @@ function handleBackdropClick(e: MouseEvent) {
         @click="handleBackdropClick"
         @keydown.escape="closeDialog"
       >
-        <div class="settings-panel">
+        <div
+          ref="panelRef"
+          class="settings-panel"
+          @mousemove="handlePanelMouseMove"
+          @mouseenter="isHovering = true"
+          @mouseleave="isHovering = false"
+        >
+          <!-- Glow effect -->
+          <div
+            class="glow-effect"
+            :class="{ active: isHovering }"
+            :style="{
+              '--glow-x': glowX + 'px',
+              '--glow-y': glowY + 'px'
+            }"
+          ></div>
+
           <!-- Header -->
           <div class="settings-header">
             <h2 class="settings-title">Settings</h2>
             <button class="close-button" @click="closeDialog">
-              <X class="w-5 h-5" />
+              <X class="w-4 h-4" />
             </button>
           </div>
 
@@ -245,13 +274,13 @@ function handleBackdropClick(e: MouseEvent) {
               <div class="duration-picker">
                 <div class="time-column">
                   <button class="spin-button" @click="incrementMinutes('duration')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M18 15l-6-6-6 6"/>
                     </svg>
                   </button>
                   <div class="time-value">{{ durationMinutes.toString().padStart(2, '0') }}</div>
                   <button class="spin-button" @click="decrementMinutes('duration')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M6 9l6 6 6-6"/>
                     </svg>
                   </button>
@@ -260,13 +289,13 @@ function handleBackdropClick(e: MouseEvent) {
                 <span class="time-separator">:</span>
                 <div class="time-column">
                   <button class="spin-button" @click="incrementSeconds('duration')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M18 15l-6-6-6 6"/>
                     </svg>
                   </button>
                   <div class="time-value">{{ durationSeconds.toString().padStart(2, '0') }}</div>
                   <button class="spin-button" @click="decrementSeconds('duration')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M6 9l6 6 6-6"/>
                     </svg>
                   </button>
@@ -283,7 +312,7 @@ function handleBackdropClick(e: MouseEvent) {
                 <div class="threshold-row">
                   <div class="threshold-label">
                     <div class="threshold-dot yellow"></div>
-                    <span>Yellow warning</span>
+                    <span>Yellow</span>
                   </div>
                   <div class="threshold-controls">
                     <div class="mini-spinner">
@@ -304,7 +333,7 @@ function handleBackdropClick(e: MouseEvent) {
                 <div class="threshold-row">
                   <div class="threshold-label">
                     <div class="threshold-dot red"></div>
-                    <span>Red warning</span>
+                    <span>Red</span>
                   </div>
                   <div class="threshold-controls">
                     <div class="mini-spinner">
@@ -331,11 +360,11 @@ function handleBackdropClick(e: MouseEvent) {
                 <div class="option-row">
                   <div class="option-info">
                     <div class="option-icon purple">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
                       </svg>
                     </div>
-                    <span>Play sound when timer ends</span>
+                    <span>Sound on end</span>
                   </div>
                   <div
                     class="toggle-switch"
@@ -352,12 +381,12 @@ function handleBackdropClick(e: MouseEvent) {
                 <div v-if="currentMode === 'countdown'" class="option-row">
                   <div class="option-info">
                     <div class="option-icon orange">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="M12 6v6l4 2"/>
                       </svg>
                     </div>
-                    <span>Continue after zero (overtime)</span>
+                    <span>Overtime</span>
                   </div>
                   <div
                     class="toggle-switch"
@@ -368,29 +397,6 @@ function handleBackdropClick(e: MouseEvent) {
                       <div class="toggle-thumb"></div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Keyboard Shortcuts -->
-            <div class="settings-section shortcuts-section">
-              <label class="section-label">Shortcuts</label>
-              <div class="shortcuts-grid">
-                <div class="shortcut-item">
-                  <kbd>Space</kbd>
-                  <span>Play/Pause</span>
-                </div>
-                <div class="shortcut-item">
-                  <kbd>R</kbd>
-                  <span>Reset</span>
-                </div>
-                <div class="shortcut-item">
-                  <kbd>F</kbd>
-                  <span>Fullscreen</span>
-                </div>
-                <div class="shortcut-item">
-                  <kbd>Esc</kbd>
-                  <span>Close</span>
                 </div>
               </div>
             </div>
@@ -406,79 +412,105 @@ function handleBackdropClick(e: MouseEvent) {
 .settings-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  padding: 24px;
+  padding: 16px;
 }
 
-/* Panel */
+/* Panel - More transparent */
 .settings-panel {
+  position: relative;
   width: 100%;
-  max-width: 480px;
-  max-height: calc(100vh - 48px);
+  max-width: 360px;
+  max-height: calc(100vh - 32px);
   background: linear-gradient(
     180deg,
-    rgba(30, 32, 38, 0.92) 0%,
-    rgba(20, 22, 28, 0.95) 100%
+    rgba(20, 22, 28, 0.75) 0%,
+    rgba(15, 17, 22, 0.8) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
   overflow: hidden;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.5),
+    0 16px 48px rgba(0, 0, 0, 0.4),
     0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    inset 0 1px 1px rgba(255, 255, 255, 0.04);
 }
 
-/* Header */
+/* Glow effect */
+.glow-effect {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  background: radial-gradient(
+    400px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(239, 68, 68, 0.12),
+    transparent 40%
+  );
+  z-index: 0;
+}
+
+.glow-effect.active {
+  opacity: 1;
+}
+
+/* Header - Compact */
 .settings-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .settings-title {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: rgba(255, 255, 255, 0.95);
 }
 
 .close-button {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .close-button:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 
-/* Content */
+/* Content - Compact */
 .settings-content {
-  padding: 24px;
+  position: relative;
+  z-index: 1;
+  padding: 12px 16px 16px;
   overflow-y: auto;
-  max-height: calc(100vh - 150px);
+  max-height: calc(100vh - 100px);
 }
 
-/* Section */
+/* Section - Compact */
 .settings-section {
-  margin-bottom: 28px;
+  margin-bottom: 14px;
 }
 
 .settings-section:last-child {
@@ -487,122 +519,122 @@ function handleBackdropClick(e: MouseEvent) {
 
 .section-label {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-  margin-bottom: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 8px;
 }
 
-/* Mode Tabs */
+/* Mode Tabs - Compact */
 .mode-tabs {
   display: flex;
-  gap: 8px;
-  padding: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .mode-tab {
   flex: 1;
-  padding: 12px 16px;
-  font-size: 14px;
+  padding: 8px 10px;
+  font-size: 12px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   background: transparent;
   border: none;
-  border-radius: 10px;
+  border-radius: 7px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .mode-tab:hover {
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .mode-tab.active {
   color: white;
   background: linear-gradient(
     180deg,
-    rgba(239, 68, 68, 0.8) 0%,
-    rgba(220, 38, 38, 0.9) 100%
+    rgba(239, 68, 68, 0.75) 0%,
+    rgba(220, 38, 38, 0.85) 100%
   );
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
 }
 
-/* Presets Grid */
+/* Presets Grid - Compact */
 .presets-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 6px;
 }
 
 .preset-button {
-  padding: 14px;
-  font-size: 15px;
+  padding: 8px 6px;
+  font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .preset-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .preset-button.active {
   color: white;
   background: linear-gradient(
     180deg,
-    rgba(239, 68, 68, 0.7) 0%,
-    rgba(220, 38, 38, 0.8) 100%
+    rgba(239, 68, 68, 0.65) 0%,
+    rgba(220, 38, 38, 0.75) 100%
   );
-  border-color: rgba(239, 68, 68, 0.4);
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.2);
 }
 
-/* Duration Picker */
+/* Duration Picker - Compact */
 .duration-picker {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
 }
 
 .time-column {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .spin-button {
-  width: 40px;
-  height: 32px;
+  width: 28px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .spin-button:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 
@@ -611,163 +643,163 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .time-value {
-  font-size: 48px;
+  font-size: 32px;
   font-weight: 700;
   font-family: ui-monospace, monospace;
   color: white;
   line-height: 1;
-  min-width: 80px;
+  min-width: 52px;
   text-align: center;
 }
 
 .time-label {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  margin-top: 4px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 2px;
 }
 
 .time-separator {
-  font-size: 36px;
+  font-size: 24px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.3);
-  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.25);
+  margin-bottom: 16px;
 }
 
-/* Thresholds */
+/* Thresholds - Compact */
 .thresholds-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .threshold-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
 }
 
 .threshold-label {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .threshold-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
 
 .threshold-dot.yellow {
   background: #eab308;
-  box-shadow: 0 0 8px rgba(234, 179, 8, 0.5);
+  box-shadow: 0 0 6px rgba(234, 179, 8, 0.5);
 }
 
 .threshold-dot.red {
   background: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
 }
 
 .threshold-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .mini-spinner {
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .mini-spinner button {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .mini-spinner button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
 }
 
 .mini-spinner span {
-  min-width: 32px;
+  min-width: 24px;
   text-align: center;
-  font-size: 14px;
+  font-size: 12px;
   font-family: ui-monospace, monospace;
   color: white;
 }
 
 .mini-separator {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
 }
 
-/* Options */
+/* Options - Compact */
 .options-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .option-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
 }
 
 .option-info {
   display: flex;
   align-items: center;
-  gap: 14px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
+  gap: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .option-icon {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 7px;
 }
 
 .option-icon.purple {
-  background: rgba(168, 85, 247, 0.2);
+  background: rgba(168, 85, 247, 0.15);
   color: #a855f7;
 }
 
 .option-icon.orange {
-  background: rgba(249, 115, 22, 0.2);
+  background: rgba(249, 115, 22, 0.15);
   color: #f97316;
 }
 
-/* Toggle Switch */
+/* Toggle Switch - Compact */
 .toggle-switch {
-  width: 52px;
-  height: 28px;
+  width: 40px;
+  height: 22px;
   cursor: pointer;
 }
 
@@ -775,83 +807,52 @@ function handleBackdropClick(e: MouseEvent) {
   position: relative;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-thumb {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.95) 0%,
     rgba(255, 255, 255, 0.85) 100%
   );
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .toggle-switch.active .toggle-track {
   background: linear-gradient(
     180deg,
-    rgba(239, 68, 68, 0.8) 0%,
-    rgba(220, 38, 38, 0.9) 100%
+    rgba(239, 68, 68, 0.75) 0%,
+    rgba(220, 38, 38, 0.85) 100%
   );
-  border-color: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.25);
   box-shadow:
-    inset 0 1px 3px rgba(0, 0, 0, 0.1),
-    0 0 12px rgba(239, 68, 68, 0.3);
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),
+    0 0 10px rgba(239, 68, 68, 0.25);
 }
 
 .toggle-switch.active .toggle-thumb {
-  left: 26px;
-}
-
-/* Shortcuts */
-.shortcuts-section {
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.shortcuts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.shortcut-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.shortcut-item kbd {
-  padding: 6px 10px;
-  font-size: 12px;
-  font-family: ui-monospace, monospace;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  left: 20px;
 }
 
 /* Modal Animation */
 .settings-modal-enter-active {
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .settings-modal-leave-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .settings-modal-enter-from,
@@ -861,13 +862,13 @@ function handleBackdropClick(e: MouseEvent) {
 
 .settings-modal-enter-from .settings-panel,
 .settings-modal-leave-to .settings-panel {
-  transform: scale(0.95) translateY(10px);
+  transform: scale(0.95) translateY(8px);
   opacity: 0;
 }
 
 /* Scrollbar */
 .settings-content::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .settings-content::-webkit-scrollbar-track {
@@ -875,11 +876,11 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 .settings-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
 .settings-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.2);
 }
 </style>
