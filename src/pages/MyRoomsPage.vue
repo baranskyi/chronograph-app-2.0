@@ -3,13 +3,15 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, Timer, Globe, Calendar } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3 } from 'lucide-vue-next'
 
 interface ActiveTimer {
   id: string
   name: string
   status: string
   remaining_seconds: number
+  duration: number
+  is_on_air: boolean
 }
 
 interface Room {
@@ -71,7 +73,7 @@ async function loadRooms() {
         created_at,
         last_used_at,
         active_timer_id,
-        timers!timers_room_id_fkey(id, name, status, remaining_seconds)
+        timers!timers_room_id_fkey(id, name, status, remaining_seconds, duration, is_on_air)
       `)
       .eq('user_id', authStore.userId)
       .eq('is_active', true)
@@ -96,7 +98,9 @@ async function loadRooms() {
           id: activeTimer.id,
           name: activeTimer.name,
           status: activeTimer.status,
-          remaining_seconds: activeTimer.remaining_seconds
+          remaining_seconds: activeTimer.remaining_seconds,
+          duration: activeTimer.duration || activeTimer.remaining_seconds,
+          is_on_air: activeTimer.is_on_air || false
         } : null,
         timezone: userTimezone.value
       }
@@ -261,7 +265,12 @@ function formatDate(dateStr: string): string {
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
+function getProgressPercent(timer: ActiveTimer): number {
+  if (!timer.duration || timer.duration === 0) return 100
+  return (timer.remaining_seconds / timer.duration) * 100
 }
 
 function getStatusColor(status: string): string {
@@ -342,47 +351,97 @@ function getStatusColor(status: string): string {
         </button>
       </div>
 
-      <!-- Rooms Grid -->
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <!-- Rooms List (Full Width) -->
+      <div v-else class="flex flex-col gap-4">
         <div
           v-for="room in rooms"
           :key="room.id"
-          class="bg-[#151518] border border-[#2a2a2a] rounded-xl overflow-hidden cursor-pointer hover:border-[#3a3a3a] hover:bg-[#1a1a1f] transition-all group"
-          @click="openRoom(room.room_code)"
+          class="relative bg-[#151518] rounded-xl overflow-hidden transition-all"
+          :class="[
+            room.active_timer?.is_on_air
+              ? 'border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)]'
+              : 'border border-[#2a2a2a] hover:border-[#3a3a3a]'
+          ]"
         >
-          <!-- Card Header -->
-          <div class="p-5 pb-4">
-            <!-- Top row: Name + Menu -->
-            <div class="flex items-start justify-between mb-3">
+          <!-- Main Card Content -->
+          <div class="p-5 flex items-center gap-6">
+            <!-- Left: Room Info -->
+            <div class="flex-shrink-0 w-48">
               <!-- Room Name (editable) -->
-              <div class="flex-1 min-w-0 mr-2">
-                <input
-                  v-if="editingRoomId === room.id"
-                  v-model="editingName"
-                  type="text"
-                  class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded px-2 py-1 text-lg font-semibold focus:outline-none focus:border-[#145BF6]"
-                  @click.stop
-                  @keydown.enter="saveRoomName(room.id)"
-                  @keydown.escape="cancelEditing"
-                  @blur="saveRoomName(room.id)"
-                  autofocus
-                />
-                <h3 v-else class="font-semibold text-lg truncate">{{ room.name }}</h3>
+              <input
+                v-if="editingRoomId === room.id"
+                v-model="editingName"
+                type="text"
+                class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded px-2 py-1 text-lg font-semibold focus:outline-none focus:border-[#145BF6]"
+                @click.stop
+                @keydown.enter="saveRoomName(room.id)"
+                @keydown.escape="cancelEditing"
+                @blur="saveRoomName(room.id)"
+                autofocus
+              />
+              <h3 v-else class="font-semibold text-lg text-white truncate">{{ room.name }}</h3>
+              <div class="text-xs font-mono text-gray-500 mt-1">{{ room.room_code }}</div>
+            </div>
+
+            <!-- Center: Timer Display -->
+            <div class="flex-1 flex flex-col items-center">
+              <div
+                v-if="room.active_timer"
+                class="text-5xl font-mono font-bold tracking-wider"
+                :class="[
+                  room.active_timer.is_on_air ? 'text-green-400' : 'text-gray-400'
+                ]"
+                :style="room.active_timer.is_on_air ? 'text-shadow: 0 0 30px rgba(74, 222, 128, 0.6), 0 0 60px rgba(74, 222, 128, 0.3)' : ''"
+              >
+                {{ formatTime(room.active_timer.remaining_seconds) }}
               </div>
+              <div v-else class="text-4xl font-mono text-gray-600">
+                --:--
+              </div>
+
+              <!-- Progress Bar -->
+              <div v-if="room.active_timer" class="w-full max-w-md mt-3 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  class="h-full rounded-full transition-all duration-300"
+                  :class="[
+                    room.active_timer.is_on_air ? 'bg-green-500' : 'bg-gray-500'
+                  ]"
+                  :style="{ width: getProgressPercent(room.active_timer) + '%' }"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="flex-shrink-0 flex items-center gap-3">
+              <!-- ON AIR Badge -->
+              <div
+                v-if="room.active_timer?.is_on_air"
+                class="px-3 py-1.5 bg-green-500/20 border border-green-500 rounded-full text-green-400 text-xs font-semibold uppercase tracking-wide"
+              >
+                ON AIR
+              </div>
+
+              <!-- Enter Room Button -->
+              <button
+                class="px-5 py-2.5 bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium text-sm"
+                @click="openRoom(room.room_code)"
+              >
+                Enter Room
+              </button>
 
               <!-- Menu Button -->
               <div class="relative">
                 <button
-                  class="p-1.5 text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded transition-colors"
-                  @click="toggleMenu(room.id, $event)"
+                  class="p-2 text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                  @click.stop="toggleMenu(room.id, $event)"
                 >
-                  <MoreVertical class="w-4 h-4" />
+                  <MoreVertical class="w-5 h-5" />
                 </button>
 
                 <!-- Dropdown Menu -->
                 <div
                   v-if="openMenuId === room.id"
-                  class="absolute right-0 top-8 w-36 bg-[#1a1a1f] border border-[#2a2a2a] rounded-lg shadow-xl z-10 py-1"
+                  class="absolute right-0 top-10 w-36 bg-[#1a1a1f] border border-[#2a2a2a] rounded-lg shadow-xl z-10 py-1"
                 >
                   <button
                     class="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-[#2a2a2a] flex items-center gap-2"
@@ -400,47 +459,6 @@ function getStatusColor(status: string): string {
                   </button>
                 </div>
               </div>
-            </div>
-
-            <!-- Room Code -->
-            <div class="text-xs font-mono text-gray-500 mb-4">{{ room.room_code }}</div>
-
-            <!-- Active Timer -->
-            <div class="mb-4">
-              <div v-if="room.active_timer" class="flex items-center gap-2">
-                <Timer class="w-4 h-4 text-[#145BF6]" />
-                <span class="text-sm font-medium">{{ room.active_timer.name }}</span>
-                <span :class="['text-xs px-1.5 py-0.5 rounded', getStatusColor(room.active_timer.status)]">
-                  {{ formatTime(room.active_timer.remaining_seconds) }}
-                </span>
-              </div>
-              <div v-else class="flex items-center gap-2 text-gray-500">
-                <Timer class="w-4 h-4" />
-                <span class="text-sm italic">No active timers</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card Footer -->
-          <div class="px-5 py-3 bg-[#0f0f12] border-t border-[#2a2a2a] flex items-center justify-between text-xs text-gray-500">
-            <div class="flex items-center gap-3">
-              <!-- Timer count -->
-              <div class="flex items-center gap-1" :title="`${room.timer_count} timer${room.timer_count !== 1 ? 's' : ''}`">
-                <Clock class="w-3.5 h-3.5" />
-                <span>{{ room.timer_count }}</span>
-              </div>
-
-              <!-- Timezone -->
-              <div class="flex items-center gap-1" :title="room.timezone">
-                <Globe class="w-3.5 h-3.5" />
-                <span class="max-w-[80px] truncate">{{ room.timezone.split('/').pop() }}</span>
-              </div>
-            </div>
-
-            <!-- Last used -->
-            <div class="flex items-center gap-1" :title="room.last_used_at ? new Date(room.last_used_at).toLocaleString() : 'Never'">
-              <Calendar class="w-3.5 h-3.5" />
-              <span>{{ formatDate(room.last_used_at) }}</span>
             </div>
           </div>
         </div>
