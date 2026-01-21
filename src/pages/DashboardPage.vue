@@ -599,9 +599,9 @@ const colorClass = (id: string) => {
 
       <!-- Bottom Status Bar -->
       <footer class="h-12 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4">
-        <div class="text-xs text-gray-500">
+        <span class="text-xs text-gray-500 leading-none">
           chronograph.pro · v{{ APP_VERSION }} · <span class="text-gray-600">&#10003;</span> {{ pingMs !== null ? pingMs + ' ms' : '...' }}
-        </div>
+        </span>
       </footer>
     </template>
 
