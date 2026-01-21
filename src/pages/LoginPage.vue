@@ -91,26 +91,39 @@ function initCanvas() {
       }
     }
 
-    // TOP-DOWN VIEW - full screen coverage with extension beyond edges
-    const extendX = 0.15
-    const extendY = 0.15
-    const startX = -width * extendX
-    const endX = width * (1 + extendX)
-    const startY = -height * extendY
-    const endY = height * (1 + extendY)
-    const totalWidth = endX - startX
-    const totalHeight = endY - startY
+    // 30-DEGREE TILT - top further away, bottom closer
+    // Perspective parameters for 30 degree tilt
+    const TILT_ANGLE = 30 * Math.PI / 180 // 30 degrees in radians
+    const perspectiveMin = 0.4  // Scale at top (further away)
+    const perspectiveMax = 1.3  // Scale at bottom (closer)
 
-    // Cell spacing for grid
-    const cellWidth = totalWidth / GRID_COLS
-    const cellHeight = totalHeight / GRID_ROWS
+    // Extended grid to ensure full coverage after perspective transform
+    const extendX = 0.5
+    const extendYTop = 0.8    // More extension at top (it compresses)
+    const extendYBottom = 0.3 // Less at bottom (it expands)
 
-    // Draw dots - TOP DOWN VIEW (no perspective compression)
+    const centerX = width / 2
+    const centerY = height / 2
+
+    // Draw dots with 30-degree perspective tilt
     for (let row = 0; row < GRID_ROWS; row++) {
       for (let col = 0; col < GRID_COLS; col++) {
-        // Base position - evenly distributed across entire screen
-        const baseX = startX + col * cellWidth + cellWidth / 2
-        const baseY = startY + row * cellHeight + cellHeight / 2
+        // Normalized position (0 to 1)
+        const nx = col / (GRID_COLS - 1)
+        const ny = row / (GRID_ROWS - 1)
+
+        // Perspective scale based on Y position (top=far, bottom=close)
+        const perspectiveScale = perspectiveMin + ny * (perspectiveMax - perspectiveMin)
+
+        // Base position before perspective
+        const baseX = (nx - 0.5) * width * (1 + extendX * 2)
+        const baseY = -height * extendYTop + ny * height * (1 + extendYTop + extendYBottom)
+
+        // Apply perspective transformation
+        // X spreads more at bottom (closer)
+        const perspX = centerX + baseX * perspectiveScale
+        // Y compresses at top, expands at bottom
+        const perspY = centerY + (baseY - centerY) * perspectiveScale * Math.cos(TILT_ANGLE)
 
         // Calculate wave offset - same wave mechanics
         const wavePhase = (col / GRID_COLS) * Math.PI * 4 + (row / GRID_ROWS) * Math.PI * 2
@@ -131,21 +144,21 @@ function initCanvas() {
           }
         }
 
-        // Final position - wave affects Y position (subtle 3D feel)
-        const screenX = baseX
-        const screenY = baseY + waveOffset * 15 + distortionOffset
+        // Final position with wave and distortion
+        const screenX = perspX
+        const screenY = perspY + waveOffset * 20 * perspectiveScale + distortionOffset
 
         // Skip if outside viewport
-        if (screenX < -20 || screenX > width + 20 || screenY < -20 || screenY > height + 20) continue
+        if (screenX < -30 || screenX > width + 30 || screenY < -30 || screenY > height + 30) continue
 
-        // Opacity based on wave height and position
-        const normalizedY = row / GRID_ROWS
-        const baseOpacity = 0.2 + normalizedY * 0.25 + (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.2
-        const finalOpacity = Math.min(0.85, baseOpacity + distortionGlow * 0.4)
+        // Opacity - more faded at top (distance), brighter at bottom
+        const depthFade = 0.15 + ny * 0.5
+        const waveBonus = (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.2
+        const finalOpacity = Math.min(0.9, depthFade + waveBonus + distortionGlow * 0.4)
 
-        // Dot size - subtle variation based on wave
-        const baseSize = 1.0 + normalizedY * 0.8
-        const waveSize = 1 + (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.3
+        // Dot size - smaller at top, larger at bottom (perspective)
+        const baseSize = (0.6 + ny * 1.4) * perspectiveScale * 0.7
+        const waveSize = 1 + (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.25
         const distortionSize = 1 + distortionGlow * 1.5
         const dotSize = baseSize * waveSize * distortionSize
 
@@ -155,7 +168,7 @@ function initCanvas() {
         const b = DOT_COLOR.b + distortionGlow * 120
 
         ctx!.beginPath()
-        ctx!.arc(screenX, screenY, Math.max(0.5, dotSize), 0, Math.PI * 2)
+        ctx!.arc(screenX, screenY, Math.max(0.4, dotSize), 0, Math.PI * 2)
         ctx!.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
         ctx!.fill()
 
