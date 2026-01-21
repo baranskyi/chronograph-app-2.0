@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, Play, Pause } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3 } from 'lucide-vue-next'
 
 declare const __APP_VERSION__: string
 const APP_VERSION = __APP_VERSION__
@@ -45,13 +45,14 @@ let animationId: number | null = null
 // Timer ticking interval
 let tickInterval: ReturnType<typeof setInterval> | null = null
 
-// Wave animation constants (matching Login/Register)
+// Wave animation constants - EXPANDED for full coverage
 const WAVE_FREQUENCY = 0.6
 const WAVE_AMPLITUDE = 0.4
 const PERSPECTIVE_FACTOR = 0.7
 const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
-const GRID_COLS = 300
-const GRID_ROWS = 160
+// Increased grid size for full coverage (same density, larger area)
+const GRID_COLS = 450
+const GRID_ROWS = 280
 
 interface Distortion {
   x: number
@@ -117,8 +118,9 @@ function initCanvas() {
       }
     }
 
-    const extendX = 0.3
-    const extendY = 0.2
+    // EXPANDED coverage - extend far beyond viewport
+    const extendX = 0.8 // 80% extension on each side
+    const extendY = 0.6 // 60% extension top/bottom (for horizon effect)
     const startX = -width * extendX
     const endX = width * (1 + extendX)
     const startY = -height * extendY
@@ -155,8 +157,8 @@ function initCanvas() {
         const screenX = centerX + (baseX - centerX) * perspectiveScale
         const screenY = baseY * perspectiveScale + height * (1 - perspectiveScale) * 0.5 + waveHeight * 30 * perspectiveScale
 
-        // Skip if outside viewport
-        if (screenX < -10 || screenX > width + 10 || screenY < -10 || screenY > height + 10) continue
+        // Skip if outside viewport (with margin)
+        if (screenX < -20 || screenX > width + 20 || screenY < -20 || screenY > height + 20) continue
 
         // Depth-based properties
         const baseOpacity = 0.15 + depth * 0.5
@@ -382,13 +384,15 @@ function cancelEditing() {
   editingRoomId.value = null
 }
 
-function toggleMenu(roomId: string, event: Event) {
-  event.stopPropagation()
-  openMenuId.value = openMenuId.value === roomId ? null : roomId
-}
+// toggleMenu moved to bottom with positioning logic
 
 function openRoom(roomCode: string) {
   router.push(`/room/${roomCode}`)
+}
+
+// Navigate to room with specific timer selected
+function openRoomWithTimer(roomCode: string, timerId: string) {
+  router.push(`/room/${roomCode}?timer=${timerId}`)
 }
 
 async function handleSignOut() {
@@ -428,6 +432,33 @@ function hasRunningTimer(room: Room): boolean {
 function getTimerCount(room: Room): number {
   return room.timers.length
 }
+
+// Store menu button positions for dropdown positioning
+const menuButtonRects = ref<Map<string, DOMRect>>(new Map())
+
+function toggleMenu(roomId: string, event: Event) {
+  event.stopPropagation()
+
+  // Store the button position before toggling
+  const button = event.currentTarget as HTMLElement
+  if (button) {
+    menuButtonRects.value.set(roomId, button.getBoundingClientRect())
+  }
+
+  openMenuId.value = openMenuId.value === roomId ? null : roomId
+}
+
+// Get dropdown position style
+function getDropdownStyle(roomId: string) {
+  const rect = menuButtonRects.value.get(roomId)
+  if (!rect) {
+    return { top: '200px', right: '24px' }
+  }
+  return {
+    top: `${rect.bottom + 8}px`,
+    left: `${rect.right - 160}px`
+  }
+}
 </script>
 
 <template>
@@ -455,7 +486,7 @@ function getTimerCount(room: Room): number {
             <div class="flex items-center gap-4">
               <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
               <button
-                class="flex items-center gap-2 text-gray-400 hover:text-white glass-button-subtle rounded-lg transition-all duration-200"
+                class="flex items-center gap-2 text-gray-400 hover:text-white glass-button-subtle rounded-lg transition-all duration-200 cursor-pointer"
                 style="padding: 8px 14px;"
                 @click="handleSignOut"
               >
@@ -478,7 +509,7 @@ function getTimerCount(room: Room): number {
             </div>
             <button
               :disabled="creating"
-              class="flex items-center gap-2 glass-button-primary rounded-xl transition-all duration-200 font-semibold cursor-pointer"
+              class="flex items-center gap-2 glass-button-muted rounded-xl transition-all duration-200 font-semibold cursor-pointer"
               style="padding: 12px 24px;"
               @click="createRoom"
             >
@@ -511,7 +542,7 @@ function getTimerCount(room: Room): number {
             </p>
             <button
               :disabled="creating"
-              class="flex items-center gap-2 glass-button-primary rounded-xl transition-all duration-200 font-semibold cursor-pointer"
+              class="flex items-center gap-2 glass-button-muted rounded-xl transition-all duration-200 font-semibold cursor-pointer"
               style="padding: 14px 28px;"
               @click="createRoom"
             >
@@ -525,9 +556,8 @@ function getTimerCount(room: Room): number {
             <div
               v-for="room in rooms"
               :key="room.id"
-              class="glass-card-room group cursor-pointer"
+              class="glass-card-room group"
               :class="{ 'glass-card-room-active': hasRunningTimer(room) }"
-              @click="openRoom(room.room_code)"
             >
               <div class="flex items-start" style="padding: 24px; gap: 24px;">
                 <!-- LEFT: Room Info -->
@@ -551,7 +581,7 @@ function getTimerCount(room: Room): number {
                     @blur="saveRoomName(room.id)"
                     autofocus
                   />
-                  <h3 v-else class="font-semibold text-xl text-white truncate group-hover:text-red-400 transition-colors">{{ room.name }}</h3>
+                  <h3 v-else class="font-semibold text-xl text-white truncate">{{ room.name }}</h3>
                   <div class="flex items-center gap-2" style="margin-top: 8px;">
                     <span class="text-xs font-mono text-gray-500 bg-white/5 rounded px-2 py-1">{{ room.room_code }}</span>
                   </div>
@@ -560,19 +590,19 @@ function getTimerCount(room: Room): number {
                   </div>
                 </div>
 
-                <!-- CENTER: Timer Bars with glass effect -->
+                <!-- CENTER: Timer Bars - CLICKABLE -->
                 <div class="flex-1 flex justify-center">
                   <div class="flex flex-col w-full" style="gap: 6px; max-width: 450px;">
                     <div
                       v-for="timer in room.timers"
                       :key="timer.id"
-                      class="glass-timer-bar relative flex items-center rounded-lg overflow-hidden"
+                      class="glass-timer-bar relative flex items-center rounded-lg overflow-hidden cursor-pointer"
                       :class="{
                         'glass-timer-selected': isTimerSelected(room, timer),
                         'glass-timer-running': timer.status === 'running'
                       }"
                       style="height: 36px;"
-                      @click.stop
+                      @click.stop="openRoomWithTimer(room.room_code, timer.id)"
                     >
                       <!-- Progress overlay -->
                       <div
@@ -581,10 +611,22 @@ function getTimerCount(room: Room): number {
                         :style="{ width: getTimerProgress(timer) + '%' }"
                       ></div>
 
-                      <!-- Status icon -->
+                      <!-- Simple stopwatch icon -->
                       <div class="relative z-10 flex items-center justify-center w-8">
-                        <Play v-if="timer.status !== 'running'" class="w-3 h-3 text-gray-500" />
-                        <Pause v-else class="w-3 h-3 text-red-400" />
+                        <svg
+                          class="w-3.5 h-3.5"
+                          :class="timer.status === 'running' ? 'text-red-400' : 'text-gray-500'"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <circle cx="12" cy="13" r="8" />
+                          <line x1="12" y1="9" x2="12" y2="13" />
+                          <line x1="12" y1="13" x2="15" y2="13" />
+                          <line x1="12" y1="1" x2="12" y2="4" />
+                          <line x1="9" y1="2" x2="15" y2="2" />
+                        </svg>
                       </div>
 
                       <!-- Timer Name -->
@@ -613,7 +655,7 @@ function getTimerCount(room: Room): number {
                 <div class="flex items-center" style="gap: 12px; flex-shrink: 0;">
                   <!-- Enter Room -->
                   <button
-                    class="glass-button-primary rounded-xl transition-all duration-200 font-medium text-sm cursor-pointer"
+                    class="glass-button-muted rounded-xl transition-all duration-200 font-medium text-sm cursor-pointer"
                     style="padding: 12px 24px;"
                     @click.stop="openRoom(room.room_code)"
                   >
@@ -630,30 +672,33 @@ function getTimerCount(room: Room): number {
                       <MoreVertical class="w-5 h-5" />
                     </button>
 
-                    <Transition name="menu">
-                      <div
-                        v-if="openMenuId === room.id"
-                        class="absolute right-0 glass-menu rounded-xl shadow-2xl z-20"
-                        style="top: 48px; width: 160px; padding: 6px;"
-                      >
-                        <button
-                          class="w-full text-left text-sm text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-3 rounded-lg transition-colors cursor-pointer"
-                          style="padding: 10px 14px;"
-                          @click="startEditing(room, $event)"
+                    <!-- Dropdown Menu - FIXED z-index, glassmorphism -->
+                    <Teleport to="body">
+                      <Transition name="menu">
+                        <div
+                          v-if="openMenuId === room.id"
+                          class="glass-dropdown fixed"
+                          :style="getDropdownStyle(room.id)"
                         >
-                          <Edit3 class="w-4 h-4" />
-                          Rename
-                        </button>
-                        <button
-                          class="w-full text-left text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-3 rounded-lg transition-colors cursor-pointer"
-                          style="padding: 10px 14px;"
-                          @click="deleteRoom(room.id, $event)"
-                        >
-                          <Trash2 class="w-4 h-4" />
-                          Delete
-                        </button>
-                      </div>
-                    </Transition>
+                          <button
+                            class="w-full text-left text-sm text-gray-300 hover:text-white hover:bg-white/10 flex items-center gap-3 rounded-lg transition-colors cursor-pointer"
+                            style="padding: 10px 14px;"
+                            @click="startEditing(room, $event)"
+                          >
+                            <Edit3 class="w-4 h-4" />
+                            Rename
+                          </button>
+                          <button
+                            class="w-full text-left text-sm text-red-400/80 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-3 rounded-lg transition-colors cursor-pointer"
+                            style="padding: 10px 14px;"
+                            @click="deleteRoom(room.id, $event)"
+                          >
+                            <Trash2 class="w-4 h-4" />
+                            Delete
+                          </button>
+                        </div>
+                      </Transition>
+                    </Teleport>
                   </div>
                 </div>
               </div>
@@ -706,22 +751,19 @@ function getTimerCount(room: Room): number {
 
 .glass-card-room:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(239, 68, 68, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(239, 68, 68, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .glass-card-room-active {
-  border-color: rgba(239, 68, 68, 0.4);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15), 0 0 60px rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.1), 0 0 60px rgba(239, 68, 68, 0.05);
 }
 
 .glass-card-room-active:hover {
-  border-color: rgba(239, 68, 68, 0.5);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 80px rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
-/* Timer bars with glass effect */
+/* Timer bars with glass effect - CLICKABLE */
 .glass-timer-bar {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -729,40 +771,48 @@ function getTimerCount(room: Room): number {
 }
 
 .glass-timer-bar:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateX(2px);
 }
 
 .glass-timer-selected {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.glass-timer-selected:hover {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.3);
 }
 
 .glass-timer-running {
-  border-color: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .timer-progress-running {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.15));
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.08));
 }
 
 .timer-progress-idle {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-/* Glass buttons */
-.glass-button-primary {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+/* MUTED Glass buttons - subdued colors */
+.glass-button-muted {
+  background: rgba(180, 80, 80, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.glass-button-primary:hover {
-  background: linear-gradient(135deg, rgba(248, 88, 88, 0.95), rgba(239, 68, 68, 0.95));
-  box-shadow: 0 6px 30px rgba(239, 68, 68, 0.4);
+.glass-button-muted:hover {
+  background: rgba(200, 90, 90, 0.5);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
   transform: translateY(-1px);
 }
 
-.glass-button-primary:disabled {
+.glass-button-muted:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
@@ -778,12 +828,17 @@ function getTimerCount(room: Room): number {
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Glass menu */
-.glass-menu {
-  background: rgba(20, 20, 25, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* Glass dropdown menu - FIXED glassmorphism, high z-index */
+.glass-dropdown {
+  background: rgba(20, 15, 20, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(239, 68, 68, 0.08);
+  padding: 6px;
+  width: 160px;
+  z-index: 99999 !important;
 }
 
 /* Glass error */
@@ -794,19 +849,19 @@ function getTimerCount(room: Room): number {
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-/* LIVE badge with glow */
+/* LIVE badge with muted glow */
 .live-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  background: rgba(180, 60, 60, 0.7);
   color: white;
   font-size: 11px;
   font-weight: 700;
   padding: 5px 12px;
   border-radius: 6px;
   letter-spacing: 0.5px;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
   animation: live-glow 2s ease-in-out infinite;
 }
 
@@ -820,10 +875,10 @@ function getTimerCount(room: Room): number {
 
 @keyframes live-glow {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
   }
   50% {
-    box-shadow: 0 0 30px rgba(239, 68, 68, 0.7);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
   }
 }
 

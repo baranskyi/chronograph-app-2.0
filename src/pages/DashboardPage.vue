@@ -73,6 +73,16 @@ onMounted(async () => {
     }
 
     timerStore.syncTimerOrder()
+
+    // Check if a specific timer was requested via query param
+    const requestedTimerId = route.query.timer as string | undefined
+    if (requestedTimerId) {
+      // Wait a tick for timers to be loaded, then select the requested timer
+      setTimeout(() => {
+        timerStore.selectTimer(requestedTimerId)
+      }, 100)
+    }
+
     isInitializing.value = false
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error'
