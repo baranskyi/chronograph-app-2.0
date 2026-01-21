@@ -924,9 +924,9 @@ const colorClass = (id: string) => {
 }
 
 .glass-footer {
-  background: rgba(8, 8, 8, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
