@@ -12,3 +12,32 @@ export const supabase = config.supabase.url && config.supabase.serviceKey
 export function isSupabaseEnabled(): boolean {
   return supabase !== null
 }
+
+// Verify JWT token and extract user ID
+export async function verifyToken(token: string): Promise<string | null> {
+  if (!config.supabase.url || !config.supabase.anonKey) {
+    return null
+  }
+
+  try {
+    // Create a temporary client with the user's token
+    const userClient = createClient(config.supabase.url, config.supabase.anonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    })
+
+    const { data: { user }, error } = await userClient.auth.getUser()
+    if (error || !user) {
+      console.log('Token verification failed:', error?.message)
+      return null
+    }
+
+    return user.id
+  } catch (error) {
+    console.error('Error verifying token:', error)
+    return null
+  }
+}

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useTimerStore } from './timerStore'
+import { useAuthStore } from './authStore'
 import type { Timer } from '../types/timer'
 
 export type MessagePriority = 'normal' | 'urgent'
@@ -53,10 +54,17 @@ export const useRoomStore = defineStore('room', () => {
     // In production, connect to same origin. In dev, Vite proxy handles it.
     const serverUrl = import.meta.env.VITE_SERVER_URL || ''
 
+    // Get auth token for authenticated socket connection
+    const authStore = useAuthStore()
+    const token = authStore.accessToken
+
     socket.value = io(serverUrl, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
-      timeout: 10000
+      timeout: 10000,
+      auth: {
+        token: token || undefined
+      }
     })
 
     socket.value.on('connect', () => {
@@ -97,8 +105,7 @@ export const useRoomStore = defineStore('room', () => {
             roomId.value = response.roomId
             isController.value = true
 
-            // Save roomId to localStorage for reconnection
-            localStorage.setItem('chronograph-roomId', response.roomId)
+            // Note: We no longer save to localStorage - rooms are accessed via URL
 
             // Add initial timers to store
             if (response.timers) {
@@ -171,21 +178,12 @@ export const useRoomStore = defineStore('room', () => {
     })
   }
 
-  // Try to reconnect to existing room, or create new one
+  // DEPRECATED: Rooms should be accessed via URL (/room/:roomCode)
+  // This function is kept for backwards compatibility but should not be used
   async function initializeRoom(): Promise<string> {
-    const savedRoomId = localStorage.getItem('chronograph-roomId')
-
-    if (savedRoomId) {
-      console.log('Attempting to rejoin room:', savedRoomId)
-      const success = await joinRoomAsController(savedRoomId)
-      if (success) {
-        return savedRoomId
-      }
-      console.log('Room no longer exists, creating new one')
-      localStorage.removeItem('chronograph-roomId')
-    }
-
-    return createRoom()
+    // No longer use localStorage - rooms are accessed via URL
+    console.warn('initializeRoom() is deprecated. Use joinRoomAsController() with roomCode from URL instead.')
+    throw new Error('Room code required - navigate via /room/:roomCode')
   }
 
   function setupControllerListeners() {
@@ -539,6 +537,7 @@ export const useRoomStore = defineStore('room', () => {
     connect,
     createRoom,
     initializeRoom,
+    joinRoomAsController,
     joinAsViewer,
     broadcastState,
     broadcastTimerState,

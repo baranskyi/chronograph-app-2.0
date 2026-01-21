@@ -1,6 +1,14 @@
 import type { Server, Socket } from 'socket.io'
 import { roomManager } from '../services/roomManager.js'
+import { verifyToken } from '../services/supabase.js'
 import type { Timer, TimerState, MessagePriority } from '../types/room.js'
+
+// Extend Socket type to include user data
+interface AuthenticatedSocket extends Socket {
+  data: {
+    userId?: string
+  }
+}
 
 // Track viewers per room: Map<roomId, Set<socketId>>
 const roomViewers = new Map<string, Set<string>>()
@@ -52,13 +60,15 @@ function serializeTimers(timers: Timer[]): Timer[] {
   return timers.map(t => ({ ...t }))
 }
 
-export function setupHandlers(io: Server, socket: Socket): void {
-  console.log(`Client connected: ${socket.id}`)
+export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
+  const userId = socket.data.userId
+  console.log(`Client connected: ${socket.id} (user: ${userId || 'anonymous'})`)
 
   // Controller creates a new room
   socket.on('room:create', async (callback: CreateRoomCallback) => {
     try {
-      const room = await roomManager.createRoom()
+      // Pass userId to create room with ownership
+      const room = await roomManager.createRoom(userId)
       roomManager.setController(room.roomId, socket.id)
       socket.join(room.roomId)
 
@@ -84,9 +94,18 @@ export function setupHandlers(io: Server, socket: Socket): void {
         callback({ error: 'Room not found' })
         return
       }
+
+      // Check ownership: only owner can control the room
+      // Allow access if: room has no owner (legacy) OR user owns the room
+      if (room.userId && room.userId !== userId) {
+        console.log(`Access denied: user ${userId} tried to join room owned by ${room.userId}`)
+        callback({ error: 'Not authorized to control this room' })
+        return
+      }
+
       roomManager.setController(room.roomId, socket.id)
       socket.join(room.roomId)
-      console.log(`Controller rejoined room: ${roomId}`)
+      console.log(`Controller rejoined room: ${roomId} (user: ${userId || 'anonymous'})`)
 
       const timers = await roomManager.getTimers(roomId)
       callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId })
@@ -404,9 +423,29 @@ export function setupHandlers(io: Server, socket: Socket): void {
 }
 
 export function initializeSocket(io: Server): void {
-  io.on('connection', (socket) => {
-    setupHandlers(io, socket)
+  // Authentication middleware - verify JWT token
+  io.use(async (socket: AuthenticatedSocket, next) => {
+    const token = socket.handshake.auth?.token
+
+    if (token) {
+      const userId = await verifyToken(token)
+      if (userId) {
+        socket.data.userId = userId
+        console.log(`Authenticated socket: ${socket.id} for user: ${userId}`)
+      } else {
+        console.log(`Invalid token for socket: ${socket.id}`)
+      }
+    } else {
+      console.log(`Anonymous socket: ${socket.id}`)
+    }
+
+    // Allow connection even without auth (for viewers)
+    next()
   })
 
-  console.log('Socket.io initialized (client-side timer calculation)')
+  io.on('connection', (socket) => {
+    setupHandlers(io, socket as AuthenticatedSocket)
+  })
+
+  console.log('Socket.io initialized with authentication')
 }

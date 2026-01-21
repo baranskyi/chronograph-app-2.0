@@ -29,17 +29,18 @@ class RoomManager {
 
   // ============ ROOM OPERATIONS ============
 
-  async createRoom(): Promise<RoomState> {
+  async createRoom(userId?: string): Promise<RoomState> {
     const roomId = this.generateRoomId()
 
     if (isSupabaseEnabled() && supabase) {
-      // Create room in Supabase
+      // Create room in Supabase with user_id if authenticated
       const { data: room, error } = await supabase
         .from('rooms')
         .insert({
           room_code: roomId,
           name: 'My Room',
-          is_active: true
+          is_active: true,
+          user_id: userId || null
         })
         .select()
         .single()
@@ -55,10 +56,11 @@ class RoomManager {
         lastActivity: Date.now()
       })
 
-      console.log(`Room created in Supabase: ${roomId}`)
+      console.log(`Room created in Supabase: ${roomId} (user: ${userId || 'anonymous'})`)
 
       return {
         roomId,
+        userId: userId || null,
         createdAt: Date.now(),
         lastActivity: Date.now(),
         controllerSocketId: null,
@@ -68,12 +70,13 @@ class RoomManager {
     }
 
     // Fallback: in-memory storage
-    return this.createRoomInMemory(roomId)
+    return this.createRoomInMemory(roomId, userId)
   }
 
-  private createRoomInMemory(roomId: string): RoomState {
+  private createRoomInMemory(roomId: string, userId?: string): RoomState {
     const room: RoomState = {
       roomId,
+      userId: userId || null,
       createdAt: Date.now(),
       lastActivity: Date.now(),
       controllerSocketId: null,
@@ -83,7 +86,7 @@ class RoomManager {
     this.memoryRooms.set(roomId, room)
     this.timerCounter.set(roomId, 0)
     this.cleanup()
-    console.log(`Room created in memory: ${roomId}`)
+    console.log(`Room created in memory: ${roomId} (user: ${userId || 'anonymous'})`)
     return room
   }
 
@@ -147,6 +150,7 @@ class RoomManager {
 
       return {
         roomId: normalizedId,
+        userId: room.user_id || null,
         createdAt: new Date(room.created_at).getTime(),
         lastActivity: runtime.lastActivity,
         controllerSocketId: runtime.controllerSocketId,

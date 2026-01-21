@@ -6,12 +6,18 @@ import { useRoomStore } from '../stores/roomStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import { Play, Pause, Settings, MoreHorizontal, Plus, GripVertical, Link2, RotateCcw, ArrowLeft } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
+
+// Get roomCode from route params
+const props = defineProps<{
+  roomCode?: string
+}>()
 
 declare const __APP_VERSION__: string
 const APP_VERSION = __APP_VERSION__
@@ -38,7 +44,25 @@ let clockInterval: number | null = null
 
 onMounted(async () => {
   try {
-    await roomStore.initializeRoom()
+    // Get roomCode from props (URL param) or route params
+    const roomCode = props.roomCode || (route.params.roomCode as string)
+
+    if (!roomCode) {
+      // No room code - redirect to my-rooms
+      router.push('/my-rooms')
+      return
+    }
+
+    // Join the room as controller
+    const success = await roomStore.joinRoomAsController(roomCode)
+    if (!success) {
+      // Room not found or not authorized - redirect to my-rooms
+      initError.value = 'Room not found or you do not have access'
+      setTimeout(() => router.push('/my-rooms'), 2000)
+      isInitializing.value = false
+      return
+    }
+
     timerStore.syncTimerOrder()
     isInitializing.value = false
   } catch (err: unknown) {

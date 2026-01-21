@@ -34,11 +34,11 @@ const routes = [
     meta: { requiresAuth: true },
     props: true
   },
-  // Legacy dashboard route - redirect to my-rooms if authenticated
+  // Legacy dashboard route - redirect to my-rooms
   {
     path: '/dashboard',
     name: 'dashboard',
-    component: () => import('../pages/DashboardPage.vue')
+    redirect: '/my-rooms'
   },
   // Legacy controller route - redirect to dashboard
   {

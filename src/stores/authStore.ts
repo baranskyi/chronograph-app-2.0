@@ -12,6 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!user.value)
   const userId = computed(() => user.value?.id ?? null)
   const userEmail = computed(() => user.value?.email ?? null)
+  const accessToken = computed(() => session.value?.access_token ?? null)
 
   // Initialize auth state
   async function initialize() {
@@ -105,6 +106,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       session.value = null
       user.value = null
+
+      // Clear room data from localStorage to prevent cross-account data leakage
+      localStorage.removeItem('chronograph-roomId')
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Sign out failed'
     } finally {
@@ -143,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     userId,
     userEmail,
+    accessToken,
 
     // Actions
     initialize,

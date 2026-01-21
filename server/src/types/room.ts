@@ -31,6 +31,7 @@ export interface Timer {
 
 export interface RoomState {
   roomId: string
+  userId: string | null  // Owner of the room (null for anonymous/legacy rooms)
   createdAt: number
   lastActivity: number
   controllerSocketId: string | null
