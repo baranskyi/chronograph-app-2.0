@@ -32,8 +32,11 @@ async function loadRooms() {
 
   try {
     // Get only rooms owned by current user
+    console.log('loadRooms: userId =', authStore.userId)
+
     if (!authStore.userId) {
       error.value = 'Not authenticated'
+      console.log('loadRooms: Not authenticated, userId is null/undefined')
       return
     }
 
@@ -51,6 +54,8 @@ async function loadRooms() {
       .eq('is_active', true)
       .order('last_used_at', { ascending: false, nullsFirst: false })
 
+    console.log('loadRooms: query result =', { data, error: fetchError })
+
     if (fetchError) throw fetchError
 
     rooms.value = (data || []).map((room: any) => ({
@@ -61,6 +66,8 @@ async function loadRooms() {
       last_used_at: room.last_used_at,
       timer_count: Array.isArray(room.timers) ? room.timers.length : room.timers?.count || 0
     }))
+
+    console.log('loadRooms: mapped rooms =', rooms.value.length, 'rooms')
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load rooms'
     console.error('Error loading rooms:', err)
