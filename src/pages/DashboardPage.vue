@@ -743,8 +743,8 @@ const colorClass = (id: string) => {
             </button>
           </div>
 
-          <!-- Timer List - Bigger items, more spacing (3x gap) -->
-          <div class="flex-1 overflow-y-auto flex flex-col gap-12">
+          <!-- Timer List - Bigger items -->
+          <div class="flex-1 overflow-y-auto flex flex-col" style="gap: 24px;">
             <div
               v-for="timer in timerStore.orderedTimerList"
               :key="timer.id"
