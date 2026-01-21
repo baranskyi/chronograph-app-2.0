@@ -44,7 +44,7 @@ interface CreateRoomCallback {
 }
 
 interface JoinRoomCallback {
-  (response: { success: true; timers: Timer[]; activeTimerId: string | null } | { error: string }): void
+  (response: { success: true; timers: Timer[]; activeTimerId: string | null; roomName: string } | { error: string }): void
 }
 
 interface TimerCallback {
@@ -114,7 +114,7 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
       console.log(`Controller rejoined room: ${roomId} (user: ${userId || 'anonymous'})`)
 
       const timers = await roomManager.getTimers(roomId)
-      callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId })
+      callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId, roomName: room.name })
     } catch (error) {
       console.error('Error rejoining room:', error)
       callback({ error: 'Failed to rejoin room' })
@@ -152,7 +152,7 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
       console.log(`Viewer joined room: ${roomId}${timerId ? ` (timer: ${timerId})` : ''} (viewers: ${viewerCount})`)
 
       const timers = await roomManager.getTimers(roomId)
-      callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId })
+      callback({ success: true, timers: serializeTimers(timers), activeTimerId: room.activeTimerId, roomName: room.name })
     } catch (error) {
       console.error('Error joining room as viewer:', error)
       callback({ error: 'Failed to join room' })

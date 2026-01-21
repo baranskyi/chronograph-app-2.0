@@ -16,6 +16,7 @@ export interface SpeakerMessage {
 export const useRoomStore = defineStore('room', () => {
   const socket = ref<Socket | null>(null)
   const roomId = ref<string | null>(null)
+  const roomName = ref<string | null>(null)
   const isConnected = ref(false)
   const isController = ref(false)
   const error = ref<string | null>(null)
@@ -140,12 +141,13 @@ export const useRoomStore = defineStore('room', () => {
       }
 
       const attemptJoin = () => {
-        socket.value!.emit('room:join-controller', { roomId: id }, (response: { success?: boolean; timers?: Timer[]; activeTimerId?: string | null; error?: string }) => {
+        socket.value!.emit('room:join-controller', { roomId: id }, (response: { success?: boolean; timers?: Timer[]; activeTimerId?: string | null; roomName?: string; error?: string }) => {
           if (response.error) {
             console.log('Failed to rejoin room:', response.error)
             resolve(false)
           } else if (response.success) {
             roomId.value = id.toUpperCase()
+            roomName.value = response.roomName || id.toUpperCase()
             isController.value = true
 
             // Restore timers from server
@@ -235,12 +237,13 @@ export const useRoomStore = defineStore('room', () => {
       }
 
       const attemptJoin = () => {
-        socket.value!.emit('room:join-viewer', { roomId: id, timerId }, (response: { success?: boolean; timers?: Timer[]; activeTimerId?: string | null; error?: string }) => {
+        socket.value!.emit('room:join-viewer', { roomId: id, timerId }, (response: { success?: boolean; timers?: Timer[]; activeTimerId?: string | null; roomName?: string; error?: string }) => {
           if (response.error) {
             error.value = response.error
             reject(new Error(response.error))
           } else if (response.success) {
             roomId.value = id.toUpperCase()
+            roomName.value = response.roomName || id.toUpperCase()
             isController.value = false
             viewerTimerId.value = timerId ?? null
 
@@ -520,6 +523,7 @@ export const useRoomStore = defineStore('room', () => {
   return {
     // State
     roomId,
+    roomName,
     isConnected,
     isController,
     error,

@@ -289,7 +289,10 @@ const colorClass = (id: string) => {
         >
           <ArrowLeft class="w-4 h-4" />
         </button>
-        <div class="font-semibold text-lg">{{ roomStore.roomId || 'Chronograph' }}</div>
+        <div class="flex flex-col">
+          <div class="font-semibold text-lg leading-tight">{{ roomStore.roomName || 'Chronograph' }}</div>
+          <div class="text-xs text-gray-500 font-mono">{{ roomStore.roomId }}</div>
+        </div>
         <div class="flex-1" />
         <button
           class="px-3 py-1.5 text-sm rounded transition-colors flex items-center gap-2"

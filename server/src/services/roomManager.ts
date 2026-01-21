@@ -60,6 +60,7 @@ class RoomManager {
 
       return {
         roomId,
+        name: 'My Room',
         userId: userId || null,
         createdAt: Date.now(),
         lastActivity: Date.now(),
@@ -76,6 +77,7 @@ class RoomManager {
   private createRoomInMemory(roomId: string, userId?: string): RoomState {
     const room: RoomState = {
       roomId,
+      name: 'My Room',
       userId: userId || null,
       createdAt: Date.now(),
       lastActivity: Date.now(),
@@ -150,6 +152,7 @@ class RoomManager {
 
       return {
         roomId: normalizedId,
+        name: room.name || normalizedId,
         userId: room.user_id || null,
         createdAt: new Date(room.created_at).getTime(),
         lastActivity: runtime.lastActivity,
