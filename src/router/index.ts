@@ -63,6 +63,13 @@ const routes = [
     name: 'viewer-short',
     component: () => import('../pages/ViewerPage.vue'),
     props: true
+  },
+  // Public Q&A submission page (no auth required)
+  {
+    path: '/ask/:roomCode',
+    name: 'ask',
+    component: () => import('../pages/AskPage.vue'),
+    props: true
   }
 ]
 

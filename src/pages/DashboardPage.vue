@@ -5,9 +5,21 @@ import { useTimerStore } from '../stores/timerStore'
 import { useRoomStore } from '../stores/roomStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
-import { Play, Pause, Settings, MoreHorizontal, Plus, GripVertical, Link2, RotateCcw, ArrowLeft } from 'lucide-vue-next'
+import { Play, Pause, Settings, MoreHorizontal, Plus, GripVertical, Link2, RotateCcw, ArrowLeft, X, Send, QrCode } from 'lucide-vue-next'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
+import { supabase } from '../lib/supabase'
+import QRCode from 'qrcode'
+
+// Question type for Q&A feature
+interface Question {
+  id: string
+  room_id: string
+  author_name: string
+  question_text: string
+  status: 'pending' | 'sent' | 'dismissed'
+  created_at: string
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -43,6 +55,14 @@ const showShareToast = ref(false)
 // Ocean animation toggle
 const oceanEnabled = ref(true)
 
+// Q&A Feature state
+const showQRCode = ref(false)
+const qrCodeDataUrl = ref<string | null>(null)
+const questions = ref<Question[]>([])
+const sendingQuestionId = ref<string | null>(null)
+const questionTargetTimerId = ref<string | null>(null)
+const showQuestionTargetDropdown = ref(false)
+
 // Custom dropdown state for "Send to" selector
 const isTargetDropdownOpen = ref(false)
 const targetDropdownRef = ref<HTMLElement | null>(null)
@@ -52,6 +72,11 @@ const selectedTargetLabel = computed(() => {
   if (messageTargetTimerId.value === null) return 'All timers'
   const timer = timerStore.timerList.find(t => t.id === messageTargetTimerId.value)
   return timer?.name || 'All timers'
+})
+
+// Computed for Q&A URL
+const askPageUrl = computed(() => {
+  return `${window.location.origin}/ask/${roomStore.roomId}`
 })
 
 function selectTarget(timerId: string | null) {
@@ -303,6 +328,20 @@ onMounted(async () => {
 
     timerStore.syncTimerOrder()
 
+    // Fetch room's database ID for Q&A feature
+    const { data: roomData } = await supabase
+      .from('rooms')
+      .select('id')
+      .eq('room_code', roomCode)
+      .single()
+
+    if (roomData) {
+      roomDbId.value = roomData.id
+      // Load existing questions and subscribe to new ones
+      await loadQuestions()
+      subscribeToQuestions()
+    }
+
     // Check if a specific timer was requested via query param
     const requestedTimerId = route.query.timer as string | undefined
     if (requestedTimerId) {
@@ -470,6 +509,104 @@ function sendCustomMessage() {
     roomStore.sendMessage(customMessage.value.trim(), 5000, 'normal', messageTargetTimerId.value, messageSplash.value)
     customMessage.value = ''
   }
+}
+
+// Q&A Functions
+// Get room database ID for Q&A
+const roomDbId = ref<string | null>(null)
+
+async function generateQRCode() {
+  showQRCode.value = !showQRCode.value
+  if (showQRCode.value && !qrCodeDataUrl.value) {
+    // Use room code for URL (user-friendly)
+    const askUrl = `${window.location.origin}/ask/${roomStore.roomId}`
+    qrCodeDataUrl.value = await QRCode.toDataURL(askUrl, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#ffffff',
+        light: '#00000000'
+      }
+    })
+  }
+}
+
+async function loadQuestions() {
+  if (!roomDbId.value) return
+  const { data, error } = await supabase
+    .from('questions')
+    .select('*')
+    .eq('room_id', roomDbId.value)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+
+  if (!error && data) {
+    questions.value = data
+  }
+}
+
+function subscribeToQuestions() {
+  if (!roomDbId.value) return
+
+  const channel = supabase
+    .channel('questions-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'questions',
+        filter: `room_id=eq.${roomDbId.value}`
+      },
+      (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newQuestion = payload.new as Question
+          if (newQuestion.status === 'pending') {
+            questions.value.unshift(newQuestion)
+          }
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = payload.new as Question
+          if (updated.status !== 'pending') {
+            questions.value = questions.value.filter(q => q.id !== updated.id)
+          }
+        } else if (payload.eventType === 'DELETE') {
+          const deleted = payload.old as Question
+          questions.value = questions.value.filter(q => q.id !== deleted.id)
+        }
+      }
+    )
+    .subscribe()
+
+  return channel
+}
+
+async function sendQuestion(questionId: string, timerId: string | null) {
+  sendingQuestionId.value = questionId
+  const question = questions.value.find(q => q.id === questionId)
+  if (!question) return
+
+  // Send as message to speaker
+  const messageText = `${question.author_name}: ${question.question_text}`
+  roomStore.sendMessage(messageText, 8000, 'normal', timerId, false)
+
+  // Update question status
+  await supabase
+    .from('questions')
+    .update({ status: 'sent', sent_at: new Date().toISOString(), target_timer_id: timerId })
+    .eq('id', questionId)
+
+  questions.value = questions.value.filter(q => q.id !== questionId)
+  sendingQuestionId.value = null
+  showQuestionTargetDropdown.value = false
+}
+
+async function dismissQuestion(questionId: string) {
+  await supabase
+    .from('questions')
+    .update({ status: 'dismissed' })
+    .eq('id', questionId)
+
+  questions.value = questions.value.filter(q => q.id !== questionId)
 }
 
 async function play(id: string) {
@@ -881,7 +1018,7 @@ const colorClass = (id: string) => {
           </h2>
 
           <!-- Message Form - Redesigned -->
-          <div class="flex-1 flex flex-col relative z-10">
+          <div class="flex-1 flex flex-col relative z-10 overflow-y-auto" style="padding-bottom: 16px;">
             <!-- Timer Target Selector - Custom Glassmorphism Dropdown -->
             <div class="form-group">
               <label class="form-label">Send to</label>
@@ -969,6 +1106,68 @@ const colorClass = (id: string) => {
                 <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
+
+            <!-- Q&A Section Divider -->
+            <div class="qa-divider">
+              <span class="qa-divider-line"></span>
+              <span class="qa-divider-text">Audience Q&A</span>
+              <span class="qa-divider-line"></span>
+            </div>
+
+            <!-- QR Code Toggle Button -->
+            <button
+              class="qr-toggle-button"
+              :class="{ active: showQRCode }"
+              @click="generateQRCode"
+            >
+              <QrCode class="w-4 h-4" />
+              <span>{{ showQRCode ? 'Hide QR Code' : 'Show QR Code' }}</span>
+            </button>
+
+            <!-- QR Code Display -->
+            <Transition name="qr-expand">
+              <div v-if="showQRCode && qrCodeDataUrl" class="qr-code-container">
+                <img :src="qrCodeDataUrl" alt="Scan to ask a question" class="qr-code-image" />
+                <p class="qr-code-hint">Scan to ask a question</p>
+                <p class="qr-code-url">{{ askPageUrl }}</p>
+              </div>
+            </Transition>
+
+            <!-- Questions List -->
+            <div v-if="questions.length > 0" class="questions-list">
+              <div class="questions-header">
+                <span class="questions-count">{{ questions.length }}</span>
+                <span>Pending Questions</span>
+              </div>
+              <div class="questions-scroll">
+                <div
+                  v-for="question in questions"
+                  :key="question.id"
+                  class="question-card"
+                >
+                  <div class="question-author">{{ question.author_name }}</div>
+                  <div class="question-text">{{ question.question_text }}</div>
+                  <div class="question-actions">
+                    <button
+                      class="question-action-btn question-send-btn"
+                      :disabled="sendingQuestionId === question.id"
+                      @click="sendQuestion(question.id, messageTargetTimerId)"
+                      :title="messageTargetTimerId ? `Send to ${selectedTargetLabel}` : 'Send to all timers'"
+                    >
+                      <Send class="w-3.5 h-3.5" />
+                      <span>{{ sendingQuestionId === question.id ? 'Sending...' : 'Send' }}</span>
+                    </button>
+                    <button
+                      class="question-action-btn question-dismiss-btn"
+                      @click="dismissQuestion(question.id)"
+                      title="Dismiss question"
+                    >
+                      <X class="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1891,5 +2090,243 @@ const colorClass = (id: string) => {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* ========================================
+   Q&A SECTION STYLES
+   ======================================== */
+
+.qa-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 20px;
+}
+
+.qa-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+}
+
+.qa-divider-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+}
+
+/* QR Toggle Button */
+.qr-toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qr-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.qr-toggle-button.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+/* QR Code Container */
+.qr-code-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  margin-top: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+.qr-code-image {
+  width: 180px;
+  height: 180px;
+  border-radius: 8px;
+}
+
+.qr-code-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.qr-code-url {
+  margin-top: 6px;
+  font-size: 10px;
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.4);
+  word-break: break-all;
+  text-align: center;
+}
+
+/* QR Expand Animation */
+.qr-expand-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.qr-expand-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr-expand-enter-from,
+.qr-expand-leave-to {
+  opacity: 0;
+  transform: scaleY(0.9);
+  transform-origin: top;
+}
+
+/* Questions List */
+.questions-list {
+  margin-top: 20px;
+}
+
+.questions-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.questions-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+.questions-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.questions-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.questions-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.questions-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.questions-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Question Card */
+.question-card {
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.15s ease;
+}
+
+.question-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.question-author {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(239, 68, 68, 0.9);
+  margin-bottom: 6px;
+}
+
+.question-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.question-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.question-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.question-send-btn {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.question-send-btn:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.question-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.question-dismiss-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.question-dismiss-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 </style>
