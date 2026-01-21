@@ -40,6 +40,9 @@ const dragOverTimerId = ref<string | null>(null)
 // Share button state - global toast at bottom center
 const showShareToast = ref(false)
 
+// Ocean animation toggle
+const oceanEnabled = ref(true)
+
 // Custom dropdown state for "Send to" selector
 const isTargetDropdownOpen = ref(false)
 const targetDropdownRef = ref<HTMLElement | null>(null)
@@ -103,6 +106,27 @@ function handleRightPanelMouseMove(e: MouseEvent) {
   const rect = rightPanelRef.value.getBoundingClientRect()
   rightGlowX.value = e.clientX - rect.left
   rightGlowY.value = e.clientY - rect.top
+}
+
+function toggleOcean() {
+  oceanEnabled.value = !oceanEnabled.value
+  if (oceanEnabled.value) {
+    initCanvas()
+  } else {
+    if (animationId) {
+      cancelAnimationFrame(animationId)
+      animationId = null
+    }
+    // Clear canvas to black
+    const canvas = canvasRef.value
+    if (canvas) {
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.fillStyle = '#080808'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
+    }
+  }
 }
 
 function initCanvas() {
@@ -676,7 +700,27 @@ const colorClass = (id: string) => {
         <!-- CENTER: Timers Panel -->
         <div class="flex-1 flex flex-col py-4" style="padding-left: 24px; padding-right: 24px;">
           <!-- Timers Header - same style as left panel timer name -->
-          <h2 class="text-2xl font-bold text-gray-100" style="margin-top: 24px; margin-bottom: 48px;">Timers</h2>
+          <!-- Timers Header with Ocean Toggle -->
+          <div class="flex items-center gap-3" style="margin-top: 24px; margin-bottom: 48px;">
+            <h2 class="text-2xl font-bold text-gray-100">Timers</h2>
+            <!-- Ocean toggle button -->
+            <button
+              class="ocean-toggle-btn"
+              :title="oceanEnabled ? 'Hide ocean animation' : 'Show ocean animation'"
+              @click="toggleOcean"
+            >
+              <!-- Eye-off icon (shown when ocean is ON) -->
+              <svg v-if="oceanEnabled" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd" />
+                <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+              </svg>
+              <!-- Eye icon (shown when ocean is OFF) -->
+              <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
 
           <!-- Add Timer Button - with 2x spacing (48px) to first timer below -->
           <button
@@ -1769,5 +1813,26 @@ const colorClass = (id: string) => {
 
 .send-button svg {
   opacity: 0.9;
+}
+
+/* Ocean toggle button */
+.ocean-toggle-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ocean-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
 }
 </style>

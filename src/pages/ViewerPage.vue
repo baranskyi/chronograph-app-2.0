@@ -55,9 +55,9 @@ function formatSeconds(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-// Legend thresholds (same as ProgressBar)
-const yellowThreshold = 30
-const redThreshold = 10
+// Get thresholds from timer settings
+const yellowThreshold = computed(() => displayTimer.value?.settings.yellowThreshold ?? 60)
+const redThreshold = computed(() => displayTimer.value?.settings.redThreshold ?? 30)
 
 // Computed times for legend
 const legendTimes = computed(() => {
@@ -65,8 +65,8 @@ const legendTimes = computed(() => {
   const total = displayTimer.value.settings.duration
   return {
     start: '0:00',
-    yellowStart: formatSeconds(total - yellowThreshold),
-    redStart: formatSeconds(total - redThreshold),
+    yellowStart: formatSeconds(total - yellowThreshold.value),
+    redStart: formatSeconds(total - redThreshold.value),
     end: formatSeconds(total)
   }
 })
@@ -237,7 +237,7 @@ function handleKeydown(e: KeyboardEvent) {
           :remaining-seconds="displayTimer.remainingSeconds"
           :yellow-threshold="yellowThreshold"
           :red-threshold="redThreshold"
-          :class="isFullscreen ? 'h-6 rounded-none' : 'h-5'"
+          :class="isFullscreen ? 'h-8 rounded-none' : 'h-5'"
         />
 
         <!-- Color Legend -->
