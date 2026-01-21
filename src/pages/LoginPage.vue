@@ -68,11 +68,22 @@ function initCanvas() {
   function animate(time: number) {
     ctx!.clearRect(0, 0, width, height)
 
-    // Slower distortion spawning
-    if (time - lastDistortionTime > 10000 + Math.random() * 15000) {
+    // Distortion spawning - 3x more frequent, 2x more likely in center
+    if (time - lastDistortionTime > 3333 + Math.random() * 5000) {
+      // 2x probability for center: 66% chance center, 33% chance edges
+      let x, y
+      if (Math.random() < 0.66) {
+        // Center bias - spawn in middle 50% of screen
+        x = GRID_COLS * 0.25 + Math.random() * GRID_COLS * 0.5
+        y = GRID_ROWS * 0.25 + Math.random() * GRID_ROWS * 0.5
+      } else {
+        // Random across entire grid
+        x = Math.random() * GRID_COLS
+        y = Math.random() * GRID_ROWS
+      }
       distortions.push({
-        x: Math.random() * GRID_COLS,
-        y: Math.random() * GRID_ROWS,
+        x,
+        y,
         intensity: 0.8 + Math.random() * 0.4,
         decay: 0.994,
         time: time

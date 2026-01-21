@@ -46,14 +46,12 @@ const oceanEnabled = ref(true)
 // Timer ticking interval
 let tickInterval: ReturnType<typeof setInterval> | null = null
 
-// Wave animation constants - EXPANDED for full coverage
+// Wave animation constants - 30-degree tilt, same as Login/Register
 const WAVE_FREQUENCY = 0.6
 const WAVE_AMPLITUDE = 0.4
-const PERSPECTIVE_FACTOR = 0.7
 const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
-// Increased grid size for full coverage (same density, larger area)
-const GRID_COLS = 450
-const GRID_ROWS = 280
+const GRID_COLS = 180
+const GRID_ROWS = 120
 
 interface Distortion {
   x: number
@@ -96,11 +94,22 @@ function initCanvas() {
   function animate(time: number) {
     ctx!.clearRect(0, 0, width, height)
 
-    // Slower distortion spawning
-    if (time - lastDistortionTime > 10000 + Math.random() * 15000) {
+    // Distortion spawning - 3x more frequent, 2x more likely in center
+    if (time - lastDistortionTime > 3333 + Math.random() * 5000) {
+      // 2x probability for center: 66% chance center, 33% chance edges
+      let x, y
+      if (Math.random() < 0.66) {
+        // Center bias - spawn in middle 50% of screen
+        x = GRID_COLS * 0.25 + Math.random() * GRID_COLS * 0.5
+        y = GRID_ROWS * 0.25 + Math.random() * GRID_ROWS * 0.5
+      } else {
+        // Random across entire grid
+        x = Math.random() * GRID_COLS
+        y = Math.random() * GRID_ROWS
+      }
       distortions.push({
-        x: Math.random() * GRID_COLS,
-        y: Math.random() * GRID_ROWS,
+        x,
+        y,
         intensity: 0.8 + Math.random() * 0.4,
         decay: 0.994,
         time: time
@@ -119,28 +128,35 @@ function initCanvas() {
       }
     }
 
-    // EXPANDED coverage - extend far beyond viewport
-    const extendX = 0.8 // 80% extension on each side
-    const extendYTop = 0.05 // Small extension at top - ocean starts just below header (~60px)
-    const extendYBottom = 0.8 // Large extension at bottom for horizon effect
-    const startX = -width * extendX
-    const endX = width * (1 + extendX)
-    const startY = 60 - height * extendYTop // Start at header height (60px)
-    const endY = height * (1 + extendYBottom)
-    const totalWidth = endX - startX
-    const totalHeight = endY - startY
+    // 30-DEGREE TILT - top further away, bottom closer (same as Login/Register)
+    const TILT_ANGLE = 30 * Math.PI / 180
+    const perspectiveMin = 0.4
+    const perspectiveMax = 1.3
+    const extendX = 0.5
+    const extendYTop = 0.8
+    const extendYBottom = 0.3
+    const centerX = width / 2
+    const centerY = height / 2
 
-    // Draw dots
+    // Draw dots with 30-degree perspective tilt
     for (let row = 0; row < GRID_ROWS; row++) {
       for (let col = 0; col < GRID_COLS; col++) {
-        const baseX = startX + (col / GRID_COLS) * totalWidth
-        const baseY = startY + (row / GRID_ROWS) * totalHeight
+        const nx = col / (GRID_COLS - 1)
+        const ny = row / (GRID_ROWS - 1)
 
-        // Calculate wave height
+        const perspectiveScale = perspectiveMin + ny * (perspectiveMax - perspectiveMin)
+
+        const baseX = (nx - 0.5) * width * (1 + extendX * 2)
+        const baseY = -height * extendYTop + ny * height * (1 + extendYTop + extendYBottom)
+
+        const perspX = centerX + baseX * perspectiveScale
+        const perspY = centerY + (baseY - centerY) * perspectiveScale * Math.cos(TILT_ANGLE)
+
         const wavePhase = (col / GRID_COLS) * Math.PI * 4 + (row / GRID_ROWS) * Math.PI * 2
-        let waveHeight = Math.sin(wavePhase + time * 0.001 * WAVE_FREQUENCY) * WAVE_AMPLITUDE
+        let waveOffset = Math.sin(wavePhase + time * 0.001 * WAVE_FREQUENCY) * WAVE_AMPLITUDE
 
-        // Apply distortions
+        let distortionOffset = 0
+        let distortionGlow = 0
         for (const d of distortions) {
           const dx = col - d.x
           const dy = row - d.y
@@ -148,30 +164,40 @@ function initCanvas() {
           const maxDist = 40
           if (dist < maxDist) {
             const factor = (1 - dist / maxDist) * d.intensity
-            waveHeight += Math.sin(dist * 0.3 - time * 0.002) * factor * 0.5
+            distortionOffset += Math.sin(dist * 0.3 - time * 0.002) * factor * 8
+            distortionGlow += factor
           }
         }
 
-        // Perspective transformation
-        const depth = row / GRID_ROWS
-        const perspectiveScale = 0.3 + depth * PERSPECTIVE_FACTOR
-        const centerX = width / 2
-        const screenX = centerX + (baseX - centerX) * perspectiveScale
-        const screenY = baseY * perspectiveScale + height * (1 - perspectiveScale) * 0.5 + waveHeight * 30 * perspectiveScale
+        const screenX = perspX
+        const screenY = perspY + waveOffset * 20 * perspectiveScale + distortionOffset
 
-        // Skip if outside viewport (with margin)
-        if (screenX < -20 || screenX > width + 20 || screenY < -20 || screenY > height + 20) continue
+        if (screenX < -30 || screenX > width + 30 || screenY < -30 || screenY > height + 30) continue
 
-        // Depth-based properties
-        const baseOpacity = 0.15 + depth * 0.5
-        const heightBonus = (waveHeight + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.3
-        const opacity = Math.min(0.9, baseOpacity + heightBonus)
-        const dotSize = (0.8 + depth * 1.5) * 0.5
+        const depthFade = 0.15 + ny * 0.5
+        const waveBonus = (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.2
+        const finalOpacity = Math.min(0.9, depthFade + waveBonus + distortionGlow * 0.4)
+
+        const baseSize = (0.6 + ny * 1.4) * perspectiveScale * 0.7
+        const waveSize = 1 + (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.25
+        const distortionSize = 1 + distortionGlow * 1.5
+        const dotSize = baseSize * waveSize * distortionSize
+
+        const r = DOT_COLOR.r
+        const g = DOT_COLOR.g + distortionGlow * 80
+        const b = DOT_COLOR.b + distortionGlow * 120
 
         ctx!.beginPath()
-        ctx!.arc(screenX, screenY, dotSize, 0, Math.PI * 2)
-        ctx!.fillStyle = `rgba(${DOT_COLOR.r}, ${DOT_COLOR.g}, ${DOT_COLOR.b}, ${opacity})`
+        ctx!.arc(screenX, screenY, Math.max(0.4, dotSize), 0, Math.PI * 2)
+        ctx!.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
         ctx!.fill()
+
+        if (distortionGlow > 0.1) {
+          ctx!.beginPath()
+          ctx!.arc(screenX, screenY, dotSize * 2.5, 0, Math.PI * 2)
+          ctx!.fillStyle = `rgba(${r}, ${g + 40}, ${b + 80}, ${distortionGlow * 0.12})`
+          ctx!.fill()
+        }
       }
     }
 
