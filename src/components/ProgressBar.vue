@@ -49,21 +49,11 @@ const markerPosition = computed(() => `${progress.value}%`)
 
 <template>
   <div class="progress-bar-container relative h-5 rounded-lg overflow-visible">
-    <!-- SVG Filter for lens distortion effect -->
-    <svg class="absolute w-0 h-0">
-      <defs>
-        <filter id="lens-distortion" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur" />
-          <feDisplacementMap in="SourceGraphic" in2="blur" scale="3" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-      </defs>
-    </svg>
-
     <!-- Background zones (static) -->
     <div class="absolute inset-0 flex rounded-lg overflow-hidden">
       <!-- Passed zone (dark) -->
       <div
-        class="bg-[#1a1a1a] transition-all duration-300 ease-out"
+        class="passed-zone transition-all duration-300 ease-out"
         :style="{ width: passedWidth }"
       />
       <!-- Green zone -->
@@ -83,21 +73,17 @@ const markerPosition = computed(() => `${progress.value}%`)
       />
     </div>
 
-    <!-- Glassmorphism Triangle Marker with Lens Effect -->
+    <!-- Glowing Line Marker -->
     <div
-      class="glass-marker absolute -translate-x-1/2 transition-all duration-300 ease-out z-10"
-      :style="{ left: markerPosition, top: '-6px' }"
+      class="progress-marker absolute transition-all duration-300 ease-out"
+      :style="{ left: markerPosition }"
     >
-      <!-- Water droplet distortion effect under triangle -->
-      <div class="lens-distortion"></div>
-
-      <!-- Glass triangle -->
-      <div class="glass-triangle">
-        <!-- Inner glow -->
-        <div class="glass-triangle-inner"></div>
-        <!-- Reflection line -->
-        <div class="glass-reflection"></div>
-      </div>
+      <!-- Main vertical line -->
+      <div class="marker-line"></div>
+      <!-- Top glow dot -->
+      <div class="marker-dot-top"></div>
+      <!-- Bottom glow dot -->
+      <div class="marker-dot-bottom"></div>
     </div>
   </div>
 </template>
@@ -107,106 +93,108 @@ const markerPosition = computed(() => `${progress.value}%`)
   min-height: 20px;
 }
 
-/* Glassmorphism marker container */
-.glass-marker {
-  width: 28px;
-  height: 32px;
+/* Passed zone with subtle gradient edge */
+.passed-zone {
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 0%,
+    #1a1a1a calc(100% - 4px),
+    rgba(26, 26, 26, 0.8) 100%
+  );
+}
+
+/* Glowing line marker */
+.progress-marker {
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  transform: translateX(-50%);
+  z-index: 10;
   pointer-events: none;
 }
 
-/* Lens distortion effect - water droplet */
-.lens-distortion {
+/* Main vertical line */
+.marker-line {
   position: absolute;
-  top: 14px;
+  top: 4px;
+  bottom: 4px;
   left: 50%;
+  width: 2px;
   transform: translateX(-50%);
-  width: 24px;
-  height: 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  border-radius: 1px;
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, 0.8),
+    0 0 16px rgba(255, 255, 255, 0.5),
+    0 0 24px rgba(255, 255, 255, 0.3);
+  animation: line-glow 2s ease-in-out infinite;
+}
+
+/* Top glowing dot */
+.marker-dot-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translateX(-50%);
   background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0.08) 40%,
+    circle,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.8) 40%,
     transparent 70%
   );
   border-radius: 50%;
-  filter: blur(1px);
-  animation: lens-pulse 2s ease-in-out infinite;
+  box-shadow:
+    0 0 6px rgba(255, 255, 255, 0.9),
+    0 0 12px rgba(255, 255, 255, 0.6);
 }
 
-@keyframes lens-pulse {
-  0%, 100% {
-    transform: translateX(-50%) scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateX(-50%) scale(1.1);
-    opacity: 1;
-  }
-}
-
-/* Glass triangle with glassmorphism */
-.glass-triangle {
-  position: relative;
-  width: 0;
-  height: 0;
-  border-left: 14px solid transparent;
-  border-right: 14px solid transparent;
-  border-top: 18px solid rgba(255, 255, 255, 0.45);
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.35))
-          drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
-}
-
-/* Inner triangle for depth effect */
-.glass-triangle-inner {
+/* Bottom glowing dot */
+.marker-dot-bottom {
   position: absolute;
-  top: -16px;
-  left: -10px;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 14px solid rgba(255, 255, 255, 0.25);
-}
-
-/* Reflection highlight on glass */
-.glass-reflection {
-  position: absolute;
-  top: -15px;
-  left: -6px;
-  width: 8px;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.5),
-    transparent
-  );
-  border-radius: 1px;
-  transform: rotate(-30deg);
-}
-
-/* Add subtle glow animation */
-.glass-triangle::after {
-  content: '';
-  position: absolute;
-  top: -18px;
-  left: -14px;
-  width: 28px;
-  height: 18px;
+  bottom: 0;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translateX(-50%);
   background: radial-gradient(
-    ellipse at 50% 100%,
-    rgba(255, 255, 255, 0.1) 0%,
+    circle,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.8) 40%,
     transparent 70%
   );
-  animation: triangle-glow 3s ease-in-out infinite;
+  border-radius: 50%;
+  box-shadow:
+    0 0 6px rgba(255, 255, 255, 0.9),
+    0 0 12px rgba(255, 255, 255, 0.6);
 }
 
-@keyframes triangle-glow {
+/* Subtle pulsing glow */
+@keyframes line-glow {
   0%, 100% {
-    opacity: 0.5;
+    box-shadow:
+      0 0 8px rgba(255, 255, 255, 0.8),
+      0 0 16px rgba(255, 255, 255, 0.5),
+      0 0 24px rgba(255, 255, 255, 0.3);
   }
   50% {
-    opacity: 1;
+    box-shadow:
+      0 0 10px rgba(255, 255, 255, 0.9),
+      0 0 20px rgba(255, 255, 255, 0.6),
+      0 0 30px rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .marker-line {
+    animation: none;
   }
 }
 </style>
