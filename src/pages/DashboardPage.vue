@@ -801,8 +801,12 @@ const colorClass = (id: string) => {
               <!-- Spacer -->
               <div class="relative z-10 flex-1" />
 
-              <!-- Duration - 2x larger, more spacing from buttons -->
-              <div class="relative z-10 text-3xl font-mono font-bold mr-8" :class="colorClass(timer.id)">
+              <!-- Duration - 2x larger, more spacing from buttons (inline style because CSS reset overrides Tailwind) -->
+              <div
+                class="relative z-10 text-3xl font-mono font-bold"
+                :class="colorClass(timer.id)"
+                style="margin-right: 32px;"
+              >
                 {{ formatDuration(timer.remainingSeconds) }}
               </div>
 
