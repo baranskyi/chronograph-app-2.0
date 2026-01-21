@@ -467,10 +467,11 @@ onUnmounted(() => {
 /* Form */
 .register-form {
   position: relative;
-  background: rgba(17, 17, 17, 0.9);
-  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
