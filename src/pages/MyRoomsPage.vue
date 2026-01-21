@@ -302,7 +302,7 @@ function getStatusColor(status: string): string {
         </div>
         <button
           :disabled="creating"
-          class="flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-600/50 rounded-lg transition-colors font-medium"
+          class="flex items-center gap-2 px-5 py-2.5 bg-[#145BF6] hover:bg-[#1048CC] disabled:bg-[#145BF6]/50 rounded-lg transition-colors font-medium"
           @click="createRoom"
         >
           <Plus class="w-5 h-5" />
@@ -318,7 +318,7 @@ function getStatusColor(status: string): string {
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-20">
         <div class="flex flex-col items-center gap-3">
-          <div class="w-8 h-8 border-2 border-gray-600 border-t-rose-500 rounded-full animate-spin"></div>
+          <div class="w-8 h-8 border-2 border-gray-600 border-t-[#145BF6] rounded-full animate-spin"></div>
           <span class="text-gray-400">Loading rooms...</span>
         </div>
       </div>
@@ -334,7 +334,7 @@ function getStatusColor(status: string): string {
         </p>
         <button
           :disabled="creating"
-          class="flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors font-medium"
+          class="flex items-center gap-2 px-5 py-2.5 bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium"
           @click="createRoom"
         >
           <Plus class="w-5 h-5" />
@@ -360,7 +360,7 @@ function getStatusColor(status: string): string {
                   v-if="editingRoomId === room.id"
                   v-model="editingName"
                   type="text"
-                  class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded px-2 py-1 text-lg font-semibold focus:outline-none focus:border-rose-500"
+                  class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded px-2 py-1 text-lg font-semibold focus:outline-none focus:border-[#145BF6]"
                   @click.stop
                   @keydown.enter="saveRoomName(room.id)"
                   @keydown.escape="cancelEditing"
@@ -408,7 +408,7 @@ function getStatusColor(status: string): string {
             <!-- Active Timer -->
             <div class="mb-4">
               <div v-if="room.active_timer" class="flex items-center gap-2">
-                <Timer class="w-4 h-4 text-rose-400" />
+                <Timer class="w-4 h-4 text-[#145BF6]" />
                 <span class="text-sm font-medium">{{ room.active_timer.name }}</span>
                 <span :class="['text-xs px-1.5 py-0.5 rounded', getStatusColor(room.active_timer.status)]">
                   {{ formatTime(room.active_timer.remaining_seconds) }}
