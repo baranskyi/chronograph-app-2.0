@@ -317,7 +317,7 @@ function getProgress(timer: ActiveTimer): number {
         <div
           v-for="room in rooms"
           :key="room.id"
-          class="bg-[#151518] rounded-xl overflow-hidden transition-all"
+          class="bg-[#151518] rounded-xl transition-all"
           :class="room.active_timer?.is_on_air ? 'room-card-active' : 'room-card-inactive'"
         >
           <div class="flex items-center" style="padding: 20px 24px; gap: 24px;">
