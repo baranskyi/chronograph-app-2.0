@@ -268,14 +268,14 @@ const colorClass = (id: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0f0f0f] text-white" style="padding: 8px;">
+  <div class="h-screen bg-[#0f0f0f] text-white flex flex-col overflow-hidden">
     <!-- Loading -->
-    <div v-if="isInitializing" class="h-screen flex items-center justify-center">
+    <div v-if="isInitializing" class="flex-1 flex items-center justify-center">
       <div class="text-xl font-semibold text-gray-400">Loading Chronograph Pro...</div>
     </div>
 
     <!-- Error -->
-    <div v-else-if="initError" class="h-screen flex flex-col items-center justify-center gap-4">
+    <div v-else-if="initError" class="flex-1 flex flex-col items-center justify-center gap-4">
       <div class="text-red-400">{{ initError }}</div>
       <button class="px-4 py-2 bg-white/10 rounded hover:bg-white/20" @click="$router.push('/')">Go Home</button>
     </div>
@@ -283,7 +283,7 @@ const colorClass = (id: string) => {
     <!-- Main Dashboard -->
     <template v-else>
       <!-- Top Header -->
-      <header class="h-14 bg-[#0f0f0f] border-b border-[#2a2a2a] flex items-center gap-4" style="padding: 0 24px;">
+      <header class="h-14 flex-shrink-0 bg-[#0f0f0f] border-b border-[#2a2a2a] flex items-center gap-4" style="padding: 0 24px;">
         <button
           class="p-2 bg-[#2a2a2a] rounded hover:bg-[#333] transition-colors"
           @click="router.push('/my-rooms')"
@@ -316,7 +316,7 @@ const colorClass = (id: string) => {
       </header>
 
       <!-- 3-Column Layout -->
-      <div class="flex h-[calc(100vh-3rem-3rem)]">
+      <div class="flex flex-1 overflow-hidden">
         <!-- LEFT: Preview Panel -->
         <div class="w-[280px] bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col py-4" style="padding-left: 16px; padding-right: 16px;">
           <!-- Timer Name - Large, left-aligned -->
@@ -598,7 +598,7 @@ const colorClass = (id: string) => {
       </div>
 
       <!-- Bottom Status Bar -->
-      <footer class="h-12 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4">
+      <footer class="h-12 flex-shrink-0 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center px-4">
         <span class="text-xs text-gray-500 leading-none">
           chronograph.pro · v{{ APP_VERSION }} · <span class="text-gray-600">&#10003;</span> {{ pingMs !== null ? pingMs + ' ms' : '...' }}
         </span>
