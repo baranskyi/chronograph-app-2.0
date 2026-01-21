@@ -3,9 +3,9 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3 } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, GripVertical } from 'lucide-vue-next'
 
-interface ActiveTimer {
+interface Timer {
   id: string
   name: string
   status: string
@@ -20,8 +20,8 @@ interface Room {
   name: string
   created_at: string
   last_used_at: string
-  timer_count: number
-  active_timer: ActiveTimer | null
+  active_timer_id: string | null
+  timers: Timer[]
 }
 
 const router = useRouter()
@@ -42,9 +42,11 @@ function startTicking() {
   if (tickInterval) return
   tickInterval = setInterval(() => {
     rooms.value.forEach(room => {
-      if (room.active_timer && room.active_timer.status === 'running' && room.active_timer.remaining_seconds > 0) {
-        room.active_timer.remaining_seconds--
-      }
+      room.timers.forEach(timer => {
+        if (timer.status === 'running' && timer.remaining_seconds > 0) {
+          timer.remaining_seconds--
+        }
+      })
     })
   }, 1000)
 }
@@ -90,7 +92,7 @@ async function loadRooms() {
         created_at,
         last_used_at,
         active_timer_id,
-        timers!timers_room_id_fkey(id, name, status, remaining_seconds, duration, is_on_air)
+        timers!timers_room_id_fkey(id, name, status, remaining_seconds, duration, is_on_air, position)
       `)
       .eq('user_id', authStore.userId)
       .eq('is_active', true)
@@ -100,9 +102,8 @@ async function loadRooms() {
 
     rooms.value = (data || []).map((room: any) => {
       const timers = Array.isArray(room.timers) ? room.timers : []
-      const activeTimer = room.active_timer_id
-        ? timers.find((t: any) => t.id === room.active_timer_id)
-        : timers[0] || null
+      // Sort by position
+      timers.sort((a: any, b: any) => (a.position || 0) - (b.position || 0))
 
       return {
         id: room.id,
@@ -110,15 +111,15 @@ async function loadRooms() {
         name: room.name,
         created_at: room.created_at,
         last_used_at: room.last_used_at,
-        timer_count: timers.length,
-        active_timer: activeTimer ? {
-          id: activeTimer.id,
-          name: activeTimer.name,
-          status: activeTimer.status,
-          remaining_seconds: activeTimer.remaining_seconds,
-          duration: activeTimer.duration || activeTimer.remaining_seconds,
-          is_on_air: activeTimer.is_on_air || false
-        } : null
+        active_timer_id: room.active_timer_id,
+        timers: timers.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          status: t.status,
+          remaining_seconds: t.remaining_seconds,
+          duration: t.duration || t.remaining_seconds,
+          is_on_air: t.is_on_air || false
+        }))
       }
     })
   } catch (err) {
@@ -254,14 +255,24 @@ async function handleSignOut() {
 }
 
 function formatTimer(seconds: number): string {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  const mins = Math.floor(Math.abs(seconds) / 60)
+  const secs = Math.abs(seconds) % 60
+  const sign = seconds < 0 ? '-' : ''
+  return `${sign}${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-function getProgress(timer: ActiveTimer): number {
-  if (!timer.duration || timer.duration === 0) return 100
-  return (timer.remaining_seconds / timer.duration) * 100
+function getTimerProgress(timer: Timer): number {
+  if (!timer.duration || timer.duration === 0) return 0
+  const elapsed = timer.duration - timer.remaining_seconds
+  return Math.min(100, Math.max(0, (elapsed / timer.duration) * 100))
+}
+
+function isTimerSelected(room: Room, timer: Timer): boolean {
+  return room.active_timer_id === timer.id
+}
+
+function hasRunningTimer(room: Room): boolean {
+  return room.timers.some(t => t.status === 'running')
 }
 </script>
 
@@ -345,11 +356,11 @@ function getProgress(timer: ActiveTimer): number {
           v-for="room in rooms"
           :key="room.id"
           class="bg-[#151518] rounded-xl transition-all"
-          :class="room.active_timer?.is_on_air ? 'room-card-active' : 'room-card-inactive'"
+          :class="hasRunningTimer(room) ? 'room-card-active' : 'room-card-inactive'"
         >
-          <div class="flex items-center" style="padding: 20px 24px; gap: 24px;">
+          <div class="flex items-start" style="padding: 20px 24px; gap: 24px;">
             <!-- LEFT: Room Info -->
-            <div style="width: 180px; flex-shrink: 0;">
+            <div style="width: 160px; flex-shrink: 0;">
               <input
                 v-if="editingRoomId === room.id"
                 v-model="editingName"
@@ -366,41 +377,46 @@ function getProgress(timer: ActiveTimer): number {
               <div class="text-xs font-mono text-gray-500" style="margin-top: 4px;">{{ room.room_code }}</div>
             </div>
 
-            <!-- CENTER: Timer -->
-            <div class="flex-1 flex flex-col items-center">
+            <!-- CENTER: Timer Bars -->
+            <div class="flex-1 flex flex-col" style="gap: 8px;">
               <div
-                v-if="room.active_timer"
-                class="font-mono font-bold tracking-wider"
-                :class="room.active_timer.is_on_air ? 'timer-glow' : 'text-gray-400'"
-                style="font-size: 48px;"
+                v-for="timer in room.timers"
+                :key="timer.id"
+                class="relative flex items-center rounded-lg overflow-hidden"
+                :class="isTimerSelected(room, timer) ? 'bg-blue-600' : 'bg-[#1a1a1a]'"
+                style="height: 40px;"
               >
-                {{ formatTimer(room.active_timer.remaining_seconds) }}
-              </div>
-              <div v-else class="font-mono text-gray-600" style="font-size: 40px;">
-                --:--
+                <!-- Progress overlay -->
+                <div
+                  v-if="isTimerSelected(room, timer)"
+                  class="absolute inset-0 bg-blue-500 transition-all duration-200 pointer-events-none"
+                  :style="{ width: getTimerProgress(timer) + '%' }"
+                ></div>
+
+                <!-- Drag dots (visual only) -->
+                <div class="relative z-10 text-gray-400" style="padding: 0 8px;">
+                  <GripVertical class="w-4 h-4 opacity-50" />
+                </div>
+
+                <!-- Timer Name -->
+                <div class="relative z-10 text-sm font-medium flex-1 truncate">
+                  {{ timer.name }}
+                </div>
+
+                <!-- Time -->
+                <div class="relative z-10 text-sm font-mono font-bold text-gray-300" style="padding-right: 12px;">
+                  {{ formatTimer(timer.remaining_seconds) }}
+                </div>
               </div>
 
-              <!-- Progress Bar -->
-              <div v-if="room.active_timer" class="w-full max-w-md bg-gray-700 rounded-full overflow-hidden" style="height: 6px; margin-top: 12px;">
-                <div
-                  class="h-full rounded-full transition-all"
-                  :class="room.active_timer.is_on_air ? 'bg-green-500' : 'bg-gray-500'"
-                  :style="{ width: getProgress(room.active_timer) + '%' }"
-                ></div>
+              <!-- No timers message -->
+              <div v-if="room.timers.length === 0" class="text-gray-500 text-sm italic" style="padding: 8px 0;">
+                No timers
               </div>
             </div>
 
             <!-- RIGHT: Actions -->
             <div class="flex items-center" style="gap: 12px; flex-shrink: 0;">
-              <!-- ON AIR Badge -->
-              <div
-                v-if="room.active_timer?.is_on_air"
-                class="bg-green-500/20 border border-green-500 rounded-full text-green-400 text-xs font-semibold uppercase tracking-wide"
-                style="padding: 6px 12px;"
-              >
-                ON AIR
-              </div>
-
               <!-- Enter Room -->
               <button
                 class="bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium text-sm"
@@ -463,10 +479,5 @@ function getProgress(timer: ActiveTimer): number {
 
 .room-card-inactive:hover {
   border-color: #3a3a3a;
-}
-
-.timer-glow {
-  color: #4ade80;
-  text-shadow: 0 0 20px rgba(74, 222, 128, 0.6), 0 0 40px rgba(74, 222, 128, 0.4), 0 0 60px rgba(74, 222, 128, 0.2);
 }
 </style>
