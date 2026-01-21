@@ -119,10 +119,10 @@ watch(
   (newMessage) => {
     if (newMessage?.splash) {
       showSplash.value = true
-      // Animation lasts ~900ms (3 flashes * 300ms)
+      // Animation lasts 3 seconds (3 flashes * 1 sec each)
       setTimeout(() => {
         showSplash.value = false
-      }, 900)
+      }, 3000)
     }
   }
 )
@@ -329,18 +329,29 @@ function handleKeydown(e: KeyboardEvent) {
   opacity: 0;
 }
 
-/* Splash flash animation - 3 red flashes */
+/* Splash flash animation - 3 smooth red flashes over 3 seconds */
 .splash-flash {
-  animation: splash-flash 0.9s ease-out;
+  animation: splash-flash 3s ease-in-out;
 }
 
 @keyframes splash-flash {
-  0%, 100% { background-color: transparent; }
-  10% { background-color: rgba(239, 68, 68, 0.6); }
-  20% { background-color: transparent; }
-  35% { background-color: rgba(239, 68, 68, 0.5); }
-  45% { background-color: transparent; }
-  60% { background-color: rgba(239, 68, 68, 0.4); }
-  70% { background-color: transparent; }
+  /* Flash 1: 0-33% (1 second) */
+  0% { background-color: transparent; }
+  5% { background-color: rgba(239, 68, 68, 0.5); }
+  15% { background-color: rgba(239, 68, 68, 0.5); }
+  30% { background-color: transparent; }
+
+  /* Flash 2: 33-66% (1 second) */
+  33% { background-color: transparent; }
+  38% { background-color: rgba(239, 68, 68, 0.4); }
+  48% { background-color: rgba(239, 68, 68, 0.4); }
+  63% { background-color: transparent; }
+
+  /* Flash 3: 66-100% (1 second) */
+  66% { background-color: transparent; }
+  71% { background-color: rgba(239, 68, 68, 0.3); }
+  81% { background-color: rgba(239, 68, 68, 0.3); }
+  96% { background-color: transparent; }
+  100% { background-color: transparent; }
 }
 </style>
