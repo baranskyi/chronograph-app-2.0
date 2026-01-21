@@ -30,7 +30,7 @@ CREATE POLICY "Room owners can view questions"
   ON questions FOR SELECT
   USING (
     room_id IN (
-      SELECT id FROM rooms WHERE owner_id = auth.uid()
+      SELECT id FROM rooms WHERE user_id = auth.uid()
     )
   );
 
@@ -39,7 +39,7 @@ CREATE POLICY "Room owners can update questions"
   ON questions FOR UPDATE
   USING (
     room_id IN (
-      SELECT id FROM rooms WHERE owner_id = auth.uid()
+      SELECT id FROM rooms WHERE user_id = auth.uid()
     )
   );
 
@@ -48,7 +48,7 @@ CREATE POLICY "Room owners can delete questions"
   ON questions FOR DELETE
   USING (
     room_id IN (
-      SELECT id FROM rooms WHERE owner_id = auth.uid()
+      SELECT id FROM rooms WHERE user_id = auth.uid()
     )
   );
 
