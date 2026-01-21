@@ -7,12 +7,14 @@ import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import { Play, Pause, Settings, MoreHorizontal, Plus, GripVertical, Link2, RotateCcw, ArrowLeft } from 'lucide-vue-next'
 import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
 const route = useRoute()
 
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
+const authStore = useAuthStore()
 
 // Get roomCode from route params
 const props = defineProps<{
@@ -51,6 +53,11 @@ onMounted(async () => {
       // No room code - redirect to my-rooms
       router.push('/my-rooms')
       return
+    }
+
+    // Ensure auth is initialized before connecting (for token to be available)
+    if (authStore.loading) {
+      await authStore.initialize()
     }
 
     // Join the room as controller

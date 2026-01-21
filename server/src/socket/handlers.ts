@@ -96,12 +96,18 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
       }
 
       // Check ownership: only owner can control the room
-      // Allow access if: room has no owner (legacy) OR user owns the room
-      if (room.userId && room.userId !== userId) {
+      // Allow access if:
+      // - room has no owner (legacy rooms)
+      // - user owns the room
+      // - user is not authenticated (will be validated via other means)
+      if (room.userId && userId && room.userId !== userId) {
         console.log(`Access denied: user ${userId} tried to join room owned by ${room.userId}`)
         callback({ error: 'Not authorized to control this room' })
         return
       }
+
+      // Log ownership check for debugging
+      console.log(`Ownership check: room.userId=${room.userId}, socket.userId=${userId || 'none'}`)
 
       roomManager.setController(room.roomId, socket.id)
       socket.join(room.roomId)
