@@ -60,7 +60,6 @@ const showQRCode = ref(false)
 const qrCodeDataUrl = ref<string | null>(null)
 const questions = ref<Question[]>([])
 const sendingQuestionId = ref<string | null>(null)
-const questionTargetTimerId = ref<string | null>(null)
 const showQuestionTargetDropdown = ref(false)
 
 // Custom dropdown state for "Send to" selector

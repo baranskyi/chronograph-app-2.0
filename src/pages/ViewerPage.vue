@@ -46,8 +46,6 @@ const formattedTime = computed(() => {
   return timerStore.getFormattedTime(displayTimer.value.id)
 })
 
-const timerName = computed(() => displayTimer.value?.name ?? 'Timer')
-
 // Helper to format seconds as mm:ss
 function formatSeconds(seconds: number): string {
   const mins = Math.floor(seconds / 60)

@@ -52,7 +52,6 @@ function initCanvas() {
   window.addEventListener('resize', resize)
 
   const TILT_ANGLE = Math.PI / 6 // 30 degrees
-  const cosAngle = Math.cos(TILT_ANGLE)
   const sinAngle = Math.sin(TILT_ANGLE)
 
   let time = 0
