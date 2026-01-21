@@ -381,37 +381,39 @@ function hasRunningTimer(room: Room): boolean {
               <div class="text-xs font-mono text-gray-500" style="margin-top: 4px;">{{ room.room_code }}</div>
             </div>
 
-            <!-- CENTER: Timer Bars -->
-            <div class="flex flex-col" style="gap: 4px; max-width: 400px;">
-              <div
-                v-for="timer in room.timers"
-                :key="timer.id"
-                class="relative flex items-center rounded overflow-hidden"
-                :class="isTimerSelected(room, timer) ? 'bg-blue-600' : 'bg-[#1a1a1a]'"
-                style="height: 24px;"
-              >
-                <!-- Progress overlay for running timers -->
+            <!-- CENTER: Timer Bars (centered) -->
+            <div class="flex-1 flex justify-center">
+              <div class="flex flex-col" style="gap: 4px; width: 100%; max-width: 400px;">
                 <div
-                  v-if="timer.status === 'running'"
-                  class="absolute inset-0 transition-all duration-200 pointer-events-none"
-                  :class="isTimerSelected(room, timer) ? 'bg-blue-500' : 'bg-blue-600/50'"
-                  :style="{ width: getTimerProgress(timer) + '%' }"
-                ></div>
+                  v-for="timer in room.timers"
+                  :key="timer.id"
+                  class="relative flex items-center rounded overflow-hidden"
+                  :class="isTimerSelected(room, timer) ? 'bg-blue-600' : 'bg-[#1a1a1a]'"
+                  style="height: 24px;"
+                >
+                  <!-- Progress overlay for running timers -->
+                  <div
+                    v-if="timer.status === 'running'"
+                    class="absolute inset-0 transition-all duration-200 pointer-events-none"
+                    :class="isTimerSelected(room, timer) ? 'bg-blue-500' : 'bg-blue-600/50'"
+                    :style="{ width: getTimerProgress(timer) + '%' }"
+                  ></div>
 
-                <!-- Timer Name -->
-                <div class="relative z-10 text-xs font-medium flex-1 truncate" style="padding-left: 8px;">
-                  {{ timer.name }}
+                  <!-- Timer Name -->
+                  <div class="relative z-10 text-xs font-medium flex-1 truncate" style="padding-left: 8px;">
+                    {{ timer.name }}
+                  </div>
+
+                  <!-- Time: current / total -->
+                  <div class="relative z-10 text-xs font-mono text-gray-300" style="padding-right: 8px;">
+                    {{ formatTimerDisplay(timer) }}
+                  </div>
                 </div>
 
-                <!-- Time: current / total -->
-                <div class="relative z-10 text-xs font-mono text-gray-300" style="padding-right: 8px;">
-                  {{ formatTimerDisplay(timer) }}
+                <!-- No timers message -->
+                <div v-if="room.timers.length === 0" class="text-gray-500 text-xs italic">
+                  No timers
                 </div>
-              </div>
-
-              <!-- No timers message -->
-              <div v-if="room.timers.length === 0" class="text-gray-500 text-xs italic">
-                No timers
               </div>
             </div>
 
