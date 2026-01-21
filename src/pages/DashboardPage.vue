@@ -542,8 +542,8 @@ const colorClass = (id: string) => {
               '--glow-y': leftGlowY + 'px'
             }"
           ></div>
-          <!-- Timer Name - Large, left-aligned -->
-          <h2 class="text-2xl font-bold text-gray-100 truncate relative z-10" style="margin-bottom: 16px;">
+          <!-- Timer Name - Large, left-aligned, with double spacing from header -->
+          <h2 class="text-2xl font-bold text-gray-100 truncate relative z-10" style="margin-top: 24px; margin-bottom: 16px;">
             {{ timerStore.selectedTimer?.name || 'Timer' }}
           </h2>
 
@@ -650,10 +650,10 @@ const colorClass = (id: string) => {
         </div>
 
         <!-- CENTER: Timers Panel -->
-        <div class="flex-1 flex flex-col py-6" style="padding-left: 24px; padding-right: 24px;">
-          <!-- Timers Header -->
-          <div class="h-14 flex items-center gap-4 mb-4">
-            <span class="font-semibold text-lg">Timers</span>
+        <div class="flex-1 flex flex-col py-4" style="padding-left: 24px; padding-right: 24px;">
+          <!-- Timers Header - with double spacing from header, aligned with left panel timer name -->
+          <div class="flex items-center gap-4 mb-4" style="margin-top: 24px;">
+            <span class="font-semibold text-lg leading-none">Timers</span>
             <button
               class="glass-button-red flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
               style="padding: 10px 20px;"
