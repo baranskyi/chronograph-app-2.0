@@ -745,13 +745,15 @@ const colorClass = (id: string) => {
                   <Settings class="w-5 h-5" />
                 </button>
                 <button
-                  class="p-3 rounded-xl min-h-12 min-w-12 touch-manipulation active:scale-95 transition-all flex items-center justify-center cursor-pointer"
-                  :class="timer.status === 'running' ? 'glass-button-amber' : 'glass-button-green'"
+                  class="play-pause-btn p-3 rounded-xl min-h-12 min-w-12 touch-manipulation flex items-center justify-center cursor-pointer"
+                  :class="timer.status === 'running' ? 'is-playing' : 'is-paused'"
                   @click.stop="timer.status === 'running' ? pause(timer.id) : play(timer.id)"
                   :title="timer.status === 'running' ? 'Pause' : 'Play'"
                 >
-                  <Pause v-if="timer.status === 'running'" class="w-5 h-5" />
-                  <Play v-else class="w-5 h-5" />
+                  <Transition name="icon-morph" mode="out-in">
+                    <Pause v-if="timer.status === 'running'" class="w-5 h-5" key="pause" />
+                    <Play v-else class="w-5 h-5" key="play" />
+                  </Transition>
                 </button>
                 <button
                   class="p-3 rounded-xl glass-button-subtle hover:bg-white/10 min-h-12 min-w-12 touch-manipulation active:scale-95 flex items-center justify-center cursor-pointer"
@@ -1001,6 +1003,105 @@ const colorClass = (id: string) => {
 .glass-button-amber:hover {
   background: rgba(245, 158, 11, 0.85);
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+}
+
+/* Play/Pause Button with Color Morphing */
+.play-pause-btn {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition:
+    background-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 150ms ease-out,
+    color 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.play-pause-btn:active {
+  transform: scale(0.92);
+}
+
+/* Paused state (green - Play button) */
+.play-pause-btn.is-paused {
+  background: rgba(34, 197, 94, 0.6);
+  box-shadow:
+    0 4px 15px rgba(34, 197, 94, 0.25),
+    0 0 0 0 rgba(34, 197, 94, 0);
+  color: white;
+}
+
+.play-pause-btn.is-paused:hover {
+  background: rgba(34, 197, 94, 0.75);
+  box-shadow:
+    0 6px 25px rgba(34, 197, 94, 0.35),
+    0 0 20px rgba(34, 197, 94, 0.15);
+}
+
+/* Playing state (amber - Pause button) */
+.play-pause-btn.is-playing {
+  background: rgba(245, 158, 11, 0.7);
+  box-shadow:
+    0 4px 15px rgba(245, 158, 11, 0.25),
+    0 0 0 0 rgba(245, 158, 11, 0);
+  color: black;
+  animation: pulse-amber 2s ease-in-out infinite;
+}
+
+.play-pause-btn.is-playing:hover {
+  background: rgba(245, 158, 11, 0.85);
+  box-shadow:
+    0 6px 25px rgba(245, 158, 11, 0.35),
+    0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+/* Pulse animation for playing state */
+@keyframes pulse-amber {
+  0%, 100% {
+    box-shadow:
+      0 4px 15px rgba(245, 158, 11, 0.25),
+      0 0 0 0 rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 4px 20px rgba(245, 158, 11, 0.35),
+      0 0 15px rgba(245, 158, 11, 0.2);
+  }
+}
+
+/* Icon morph transition */
+.icon-morph-enter-active {
+  transition: all 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.icon-morph-leave-active {
+  transition: all 120ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+.icon-morph-enter-from {
+  opacity: 0;
+  transform: scale(0.6) rotate(-15deg);
+}
+
+.icon-morph-leave-to {
+  opacity: 0;
+  transform: scale(0.6) rotate(15deg);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .play-pause-btn {
+    transition: none;
+  }
+  .play-pause-btn.is-playing {
+    animation: none;
+  }
+  .icon-morph-enter-active,
+  .icon-morph-leave-active {
+    transition: opacity 100ms ease;
+  }
+  .icon-morph-enter-from,
+  .icon-morph-leave-to {
+    transform: none;
+  }
 }
 
 /* Timer items */
