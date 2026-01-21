@@ -19,6 +19,7 @@ const { isFullscreen, toggle: toggleFullscreen, exit: exitFullscreen } = useFull
 
 const loading = ref(true)
 const error = ref<string | null>(null)
+const showSplash = ref(false)
 
 const roomId = (route.params.roomId as string).toUpperCase()
 const requestedTimerId = route.params.timerId as string | undefined
@@ -112,6 +113,20 @@ watch(
   }
 )
 
+// Trigger splash animation when message with splash arrives
+watch(
+  () => roomStore.currentMessage,
+  (newMessage) => {
+    if (newMessage?.splash) {
+      showSplash.value = true
+      // Animation lasts ~900ms (3 flashes * 300ms)
+      setTimeout(() => {
+        showSplash.value = false
+      }, 900)
+    }
+  }
+)
+
 function handleKeydown(e: KeyboardEvent) {
   switch (e.key.toLowerCase()) {
     case 'f':
@@ -196,6 +211,12 @@ function handleKeydown(e: KeyboardEvent) {
 
       <!-- Message Overlay -->
       <MessageOverlay v-if="roomStore.currentMessage" :message="roomStore.currentMessage" />
+
+      <!-- Splash Flash Overlay -->
+      <div
+        v-if="showSplash"
+        class="fixed inset-0 z-40 pointer-events-none splash-flash"
+      ></div>
 
       <!-- Blackout Overlay -->
       <Transition name="blackout">
@@ -306,5 +327,20 @@ function handleKeydown(e: KeyboardEvent) {
 .blackout-enter-from,
 .blackout-leave-to {
   opacity: 0;
+}
+
+/* Splash flash animation - 3 red flashes */
+.splash-flash {
+  animation: splash-flash 0.9s ease-out;
+}
+
+@keyframes splash-flash {
+  0%, 100% { background-color: transparent; }
+  10% { background-color: rgba(239, 68, 68, 0.6); }
+  20% { background-color: transparent; }
+  35% { background-color: rgba(239, 68, 68, 0.5); }
+  45% { background-color: transparent; }
+  60% { background-color: rgba(239, 68, 68, 0.4); }
+  70% { background-color: transparent; }
 }
 </style>

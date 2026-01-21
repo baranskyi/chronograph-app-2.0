@@ -379,28 +379,30 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
     text,
     duration = 5000,
     priority = 'normal',
-    targetTimerId
+    targetTimerId,
+    splash = false
   }: {
     roomId: string
     text: string
     duration?: number
     priority?: MessagePriority
     targetTimerId?: string | null
+    splash?: boolean
   }) => {
     if (!roomManager.isController(roomId, socket.id)) {
       return // Only controller can send messages
     }
 
     const normalizedRoomId = roomId.toUpperCase()
-    const messagePayload = { text, duration, priority }
+    const messagePayload = { text, duration, priority, splash }
 
     if (targetTimerId) {
       // Send only to viewers of specific timer
-      console.log(`Message sent to room ${roomId} timer ${targetTimerId}: "${text}"`)
+      console.log(`Message sent to room ${roomId} timer ${targetTimerId}: "${text}"${splash ? ' (splash)' : ''}`)
       socket.to(`${normalizedRoomId}:${targetTimerId}`).emit('message:show', messagePayload)
     } else {
       // Send to all viewers in the room (except sender)
-      console.log(`Message sent to room ${roomId}: "${text}"`)
+      console.log(`Message sent to room ${roomId}: "${text}"${splash ? ' (splash)' : ''}`)
       socket.to(normalizedRoomId).emit('message:show', messagePayload)
     }
   })

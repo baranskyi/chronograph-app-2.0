@@ -11,6 +11,7 @@ export interface SpeakerMessage {
   text: string
   duration: number
   priority: MessagePriority
+  splash?: boolean
 }
 
 export const useRoomStore = defineStore('room', () => {
@@ -467,7 +468,7 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
-  function sendMessage(text: string, duration = 5000, priority: MessagePriority = 'normal', targetTimerId?: string | null) {
+  function sendMessage(text: string, duration = 5000, priority: MessagePriority = 'normal', targetTimerId?: string | null, splash?: boolean) {
     if (!isController.value || !roomId.value || !socket.value?.connected) {
       return
     }
@@ -477,7 +478,8 @@ export const useRoomStore = defineStore('room', () => {
       text,
       duration,
       priority,
-      targetTimerId: targetTimerId || null
+      targetTimerId: targetTimerId || null,
+      splash: splash || false
     })
   }
 

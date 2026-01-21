@@ -29,6 +29,7 @@ const isInitializing = ref(true)
 const initError = ref<string | null>(null)
 const customMessage = ref('')
 const messageTargetTimerId = ref<string | null>(null)
+const messageSplash = ref(false)
 const pingMs = ref<number | null>(null)
 const editingTimerId = ref<string | null>(null)
 const editingTimerName = ref('')
@@ -221,7 +222,7 @@ function getTimerProgress(timer: { remainingSeconds: number; settings: { duratio
 
 function sendCustomMessage() {
   if (customMessage.value.trim()) {
-    roomStore.sendMessage(customMessage.value.trim(), 5000, 'normal', messageTargetTimerId.value)
+    roomStore.sendMessage(customMessage.value.trim(), 5000, 'normal', messageTargetTimerId.value, messageSplash.value)
     customMessage.value = ''
   }
 }
@@ -571,6 +572,16 @@ const colorClass = (id: string) => {
               class="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-sm focus:outline-none focus:border-blue-500 resize-none"
               style="padding: 16px;"
             ></textarea>
+
+            <!-- Splash checkbox -->
+            <label class="flex items-center gap-3 cursor-pointer" style="margin-top: 12px;">
+              <input
+                v-model="messageSplash"
+                type="checkbox"
+                class="w-5 h-5 rounded border-[#2a2a2a] bg-[#0f0f0f] text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+              />
+              <span class="text-sm text-gray-300">Make a splash</span>
+            </label>
 
             <button
               class="w-full px-4 py-3 text-base font-medium bg-blue-600 rounded-lg hover:bg-blue-700 active:scale-[0.98] transition-all touch-manipulation"
