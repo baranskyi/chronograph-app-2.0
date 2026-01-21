@@ -429,7 +429,7 @@ const colorClass = (id: string) => {
         <!-- CENTER: Timers Panel -->
         <div class="flex-1 flex flex-col bg-[#0f0f0f] py-4" style="padding-left: 16px; padding-right: 16px;">
           <!-- Timers Header -->
-          <div class="h-12 border-b border-[#2a2a2a] flex items-center gap-4 mb-2">
+          <div class="h-12 flex items-center gap-4 mb-2">
             <span class="font-medium">Timers</span>
             <button
               class="flex items-center gap-2 text-sm text-gray-300 hover:text-white border border-gray-500 hover:border-gray-400 rounded-md transition-colors cursor-pointer"
