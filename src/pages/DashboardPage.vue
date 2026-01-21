@@ -755,7 +755,7 @@ const colorClass = (id: string) => {
                 draggedTimerId === timer.id ? 'opacity-50 scale-[0.98]' : '',
                 dragOverTimerId === timer.id && draggedTimerId !== timer.id ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-transparent' : ''
               ]"
-              style="padding: 20px 24px;"
+              style="padding: 20px 24px; flex-shrink: 0;"
               draggable="true"
               @click="timerStore.selectTimer(timer.id)"
               @dragstart="handleDragStart(timer.id, $event)"
