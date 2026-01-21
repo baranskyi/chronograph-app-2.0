@@ -724,12 +724,12 @@ const colorClass = (id: string) => {
               <div class="relative z-10 flex-1" />
 
               <!-- Duration -->
-              <div class="relative z-10 text-lg font-mono font-bold mr-6" :class="colorClass(timer.id)">
+              <div class="relative z-10 text-lg font-mono font-bold mr-3" :class="colorClass(timer.id)">
                 {{ formatDuration(timer.remainingSeconds) }}
               </div>
 
               <!-- Controls - Bigger -->
-              <div class="relative z-10 flex items-center gap-2">
+              <div class="relative z-10 flex items-center gap-3">
                 <button
                   class="p-3 rounded-xl glass-button-subtle hover:bg-white/10 min-h-12 min-w-12 touch-manipulation active:scale-95 flex items-center justify-center cursor-pointer"
                   @click.stop="reset(timer.id)"
