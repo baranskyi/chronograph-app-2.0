@@ -39,7 +39,7 @@
 - [x] Компонент SettingsPanel (модальное окно)
 - [x] Composable useAudio для звуковых сигналов
 - [x] PWA манифест и Service Worker
-- [x] Тёмная тема (как у Stagetimer)
+- [x] Тёмная тема (профессиональный стиль)
 
 ---
 
@@ -158,7 +158,7 @@ Backend (Стадия 2+):
 
 ## Источники и референсы
 
-- [Stagetimer.io](https://stagetimer.io/features/) — основной референс
+- [Stagetimer.io](https://stagetimer.io/features/) — конкурент для анализа
 - [Ontime](https://www.getontime.no/) — open-source альтернатива
 - [CueTimer](https://www.presentationtools.com/cuetimer/)
 - [jstimer](https://github.com/48kRAM/jstimer) — минималистичный пример
