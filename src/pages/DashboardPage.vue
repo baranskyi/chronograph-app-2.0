@@ -329,7 +329,7 @@ const colorClass = (id: string) => {
               <span
                 class="text-xs font-bold rounded-md transition-colors"
                 :class="timerStore.selectedTimer.status === 'running'
-                  ? 'bg-red-600 text-white'
+                  ? 'on-air-badge-active'
                   : 'bg-transparent border border-gray-500 text-gray-500'"
                 style="padding: 8px 16px;"
               >ON AIR</span>
@@ -660,5 +660,23 @@ const colorClass = (id: string) => {
 .toast-leave-to {
   opacity: 0;
   transform: translate(-50%, 16px);
+}
+
+/* ON AIR badge with smooth pulse animation */
+.on-air-badge-active {
+  background-color: #dc2626;
+  color: white;
+  animation: on-air-pulse 2s ease-in-out infinite;
+}
+
+@keyframes on-air-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 16px rgba(220, 38, 38, 0.9);
+  }
 }
 </style>
