@@ -794,51 +794,68 @@ const colorClass = (id: string) => {
           ></div>
 
           <!-- Messages Header - Same style as timer name in left panel -->
-          <h2 class="text-2xl font-bold text-gray-100 truncate relative z-10" style="margin-top: 24px; margin-bottom: 32px;">
+          <h2 class="text-2xl font-bold text-gray-100 truncate relative z-10" style="margin-top: 24px; margin-bottom: 24px;">
             Message to Speaker
           </h2>
 
-          <!-- Message Input -->
+          <!-- Message Form - Redesigned -->
           <div class="flex-1 flex flex-col relative z-10">
-            <!-- Timer Target Selector -->
-            <div style="margin-bottom: 12px;">
-              <label class="block text-xs text-gray-400" style="margin-bottom: 8px;">Send to:</label>
-              <select
-                v-model="messageTargetTimerId"
-                class="w-full bg-black/30 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-red-500/50 backdrop-blur-sm"
-                style="padding: 14px 16px;"
-              >
-                <option :value="null">All timers</option>
-                <option v-for="timer in timerStore.orderedTimerList" :key="timer.id" :value="timer.id">
-                  {{ timer.name }}
-                </option>
-              </select>
+            <!-- Timer Target Selector - Glassmorphism -->
+            <div class="form-group">
+              <label class="form-label">Send to</label>
+              <div class="glass-select-wrapper">
+                <select
+                  v-model="messageTargetTimerId"
+                  class="glass-select"
+                >
+                  <option :value="null">All timers</option>
+                  <option v-for="timer in timerStore.orderedTimerList" :key="timer.id" :value="timer.id">
+                    {{ timer.name }}
+                  </option>
+                </select>
+                <div class="glass-select-arrow">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
             </div>
 
-            <textarea
-              v-model="customMessage"
-              placeholder="Enter message for speaker..."
-              rows="4"
-              class="w-full bg-black/30 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-red-500/50 resize-none backdrop-blur-sm"
-              style="padding: 16px;"
-            ></textarea>
+            <!-- Message Textarea - Glassmorphism -->
+            <div class="form-group">
+              <label class="form-label">Message</label>
+              <textarea
+                v-model="customMessage"
+                placeholder="Type your message..."
+                rows="4"
+                class="glass-textarea"
+              ></textarea>
+            </div>
 
-            <!-- Splash checkbox -->
-            <label class="flex items-center gap-3 cursor-pointer" style="margin-top: 12px;">
-              <input
-                v-model="messageSplash"
-                type="checkbox"
-                class="w-5 h-5 rounded border-white/20 bg-black/30 text-red-500 focus:ring-red-500 focus:ring-offset-0 cursor-pointer accent-red-500"
-              />
-              <span class="text-sm text-gray-300">Make a splash</span>
+            <!-- Splash Toggle - Round iOS-style -->
+            <label class="toggle-container">
+              <span class="toggle-label">Make a splash</span>
+              <div class="toggle-switch" :class="{ active: messageSplash }">
+                <input
+                  v-model="messageSplash"
+                  type="checkbox"
+                  class="toggle-input"
+                />
+                <div class="toggle-track">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </div>
             </label>
 
+            <!-- Send Button -->
             <button
-              class="w-full glass-button-red text-base font-semibold rounded-xl active:scale-[0.98] transition-all touch-manipulation cursor-pointer"
-              style="margin-top: 16px; padding: 14px 24px;"
+              class="send-button"
               @click="sendCustomMessage"
             >
-              Send
+              <span>Send Message</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -1365,5 +1382,253 @@ const colorClass = (id: string) => {
     opacity: 0.7;
     transform: scale(0.95);
   }
+}
+
+/* ========================================
+   MESSAGE TO SPEAKER - FORM STYLES
+   ======================================== */
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 10px;
+}
+
+/* Glassmorphism Select Dropdown */
+.glass-select-wrapper {
+  position: relative;
+}
+
+.glass-select {
+  width: 100%;
+  padding: 14px 40px 14px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.glass-select:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+}
+
+.glass-select:focus {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.glass-select option {
+  background: #1a1a1a;
+  color: white;
+  padding: 12px;
+}
+
+.glass-select-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+/* Glassmorphism Textarea */
+.glass-textarea {
+  width: 100%;
+  padding: 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  outline: none;
+  resize: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.glass-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.glass-textarea:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.glass-textarea:focus {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+/* iOS-style Toggle Switch */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.85) 100%
+  );
+  border-radius: 50%;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 1px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-switch.active .toggle-track {
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.8) 0%,
+    rgba(220, 38, 38, 0.9) 100%
+  );
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.1),
+    0 0 12px rgba(239, 68, 68, 0.3);
+}
+
+.toggle-switch.active .toggle-thumb {
+  left: 26px;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* Send Button - Enhanced */
+.send-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 24px;
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(
+    180deg,
+    rgba(220, 70, 70, 0.85) 0%,
+    rgba(185, 50, 50, 0.9) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 4px 16px rgba(239, 68, 68, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.send-button:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(235, 80, 80, 0.9) 0%,
+    rgba(200, 60, 60, 0.95) 100%
+  );
+  box-shadow:
+    0 6px 24px rgba(239, 68, 68, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.send-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    0 2px 8px rgba(239, 68, 68, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.send-button svg {
+  opacity: 0.9;
 }
 </style>
