@@ -543,12 +543,12 @@ const colorClass = (id: string) => {
             }"
           ></div>
           <!-- Timer Name - Large, left-aligned, with double spacing from header -->
-          <h2 class="text-2xl font-bold text-gray-100 truncate relative z-10" style="margin-top: 24px; margin-bottom: 16px;">
+          <h2 class="text-2xl font-bold text-gray-100 truncate relative z-10" style="margin-top: 24px; margin-bottom: 32px;">
             {{ timerStore.selectedTimer?.name || 'Timer' }}
           </h2>
 
-          <!-- Big Time Display - Rebuilt from scratch -->
-          <div class="flex-1 flex flex-col items-center justify-center gap-6 relative z-10">
+          <!-- Big Time Display - Top aligned with double spacing -->
+          <div class="flex flex-col items-center gap-6 relative z-10">
 
             <!-- Section 1: ON AIR Badge -->
             <div v-if="timerStore.selectedTimer">
@@ -793,10 +793,10 @@ const colorClass = (id: string) => {
             }"
           ></div>
 
-          <!-- Messages Header -->
-          <div class="h-12 border-b border-white/10 flex items-center mb-4 relative z-10">
-            <span class="font-semibold">Message to Speaker</span>
-          </div>
+          <!-- Messages Header - Same style as timer name in left panel -->
+          <h2 class="text-2xl font-bold text-gray-100 truncate relative z-10" style="margin-top: 24px; margin-bottom: 32px;">
+            Message to Speaker
+          </h2>
 
           <!-- Message Input -->
           <div class="flex-1 flex flex-col relative z-10">
