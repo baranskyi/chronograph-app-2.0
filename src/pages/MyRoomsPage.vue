@@ -22,7 +22,6 @@ interface Room {
   last_used_at: string
   timer_count: number
   active_timer: ActiveTimer | null
-  timezone: string
 }
 
 const router = useRouter()
@@ -32,20 +31,12 @@ const rooms = ref<Room[]>([])
 const loading = ref(true)
 const creating = ref(false)
 const error = ref<string | null>(null)
-
-// Editing state
 const editingRoomId = ref<string | null>(null)
 const editingName = ref('')
-
-// Menu state
 const openMenuId = ref<string | null>(null)
-
-// Get user's timezone
-const userTimezone = computed(() => Intl.DateTimeFormat().resolvedOptions().timeZone)
 
 onMounted(async () => {
   await loadRooms()
-  // Close menu on outside click
   document.addEventListener('click', closeMenu)
 })
 
@@ -63,7 +54,6 @@ async function loadRooms() {
       return
     }
 
-    // Get rooms with active timer info
     const { data, error: fetchError } = await supabase
       .from('rooms')
       .select(`
@@ -101,8 +91,7 @@ async function loadRooms() {
           remaining_seconds: activeTimer.remaining_seconds,
           duration: activeTimer.duration || activeTimer.remaining_seconds,
           is_on_air: activeTimer.is_on_air || false
-        } : null,
-        timezone: userTimezone.value
+        } : null
       }
     })
   } catch (err) {
@@ -137,7 +126,6 @@ async function createRoom() {
 
     if (createError) throw createError
 
-    // Create default timer for the room
     await supabase
       .from('timers')
       .insert({
@@ -149,7 +137,6 @@ async function createRoom() {
         is_on_air: true
       })
 
-    // Update room's active_timer_id
     const { data: timerData } = await supabase
       .from('timers')
       .select('id')
@@ -176,7 +163,7 @@ async function deleteRoom(roomId: string, event: Event) {
   event.stopPropagation()
   openMenuId.value = null
 
-  if (!confirm('Are you sure you want to delete this room? This action cannot be undone.')) return
+  if (!confirm('Are you sure you want to delete this room?')) return
 
   try {
     const { error: deleteError } = await supabase
@@ -185,7 +172,6 @@ async function deleteRoom(roomId: string, event: Event) {
       .eq('id', roomId)
 
     if (deleteError) throw deleteError
-
     rooms.value = rooms.value.filter(r => r.id !== roomId)
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to delete room'
@@ -214,9 +200,7 @@ async function saveRoomName(roomId: string) {
     if (updateError) throw updateError
 
     const room = rooms.value.find(r => r.id === roomId)
-    if (room) {
-      room.name = editingName.value.trim()
-    }
+    if (room) room.name = editingName.value.trim()
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to rename room'
   } finally {
@@ -242,43 +226,15 @@ async function handleSignOut() {
   router.push('/')
 }
 
-function formatDate(dateStr: string): string {
-  if (!dateStr) return 'Never'
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-function formatTime(seconds: number): string {
+function formatTimer(seconds: number): string {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
-function getProgressPercent(timer: ActiveTimer): number {
+function getProgress(timer: ActiveTimer): number {
   if (!timer.duration || timer.duration === 0) return 100
   return (timer.remaining_seconds / timer.duration) * 100
-}
-
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'running': return 'text-green-400'
-    case 'paused': return 'text-yellow-400'
-    default: return 'text-gray-400'
-  }
 }
 </script>
 
@@ -286,32 +242,36 @@ function getStatusColor(status: string): string {
   <div class="min-h-screen bg-[#0a0a0f] text-white">
     <!-- Header -->
     <header class="border-b border-[#2a2a2a] bg-[#0f0f0f]">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <h1 class="text-xl font-bold">Chronograph</h1>
-        <div class="flex items-center gap-4">
-          <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
-          <button
-            class="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
-            @click="handleSignOut"
-          >
-            <LogOut class="w-4 h-4" />
-            <span class="text-sm hidden sm:inline">Sign out</span>
-          </button>
+      <div class="max-w-6xl mx-auto" style="padding: 16px 24px;">
+        <div class="flex items-center justify-between">
+          <h1 class="text-xl font-bold">Chronograph</h1>
+          <div class="flex items-center gap-4">
+            <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
+            <button
+              class="flex items-center gap-2 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+              style="padding: 8px 12px;"
+              @click="handleSignOut"
+            >
+              <LogOut class="w-4 h-4" />
+              <span class="text-sm hidden sm:inline">Sign out</span>
+            </button>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-6 py-8">
-      <!-- Page Title -->
-      <div class="flex items-center justify-between mb-8">
+    <!-- Main -->
+    <main class="max-w-6xl mx-auto" style="padding: 32px 24px;">
+      <!-- Title Row -->
+      <div class="flex items-center justify-between" style="margin-bottom: 32px;">
         <div>
-          <h2 class="text-2xl font-semibold mb-1">My Rooms</h2>
+          <h2 class="text-2xl font-semibold" style="margin-bottom: 4px;">My Rooms</h2>
           <p class="text-gray-500 text-sm">Manage your timer rooms</p>
         </div>
         <button
           :disabled="creating"
-          class="flex items-center gap-2 px-5 py-2.5 bg-[#145BF6] hover:bg-[#1048CC] disabled:bg-[#145BF6]/50 rounded-lg transition-colors font-medium"
+          class="flex items-center gap-2 bg-[#145BF6] hover:bg-[#1048CC] disabled:opacity-50 rounded-lg transition-colors font-medium"
+          style="padding: 10px 20px;"
           @click="createRoom"
         >
           <Plus class="w-5 h-5" />
@@ -320,12 +280,12 @@ function getStatusColor(status: string): string {
       </div>
 
       <!-- Error -->
-      <div v-if="error" class="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+      <div v-if="error" class="bg-red-500/10 border border-red-500/30 rounded-lg" style="padding: 16px; margin-bottom: 24px;">
         <p class="text-red-400">{{ error }}</p>
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="flex items-center justify-center py-20">
+      <div v-if="loading" class="flex items-center justify-center" style="padding: 80px 0;">
         <div class="flex flex-col items-center gap-3">
           <div class="w-8 h-8 border-2 border-gray-600 border-t-[#145BF6] rounded-full animate-spin"></div>
           <span class="text-gray-400">Loading rooms...</span>
@@ -333,17 +293,18 @@ function getStatusColor(status: string): string {
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="rooms.length === 0" class="flex flex-col items-center justify-center py-20">
-        <div class="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-5 border border-[#2a2a2a]">
+      <div v-else-if="rooms.length === 0" class="flex flex-col items-center justify-center" style="padding: 80px 0;">
+        <div class="w-20 h-20 bg-[#1a1a1a] rounded-full flex items-center justify-center border border-[#2a2a2a]" style="margin-bottom: 20px;">
           <Clock class="w-10 h-10 text-gray-600" />
         </div>
-        <h3 class="text-xl font-medium text-gray-300 mb-2">No rooms yet</h3>
-        <p class="text-gray-500 mb-6 text-center max-w-md">
-          Create your first room to start managing timers for your events, presentations, or meetings.
+        <h3 class="text-xl font-medium text-gray-300" style="margin-bottom: 8px;">No rooms yet</h3>
+        <p class="text-gray-500 text-center max-w-md" style="margin-bottom: 24px;">
+          Create your first room to start managing timers.
         </p>
         <button
           :disabled="creating"
-          class="flex items-center gap-2 px-5 py-2.5 bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium"
+          class="flex items-center gap-2 bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium"
+          style="padding: 10px 20px;"
           @click="createRoom"
         >
           <Plus class="w-5 h-5" />
@@ -351,28 +312,23 @@ function getStatusColor(status: string): string {
         </button>
       </div>
 
-      <!-- Rooms List (Full Width) -->
-      <div v-else class="flex flex-col gap-4">
+      <!-- ROOMS LIST -->
+      <div v-else class="flex flex-col" style="gap: 16px;">
         <div
           v-for="room in rooms"
           :key="room.id"
-          class="relative bg-[#151518] rounded-xl overflow-hidden transition-all"
-          :class="[
-            room.active_timer?.is_on_air
-              ? 'border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)]'
-              : 'border border-[#2a2a2a] hover:border-[#3a3a3a]'
-          ]"
+          class="bg-[#151518] rounded-xl overflow-hidden transition-all"
+          :class="room.active_timer?.is_on_air ? 'room-card-active' : 'room-card-inactive'"
         >
-          <!-- Main Card Content -->
-          <div class="p-5 flex items-center gap-6">
-            <!-- Left: Room Info -->
-            <div class="flex-shrink-0 w-48">
-              <!-- Room Name (editable) -->
+          <div class="flex items-center" style="padding: 20px 24px; gap: 24px;">
+            <!-- LEFT: Room Info -->
+            <div style="width: 180px; flex-shrink: 0;">
               <input
                 v-if="editingRoomId === room.id"
                 v-model="editingName"
                 type="text"
-                class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded px-2 py-1 text-lg font-semibold focus:outline-none focus:border-[#145BF6]"
+                class="w-full bg-[#0a0a0f] border border-[#3a3a3a] rounded text-lg font-semibold focus:outline-none focus:border-[#145BF6]"
+                style="padding: 4px 8px;"
                 @click.stop
                 @keydown.enter="saveRoomName(room.id)"
                 @keydown.escape="cancelEditing"
@@ -380,78 +336,79 @@ function getStatusColor(status: string): string {
                 autofocus
               />
               <h3 v-else class="font-semibold text-lg text-white truncate">{{ room.name }}</h3>
-              <div class="text-xs font-mono text-gray-500 mt-1">{{ room.room_code }}</div>
+              <div class="text-xs font-mono text-gray-500" style="margin-top: 4px;">{{ room.room_code }}</div>
             </div>
 
-            <!-- Center: Timer Display -->
+            <!-- CENTER: Timer -->
             <div class="flex-1 flex flex-col items-center">
               <div
                 v-if="room.active_timer"
-                class="text-5xl font-mono font-bold tracking-wider"
-                :class="[
-                  room.active_timer.is_on_air ? 'text-green-400' : 'text-gray-400'
-                ]"
-                :style="room.active_timer.is_on_air ? 'text-shadow: 0 0 30px rgba(74, 222, 128, 0.6), 0 0 60px rgba(74, 222, 128, 0.3)' : ''"
+                class="font-mono font-bold tracking-wider"
+                :class="room.active_timer.is_on_air ? 'timer-glow' : 'text-gray-400'"
+                style="font-size: 48px;"
               >
-                {{ formatTime(room.active_timer.remaining_seconds) }}
+                {{ formatTimer(room.active_timer.remaining_seconds) }}
               </div>
-              <div v-else class="text-4xl font-mono text-gray-600">
+              <div v-else class="font-mono text-gray-600" style="font-size: 40px;">
                 --:--
               </div>
 
               <!-- Progress Bar -->
-              <div v-if="room.active_timer" class="w-full max-w-md mt-3 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div v-if="room.active_timer" class="w-full max-w-md bg-gray-700 rounded-full overflow-hidden" style="height: 6px; margin-top: 12px;">
                 <div
-                  class="h-full rounded-full transition-all duration-300"
-                  :class="[
-                    room.active_timer.is_on_air ? 'bg-green-500' : 'bg-gray-500'
-                  ]"
-                  :style="{ width: getProgressPercent(room.active_timer) + '%' }"
+                  class="h-full rounded-full transition-all"
+                  :class="room.active_timer.is_on_air ? 'bg-green-500' : 'bg-gray-500'"
+                  :style="{ width: getProgress(room.active_timer) + '%' }"
                 ></div>
               </div>
             </div>
 
-            <!-- Right: Actions -->
-            <div class="flex-shrink-0 flex items-center gap-3">
+            <!-- RIGHT: Actions -->
+            <div class="flex items-center" style="gap: 12px; flex-shrink: 0;">
               <!-- ON AIR Badge -->
               <div
                 v-if="room.active_timer?.is_on_air"
-                class="px-3 py-1.5 bg-green-500/20 border border-green-500 rounded-full text-green-400 text-xs font-semibold uppercase tracking-wide"
+                class="bg-green-500/20 border border-green-500 rounded-full text-green-400 text-xs font-semibold uppercase tracking-wide"
+                style="padding: 6px 12px;"
               >
                 ON AIR
               </div>
 
-              <!-- Enter Room Button -->
+              <!-- Enter Room -->
               <button
-                class="px-5 py-2.5 bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium text-sm"
+                class="bg-[#145BF6] hover:bg-[#1048CC] rounded-lg transition-colors font-medium text-sm"
+                style="padding: 10px 20px;"
                 @click="openRoom(room.room_code)"
               >
                 Enter Room
               </button>
 
-              <!-- Menu Button -->
+              <!-- Menu -->
               <div class="relative">
                 <button
-                  class="p-2 text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                  class="text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded-lg transition-colors"
+                  style="padding: 8px;"
                   @click.stop="toggleMenu(room.id, $event)"
                 >
                   <MoreVertical class="w-5 h-5" />
                 </button>
 
-                <!-- Dropdown Menu -->
                 <div
                   v-if="openMenuId === room.id"
-                  class="absolute right-0 top-10 w-36 bg-[#1a1a1f] border border-[#2a2a2a] rounded-lg shadow-xl z-10 py-1"
+                  class="absolute right-0 bg-[#1a1a1f] border border-[#2a2a2a] rounded-lg shadow-xl z-10"
+                  style="top: 40px; width: 144px; padding: 4px 0;"
                 >
                   <button
-                    class="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-[#2a2a2a] flex items-center gap-2"
+                    class="w-full text-left text-sm text-gray-300 hover:bg-[#2a2a2a] flex items-center gap-2"
+                    style="padding: 8px 12px;"
                     @click="startEditing(room, $event)"
                   >
                     <Edit3 class="w-4 h-4" />
                     Rename
                   </button>
                   <button
-                    class="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2"
+                    class="w-full text-left text-sm text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2"
+                    style="padding: 8px 12px;"
                     @click="deleteRoom(room.id, $event)"
                   >
                     <Trash2 class="w-4 h-4" />
@@ -466,3 +423,23 @@ function getStatusColor(status: string): string {
     </main>
   </div>
 </template>
+
+<style scoped>
+.room-card-active {
+  border: 2px solid #22c55e;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3), 0 0 40px rgba(34, 197, 94, 0.1);
+}
+
+.room-card-inactive {
+  border: 1px solid #2a2a2a;
+}
+
+.room-card-inactive:hover {
+  border-color: #3a3a3a;
+}
+
+.timer-glow {
+  color: #4ade80;
+  text-shadow: 0 0 20px rgba(74, 222, 128, 0.6), 0 0 40px rgba(74, 222, 128, 0.4), 0 0 60px rgba(74, 222, 128, 0.2);
+}
+</style>
