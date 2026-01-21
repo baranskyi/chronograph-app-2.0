@@ -1151,10 +1151,9 @@ const colorClass = (id: string) => {
                       class="question-action-btn question-send-btn"
                       :disabled="sendingQuestionId === question.id"
                       @click="sendQuestion(question.id, messageTargetTimerId)"
-                      :title="messageTargetTimerId ? `Send to ${selectedTargetLabel}` : 'Send to all timers'"
                     >
                       <Send class="w-3.5 h-3.5" />
-                      <span>{{ sendingQuestionId === question.id ? 'Sending...' : 'Send' }}</span>
+                      <span>{{ sendingQuestionId === question.id ? 'Sending...' : `Send to ${selectedTargetLabel}` }}</span>
                     </button>
                     <button
                       class="question-action-btn question-dismiss-btn"
