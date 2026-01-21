@@ -651,19 +651,18 @@ const colorClass = (id: string) => {
 
         <!-- CENTER: Timers Panel -->
         <div class="flex-1 flex flex-col py-4" style="padding-left: 24px; padding-right: 24px;">
-          <!-- Timers Header - with double spacing from header, aligned with left panel timer name -->
-          <div class="flex items-center gap-4 mb-16" style="margin-top: 24px;">
-            <span class="font-semibold text-lg leading-none">Timers</span>
-            <button
-              class="glass-button-red flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
-              style="padding: 10px 20px;"
-              @click="handleAddTimer"
-            >
-              <Plus class="w-4 h-4" />
-              <span>Add Timer</span>
-            </button>
-            <div class="flex-1" />
-          </div>
+          <!-- Timers Header - same style as left panel timer name -->
+          <h2 class="text-2xl font-bold text-gray-100" style="margin-top: 24px; margin-bottom: 48px;">Timers</h2>
+
+          <!-- Add Timer Button - with 2x spacing (48px) to first timer below -->
+          <button
+            class="glass-button-red flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
+            style="padding: 10px 20px; margin-bottom: 48px;"
+            @click="handleAddTimer"
+          >
+            <Plus class="w-4 h-4" />
+            <span>Add Timer</span>
+          </button>
 
           <!-- Timer List - Bigger items, more spacing (3x gap) -->
           <div class="flex-1 overflow-y-auto flex flex-col gap-12">
