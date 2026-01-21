@@ -28,6 +28,7 @@ const showSettings = ref(false)
 const isInitializing = ref(true)
 const initError = ref<string | null>(null)
 const customMessage = ref('')
+const messageTargetTimerId = ref<string | null>(null)
 const pingMs = ref<number | null>(null)
 const editingTimerId = ref<string | null>(null)
 const editingTimerName = ref('')
@@ -220,7 +221,7 @@ function getTimerProgress(timer: { remainingSeconds: number; settings: { duratio
 
 function sendCustomMessage() {
   if (customMessage.value.trim()) {
-    roomStore.sendMessage(customMessage.value.trim())
+    roomStore.sendMessage(customMessage.value.trim(), 5000, 'normal', messageTargetTimerId.value)
     customMessage.value = ''
   }
 }
@@ -548,6 +549,21 @@ const colorClass = (id: string) => {
 
           <!-- Message Input -->
           <div class="flex-1 flex flex-col">
+            <!-- Timer Target Selector -->
+            <div style="margin-bottom: 12px;">
+              <label class="block text-xs text-gray-400" style="margin-bottom: 8px;">Send to:</label>
+              <select
+                v-model="messageTargetTimerId"
+                class="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                style="padding: 12px 16px;"
+              >
+                <option :value="null">All timers</option>
+                <option v-for="timer in timerStore.orderedTimerList" :key="timer.id" :value="timer.id">
+                  {{ timer.name }}
+                </option>
+              </select>
+            </div>
+
             <textarea
               v-model="customMessage"
               placeholder="Enter message for speaker..."

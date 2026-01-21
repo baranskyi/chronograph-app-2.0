@@ -467,7 +467,7 @@ export const useRoomStore = defineStore('room', () => {
     }
   }
 
-  function sendMessage(text: string, duration = 5000, priority: MessagePriority = 'normal') {
+  function sendMessage(text: string, duration = 5000, priority: MessagePriority = 'normal', targetTimerId?: string | null) {
     if (!isController.value || !roomId.value || !socket.value?.connected) {
       return
     }
@@ -476,7 +476,8 @@ export const useRoomStore = defineStore('room', () => {
       roomId: roomId.value,
       text,
       duration,
-      priority
+      priority,
+      targetTimerId: targetTimerId || null
     })
   }
 

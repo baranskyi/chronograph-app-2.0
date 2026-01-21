@@ -378,20 +378,31 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
     roomId,
     text,
     duration = 5000,
-    priority = 'normal'
+    priority = 'normal',
+    targetTimerId
   }: {
     roomId: string
     text: string
     duration?: number
     priority?: MessagePriority
+    targetTimerId?: string | null
   }) => {
     if (!roomManager.isController(roomId, socket.id)) {
       return // Only controller can send messages
     }
 
-    console.log(`Message sent to room ${roomId}: "${text}"`)
-    // Broadcast to all viewers in the room (except sender)
-    socket.to(roomId.toUpperCase()).emit('message:show', { text, duration, priority })
+    const normalizedRoomId = roomId.toUpperCase()
+    const messagePayload = { text, duration, priority }
+
+    if (targetTimerId) {
+      // Send only to viewers of specific timer
+      console.log(`Message sent to room ${roomId} timer ${targetTimerId}: "${text}"`)
+      socket.to(`${normalizedRoomId}:${targetTimerId}`).emit('message:show', messagePayload)
+    } else {
+      // Send to all viewers in the room (except sender)
+      console.log(`Message sent to room ${roomId}: "${text}"`)
+      socket.to(normalizedRoomId).emit('message:show', messagePayload)
+    }
   })
 
   // Controller toggles blackout mode
