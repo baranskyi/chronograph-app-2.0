@@ -22,10 +22,10 @@ let animationId: number | null = null
 let ctx: CanvasRenderingContext2D | null = null
 
 // Wave parameters
-const WAVE_FREQUENCY = 3 // 3 Hz
-const GRID_COLS = 80
-const GRID_ROWS = 40
-const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
+const WAVE_FREQUENCY = 1 // 1 Hz (3x slower than before)
+const GRID_COLS = 120 // Extended grid
+const GRID_ROWS = 60
+const DOT_COLOR = { r: 100, g: 100, b: 100 } // Gray color
 
 interface Distortion {
   x: number
@@ -74,13 +74,13 @@ function drawFrame(time: number) {
   // Time in seconds
   const t = time / 1000
 
-  // Maybe add new distortion
-  if (time - lastDistortionTime > 2000 + Math.random() * 3000) {
+  // Maybe add new distortion (slower, every 3-6 seconds)
+  if (time - lastDistortionTime > 3000 + Math.random() * 3000) {
     distortions.push({
       x: Math.random() * GRID_COLS,
       y: Math.random() * GRID_ROWS,
-      intensity: 0.8 + Math.random() * 0.4,
-      decay: 0.97,
+      intensity: 1.0,
+      decay: 0.994, // 5x slower decay
       time: time
     })
     lastDistortionTime = time
@@ -93,79 +93,94 @@ function drawFrame(time: number) {
   })
 
   // Draw dots with perspective and waves
+  // Extended bounds to go beyond viewport
+  const extendX = 0.3 // 30% extension on each side
+  const extendY = 0.2 // 20% extension top/bottom
+
   for (let row = 0; row < GRID_ROWS; row++) {
     for (let col = 0; col < GRID_COLS; col++) {
-      // Normalize positions
-      const nx = col / GRID_COLS
-      const ny = row / GRID_ROWS
+      // Normalize positions with extension beyond viewport
+      const nx = -extendX + (col / GRID_COLS) * (1 + extendX * 2)
+      const ny = -extendY + (row / GRID_ROWS) * (1 + extendY * 2)
 
       // Perspective transformation (looking at ocean from above at angle)
-      const perspectiveScale = 0.3 + ny * 0.7
-      const perspectiveY = height * 0.2 + ny * ny * height * 0.8
-      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale
+      // Extends beyond viewport edges
+      const perspectiveScale = 0.2 + Math.max(0, ny + extendY) * 0.8
+      const perspectiveY = height * (-0.1) + Math.pow(Math.max(0, ny + extendY), 1.5) * height * 1.2
+      const perspectiveX = width * 0.5 + (nx - 0.5) * width * perspectiveScale * 1.5
 
-      // Wave calculation (3 Hz frequency)
-      const wavePhase = nx * 8 + ny * 4
-      const wave1 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.3 + wavePhase) * 0.5
-      const wave2 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.2 + wavePhase * 0.7) * 0.3
-      const wave3 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.15 + wavePhase * 1.3) * 0.2
-      const waveHeight = (wave1 + wave2 + wave3) * cellHeight * perspectiveScale * 2
+      // Wave calculation (slow, gentle waves)
+      const wavePhase = nx * 6 + ny * 3
+      const wave1 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.1 + wavePhase) * 0.5
+      const wave2 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.07 + wavePhase * 0.7) * 0.3
+      const wave3 = Math.sin(t * WAVE_FREQUENCY * 2 * Math.PI * 0.05 + wavePhase * 1.3) * 0.2
+      const waveHeight = (wave1 + wave2 + wave3) * cellHeight * perspectiveScale * 1.5
 
-      // Apply distortions
+      // Apply distortions (5x larger amplitude, slower spread)
       let distortionOffset = 0
       let distortionGlow = 0
       for (const d of distortions) {
         const dx = col - d.x
         const dy = row - d.y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        const distEffect = Math.exp(-dist * dist / 20) * d.intensity
 
-        // Electric shock wave effect
-        const shockWave = Math.sin(dist * 2 - (time - d.time) * 0.02) * distEffect * 15
+        // Larger spread radius, slower propagation
+        const distEffect = Math.exp(-dist * dist / 80) * d.intensity
+
+        // Slower wave propagation (5x slower), 5x larger amplitude
+        const timeSinceStart = time - d.time
+        const waveRadius = timeSinceStart * 0.008 // Slow outward spread
+        const ringEffect = Math.exp(-Math.pow(dist - waveRadius, 2) / 30) * d.intensity
+
+        // Electric shock wave effect - 5x larger amplitude
+        const shockWave = Math.sin(dist * 0.5 - timeSinceStart * 0.004) * ringEffect * 75
         distortionOffset += shockWave
-        distortionGlow += distEffect
+        distortionGlow += distEffect * 0.5 + ringEffect * 0.8
       }
 
       // Final position
       const x = perspectiveX
       const y = perspectiveY + waveHeight + distortionOffset
 
+      // Skip if outside viewport with margin
+      if (x < -50 || x > width + 50 || y < -50 || y > height + 50) continue
+
       // Depth of field effect
-      // Focus zone in middle, blur near and far
-      const depthFactor = ny // 0 = far, 1 = near
-      const focusZone = 0.5
-      const depthBlur = Math.abs(depthFactor - focusZone) * 2
+      const depthFactor = Math.max(0, Math.min(1, (ny + extendY) / (1 + extendY)))
+      const focusZone = 0.4
+      const depthBlur = Math.abs(depthFactor - focusZone) * 1.5
 
       // Base opacity with depth fade
-      const farFade = Math.pow(depthFactor, 0.5) // Fade distant points
-      const nearFade = 1 - Math.pow(Math.max(0, depthFactor - 0.85) * 6.67, 2) // Fade very close points
-      const baseOpacity = farFade * nearFade * (0.15 + wave1 * 0.05)
+      const farFade = Math.pow(depthFactor, 0.7)
+      const nearFade = 1 - Math.pow(Math.max(0, depthFactor - 0.9) * 10, 2)
+      const baseOpacity = farFade * nearFade * (0.12 + wave1 * 0.03)
 
       // Add distortion glow
-      const finalOpacity = Math.min(1, baseOpacity + distortionGlow * 0.5)
+      const finalOpacity = Math.min(0.6, baseOpacity + distortionGlow * 0.3)
 
-      // Dot size based on depth and wave
-      const baseSize = 1 + perspectiveScale * 2.5
-      const waveSize = 1 + (wave1 + 1) * 0.2
-      const distortionSize = 1 + distortionGlow * 2
-      const size = baseSize * waveSize * distortionSize * (1 - depthBlur * 0.3)
+      // Dot size - very small dots
+      const baseSize = 0.3 + perspectiveScale * 0.8 // Much smaller
+      const waveSize = 1 + (wave1 + 1) * 0.1
+      const distortionSize = 1 + distortionGlow * 1.5
+      const size = baseSize * waveSize * distortionSize * (1 - depthBlur * 0.2)
 
-      // Color with distortion highlight
-      const r = DOT_COLOR.r
-      const g = DOT_COLOR.g + distortionGlow * 100
-      const b = DOT_COLOR.b + distortionGlow * 150
+      // Color - gray with subtle highlight on distortion
+      const brightness = DOT_COLOR.r + distortionGlow * 80
+      const r = Math.min(255, brightness)
+      const g = Math.min(255, brightness + distortionGlow * 30)
+      const b = Math.min(255, brightness + distortionGlow * 50)
 
       // Draw dot
       ctx.beginPath()
-      ctx.arc(x, y, Math.max(0.5, size), 0, Math.PI * 2)
+      ctx.arc(x, y, Math.max(0.3, size), 0, Math.PI * 2)
       ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
       ctx.fill()
 
-      // Add glow for distorted points
-      if (distortionGlow > 0.1) {
+      // Add subtle glow for distorted points
+      if (distortionGlow > 0.15) {
         ctx.beginPath()
-        ctx.arc(x, y, size * 3, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${r}, ${g + 50}, ${b + 100}, ${distortionGlow * 0.15})`
+        ctx.arc(x, y, size * 4, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${distortionGlow * 0.08})`
         ctx.fill()
       }
     }
