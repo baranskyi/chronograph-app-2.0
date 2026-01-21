@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useFullscreen } from '@vueuse/core'
 import { useRoomStore } from '../stores/roomStore'
 import { useTimerStore } from '../stores/timerStore'
-import ConnectionStatus from '../components/ConnectionStatus.vue'
 import MessageOverlay from '../components/MessageOverlay.vue'
 import ProgressBar from '../components/ProgressBar.vue'
 import { useAudio } from '../composables/useAudio'
@@ -161,17 +160,13 @@ function handleKeydown(e: KeyboardEvent) {
 
     <!-- Timer display (read-only) -->
     <template v-else>
-      <!-- Connection status -->
-      <ConnectionStatus v-if="!isFullscreen" />
-
-
-      <!-- Branding -->
+      <!-- Branding - always visible, larger in fullscreen -->
       <div
-        v-if="!isFullscreen"
-        class="fixed top-4 left-4 z-10 flex items-center gap-2"
+        class="fixed z-10 flex items-center"
+        :class="isFullscreen ? 'top-6 left-6 gap-3' : 'top-4 left-4 gap-2'"
       >
-        <span class="logo-pulse"></span>
-        <span class="text-xl font-bold text-white">Chronograph <span class="text-red-500">Pro</span></span>
+        <span class="logo-pulse" :class="isFullscreen ? 'logo-pulse-large' : ''"></span>
+        <span class="font-bold text-white" :class="isFullscreen ? 'text-3xl' : 'text-xl'">Chronograph <span class="text-red-500">Pro</span></span>
       </div>
 
       <!-- No timer to display -->
@@ -360,6 +355,12 @@ function handleKeydown(e: KeyboardEvent) {
   background-color: #ef4444;
   box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
   animation: logo-pulse 3s ease-in-out infinite;
+}
+
+.logo-pulse-large {
+  width: 14px;
+  height: 14px;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
 }
 
 @keyframes logo-pulse {
