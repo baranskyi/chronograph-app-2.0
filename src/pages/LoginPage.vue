@@ -20,13 +20,12 @@ const isHovering = ref(false)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationId: number | null = null
 
-// Wave animation constants - EXACT SAME AS MY-ROOMS
+// Wave animation constants - TOP-DOWN VIEW for full screen coverage
 const WAVE_FREQUENCY = 0.6
 const WAVE_AMPLITUDE = 0.4
-const PERSPECTIVE_FACTOR = 0.7
 const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent
-const GRID_COLS = 450
-const GRID_ROWS = 280
+const GRID_COLS = 180
+const GRID_ROWS = 120
 
 interface Distortion {
   x: number
@@ -92,28 +91,34 @@ function initCanvas() {
       }
     }
 
-    // EXPANDED coverage - extend far beyond viewport (same as my-rooms, but starts from top)
-    const extendX = 0.8
-    const extendYTop = 0.1
-    const extendYBottom = 0.8
+    // TOP-DOWN VIEW - full screen coverage with extension beyond edges
+    const extendX = 0.15
+    const extendY = 0.15
     const startX = -width * extendX
     const endX = width * (1 + extendX)
-    const startY = -height * extendYTop // Start from top
-    const endY = height * (1 + extendYBottom)
+    const startY = -height * extendY
+    const endY = height * (1 + extendY)
     const totalWidth = endX - startX
     const totalHeight = endY - startY
 
-    // Draw dots
+    // Cell spacing for grid
+    const cellWidth = totalWidth / GRID_COLS
+    const cellHeight = totalHeight / GRID_ROWS
+
+    // Draw dots - TOP DOWN VIEW (no perspective compression)
     for (let row = 0; row < GRID_ROWS; row++) {
       for (let col = 0; col < GRID_COLS; col++) {
-        const baseX = startX + (col / GRID_COLS) * totalWidth
-        const baseY = startY + (row / GRID_ROWS) * totalHeight
+        // Base position - evenly distributed across entire screen
+        const baseX = startX + col * cellWidth + cellWidth / 2
+        const baseY = startY + row * cellHeight + cellHeight / 2
 
-        // Calculate wave height
+        // Calculate wave offset - same wave mechanics
         const wavePhase = (col / GRID_COLS) * Math.PI * 4 + (row / GRID_ROWS) * Math.PI * 2
-        let waveHeight = Math.sin(wavePhase + time * 0.001 * WAVE_FREQUENCY) * WAVE_AMPLITUDE
+        let waveOffset = Math.sin(wavePhase + time * 0.001 * WAVE_FREQUENCY) * WAVE_AMPLITUDE
 
-        // Apply distortions
+        // Apply distortions - same distortion mechanics
+        let distortionOffset = 0
+        let distortionGlow = 0
         for (const d of distortions) {
           const dx = col - d.x
           const dy = row - d.y
@@ -121,30 +126,46 @@ function initCanvas() {
           const maxDist = 40
           if (dist < maxDist) {
             const factor = (1 - dist / maxDist) * d.intensity
-            waveHeight += Math.sin(dist * 0.3 - time * 0.002) * factor * 0.5
+            distortionOffset += Math.sin(dist * 0.3 - time * 0.002) * factor * 8
+            distortionGlow += factor
           }
         }
 
-        // Perspective transformation
-        const depth = row / GRID_ROWS
-        const perspectiveScale = 0.3 + depth * PERSPECTIVE_FACTOR
-        const centerX = width / 2
-        const screenX = centerX + (baseX - centerX) * perspectiveScale
-        const screenY = baseY * perspectiveScale + height * (1 - perspectiveScale) * 0.5 + waveHeight * 30 * perspectiveScale
+        // Final position - wave affects Y position (subtle 3D feel)
+        const screenX = baseX
+        const screenY = baseY + waveOffset * 15 + distortionOffset
 
-        // Skip if outside viewport (with margin)
+        // Skip if outside viewport
         if (screenX < -20 || screenX > width + 20 || screenY < -20 || screenY > height + 20) continue
 
-        // Depth-based properties
-        const baseOpacity = 0.15 + depth * 0.5
-        const heightBonus = (waveHeight + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.3
-        const opacity = Math.min(0.9, baseOpacity + heightBonus)
-        const dotSize = (0.8 + depth * 1.5) * 0.5
+        // Opacity based on wave height and position
+        const normalizedY = row / GRID_ROWS
+        const baseOpacity = 0.2 + normalizedY * 0.25 + (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.2
+        const finalOpacity = Math.min(0.85, baseOpacity + distortionGlow * 0.4)
+
+        // Dot size - subtle variation based on wave
+        const baseSize = 1.0 + normalizedY * 0.8
+        const waveSize = 1 + (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.3
+        const distortionSize = 1 + distortionGlow * 1.5
+        const dotSize = baseSize * waveSize * distortionSize
+
+        // Color with distortion glow effect
+        const r = DOT_COLOR.r
+        const g = DOT_COLOR.g + distortionGlow * 80
+        const b = DOT_COLOR.b + distortionGlow * 120
 
         ctx!.beginPath()
-        ctx!.arc(screenX, screenY, dotSize, 0, Math.PI * 2)
-        ctx!.fillStyle = `rgba(${DOT_COLOR.r}, ${DOT_COLOR.g}, ${DOT_COLOR.b}, ${opacity})`
+        ctx!.arc(screenX, screenY, Math.max(0.5, dotSize), 0, Math.PI * 2)
+        ctx!.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
         ctx!.fill()
+
+        // Glow effect for distortions
+        if (distortionGlow > 0.1) {
+          ctx!.beginPath()
+          ctx!.arc(screenX, screenY, dotSize * 2.5, 0, Math.PI * 2)
+          ctx!.fillStyle = `rgba(${r}, ${g + 40}, ${b + 80}, ${distortionGlow * 0.12})`
+          ctx!.fill()
+        }
       }
     }
 
