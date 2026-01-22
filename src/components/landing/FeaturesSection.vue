@@ -1,113 +1,188 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Timer, Zap, QrCode, Smartphone, Wifi, Bell, Users, Monitor } from 'lucide-vue-next'
 
 const features = [
   {
     icon: Timer,
     title: 'Multiple Timer Types',
-    description: 'Countdown, count-up, EMOM, Tabata, and interval timers. Configure work and rest periods with custom rounds.',
-    gradient: 'from-blue-500 to-cyan-500'
+    description: 'Countdown, count-up, EMOM, Tabata, and interval timers with custom rounds.'
   },
   {
     icon: Zap,
     title: 'Real-time Sync',
-    description: 'Changes sync instantly across all connected devices. Everyone sees updates the moment they happen.',
-    gradient: 'from-yellow-500 to-orange-500'
+    description: 'Changes sync instantly across all connected devices.'
   },
   {
     icon: QrCode,
     title: 'QR Code Sharing',
-    description: 'Share your timer room with a single QR code. Participants scan and join in seconds without creating an account.',
-    gradient: 'from-purple-500 to-pink-500'
+    description: 'Share via QR code. Participants join in seconds without an account.'
   },
   {
     icon: Smartphone,
     title: 'Remote Control',
-    description: 'Control all timers from your phone or tablet. Walk around freely while managing the session.',
-    gradient: 'from-green-500 to-emerald-500'
+    description: 'Control all timers from your phone. Walk around freely.'
   },
   {
     icon: Monitor,
     title: 'Fullscreen Display',
-    description: 'Crystal-clear timer display optimized for projectors, TVs, and large screens. Perfect for venues of any size.',
-    gradient: 'from-indigo-500 to-blue-500'
+    description: 'Crystal-clear display optimized for projectors and large screens.'
   },
   {
     icon: Bell,
     title: 'Smart Alerts',
-    description: 'Visual color changes and optional sound alerts. Green for safe, yellow for warning, red for critical time.',
-    gradient: 'from-red-500 to-orange-500'
+    description: 'Visual color changes and sound alerts at critical moments.'
   },
   {
     icon: Users,
     title: 'Unlimited Viewers',
-    description: 'No limit on how many people can view your timer. Perfect for events with hundreds of participants.',
-    gradient: 'from-teal-500 to-cyan-500'
+    description: 'No limit on viewers. Perfect for large events.'
   },
   {
     icon: Wifi,
     title: 'Works Offline',
-    description: 'PWA support means the app works even without internet. Install it on any device for native-like experience.',
-    gradient: 'from-violet-500 to-purple-500'
+    description: 'PWA support means it works even without internet.'
   }
 ]
+
+// Glow effect
+const hoveredIndex = ref<number | null>(null)
+const glowPos = ref<{ [key: number]: { x: number; y: number } }>({})
+
+function handleMouseMove(index: number, e: MouseEvent) {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  glowPos.value[index] = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  }
+}
 </script>
 
 <template>
-  <section id="features" class="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-    <!-- Background gradient -->
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/5 to-transparent" />
-
-    <div class="relative max-w-7xl mx-auto">
+  <section id="features" class="relative" style="padding: 100px 24px;">
+    <div class="w-full max-w-[1200px] mx-auto">
       <!-- Section Header -->
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+      <div class="text-center" style="margin-bottom: 64px;">
+        <h2 class="section-title">
           <span class="text-white">Powerful Features for</span>
           <br />
-          <span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Professional Sessions</span>
+          <span class="text-red-500">Professional Sessions</span>
         </h2>
-        <p class="text-gray-400 text-lg">
-          Everything you need to run perfectly timed events, from small meetings to large conferences.
+        <p class="section-subtitle">
+          Everything you need to run perfectly timed events.
         </p>
       </div>
 
       <!-- Features Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div
-          v-for="feature in features"
+          v-for="(feature, index) in features"
           :key="feature.title"
-          class="group relative p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 cursor-pointer"
+          class="feature-card"
+          @mousemove="handleMouseMove(index, $event)"
+          @mouseenter="hoveredIndex = index"
+          @mouseleave="hoveredIndex = null"
         >
-          <!-- Icon with gradient background -->
-          <div class="relative mb-5">
-            <div
-              class="absolute inset-0 w-12 h-12 rounded-xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"
-              :class="`bg-gradient-to-r ${feature.gradient}`"
-            />
-            <div class="relative w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <component
-                :is="feature.icon"
-                class="w-6 h-6 text-white/80"
-              />
-            </div>
-          </div>
-
-          <!-- Content -->
-          <h3 class="text-lg font-semibold text-white mb-2 group-hover:text-white transition-colors">
-            {{ feature.title }}
-          </h3>
-          <p class="text-gray-500 text-sm leading-relaxed">
-            {{ feature.description }}
-          </p>
-
-          <!-- Hover glow effect -->
+          <!-- Glow effect -->
           <div
-            class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-            :class="`bg-gradient-to-r ${feature.gradient}`"
-            style="filter: blur(80px); transform: scale(0.8); z-index: -1;"
-          />
+            class="card-glow"
+            :class="{ active: hoveredIndex === index }"
+            :style="{
+              '--glow-x': (glowPos[index]?.x || 0) + 'px',
+              '--glow-y': (glowPos[index]?.y || 0) + 'px'
+            }"
+          ></div>
+
+          <div class="relative z-10">
+            <!-- Icon -->
+            <div class="feature-icon">
+              <component :is="feature.icon" class="w-6 h-6 text-red-400" />
+            </div>
+
+            <!-- Content -->
+            <h3 class="feature-title">{{ feature.title }}</h3>
+            <p class="feature-description">{{ feature.description }}</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.section-title {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-size: 18px;
+  color: #6b7280;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  position: relative;
+  overflow: hidden;
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.feature-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.card-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  background: radial-gradient(
+    400px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(239, 68, 68, 0.15),
+    transparent 40%
+  );
+}
+
+.card-glow.active {
+  opacity: 1;
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.feature-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.feature-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b7280;
+}
+</style>

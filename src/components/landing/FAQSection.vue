@@ -53,47 +53,45 @@ function toggle(index: number) {
 </script>
 
 <template>
-  <section id="faq" class="relative py-24 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-3xl mx-auto">
+  <section id="faq" class="relative" style="padding: 100px 24px;">
+    <div class="w-full max-w-[800px] mx-auto">
       <!-- Section Header -->
-      <div class="text-center mb-16">
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+      <div class="text-center" style="margin-bottom: 64px;">
+        <h2 class="section-title">
           <span class="text-white">Frequently Asked</span>
-          <span class="text-gray-400"> Questions</span>
+          <span class="text-red-500"> Questions</span>
         </h2>
-        <p class="text-gray-400 text-lg">
+        <p class="section-subtitle">
           Everything you need to know about Chronograph.pro
         </p>
       </div>
 
       <!-- FAQ Items -->
-      <div class="space-y-3">
+      <div class="faq-list">
         <div
           v-for="(faq, index) in faqs"
           :key="index"
-          class="group"
+          class="faq-item"
         >
           <button
-            class="w-full p-6 flex items-center justify-between text-left rounded-2xl transition-all duration-300 cursor-pointer"
-            :class="openIndex === index
-              ? 'bg-white/[0.05] border border-white/10'
-              : 'bg-white/[0.02] border border-transparent hover:bg-white/[0.04] hover:border-white/5'"
+            class="faq-question"
+            :class="{ 'faq-question-open': openIndex === index }"
             @click="toggle(index)"
           >
-            <span class="font-medium text-white pr-4">{{ faq.question }}</span>
+            <span class="question-text">{{ faq.question }}</span>
             <ChevronDown
-              class="w-5 h-5 text-gray-500 transition-transform duration-300 flex-shrink-0"
-              :class="{ 'rotate-180 text-blue-400': openIndex === index }"
+              class="chevron"
+              :class="{ 'chevron-open': openIndex === index }"
             />
           </button>
 
           <!-- Answer panel -->
           <div
-            class="overflow-hidden transition-all duration-300"
-            :class="openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'"
+            class="faq-answer"
+            :class="{ 'faq-answer-open': openIndex === index }"
           >
-            <div class="px-6 pb-6 pt-2">
-              <p class="text-gray-400 leading-relaxed">{{ faq.answer }}</p>
+            <div class="answer-content">
+              <p class="answer-text">{{ faq.answer }}</p>
             </div>
           </div>
         </div>
@@ -101,3 +99,109 @@ function toggle(index: number) {
     </div>
   </section>
 </template>
+
+<style scoped>
+.section-title {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-size: 18px;
+  color: #6b7280;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.faq-item {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.faq-question {
+  width: 100%;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.faq-question:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.faq-question-open {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+  border-radius: 16px 16px 0 0;
+}
+
+.faq-question-open:hover {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.question-text {
+  font-weight: 500;
+  color: #ffffff;
+  padding-right: 16px;
+  font-size: 15px;
+}
+
+.chevron {
+  width: 20px;
+  height: 20px;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.chevron-open {
+  transform: rotate(180deg);
+  color: #ef4444;
+}
+
+.faq-answer {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.faq-answer-open {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.answer-content {
+  padding: 0 24px 24px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-top: none;
+  border-radius: 0 0 16px 16px;
+}
+
+.answer-text {
+  color: #9ca3af;
+  line-height: 1.7;
+  font-size: 14px;
+  padding-top: 16px;
+}
+</style>

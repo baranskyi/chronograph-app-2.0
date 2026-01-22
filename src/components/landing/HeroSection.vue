@@ -1,18 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowRight, Play, CheckCircle } from 'lucide-vue-next'
+import { ArrowRight, Play } from 'lucide-vue-next'
 
 // Animated timer display
 const timerValue = ref('05:00')
 const timerSeconds = ref(300)
 let timerInterval: ReturnType<typeof setInterval> | null = null
-
-const benefits = [
-  'Real-time sync across all devices',
-  'QR code sharing for instant access',
-  'Remote control from anywhere'
-]
 
 function formatTime(totalSeconds: number): string {
   const mins = Math.floor(totalSeconds / 60)
@@ -37,127 +31,95 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="relative min-h-screen flex items-center justify-center pt-24 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
-    <!-- Background Effects -->
-    <div class="absolute inset-0 overflow-hidden">
-      <!-- Gradient orbs -->
-      <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
-      <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;" />
-      <div class="absolute top-1/2 right-1/3 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;" />
-
-      <!-- Grid pattern -->
-      <div
-        class="absolute inset-0 opacity-[0.02]"
-        style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 60px 60px;"
-      />
-    </div>
-
-    <div class="relative max-w-7xl mx-auto w-full">
-      <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+  <section class="relative min-h-screen flex items-center justify-center" style="padding: 140px 24px 80px;">
+    <div class="w-full max-w-[1200px] mx-auto">
+      <div class="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
         <!-- Left: Text Content -->
         <div class="text-center lg:text-left">
+          <!-- Tagline -->
+          <p class="tagline">All eyes on you when you're in time</p>
+
           <!-- Headline -->
-          <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
+          <h1 class="hero-title">
             <span class="text-white">Control Time.</span>
             <br />
-            <span class="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Lead Sessions.
-            </span>
+            <span class="text-red-500">Lead Sessions.</span>
           </h1>
 
           <!-- Subheadline -->
-          <p class="text-lg sm:text-xl text-gray-400 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            Professional timer system for events, conferences, presentations, and training sessions. Create, share, and control timers remotely from any device.
+          <p class="hero-subtitle">
+            Professional timer system for events, conferences, presentations, and training sessions.
+            Create, share, and control timers remotely from any device.
           </p>
 
-          <!-- Benefits list -->
-          <ul class="flex flex-col gap-3 mb-10 max-w-xl mx-auto lg:mx-0">
-            <li
-              v-for="benefit in benefits"
-              :key="benefit"
-              class="flex items-center gap-3 text-gray-300"
-            >
-              <CheckCircle class="w-5 h-5 text-green-400 flex-shrink-0" />
-              <span>{{ benefit }}</span>
-            </li>
-          </ul>
-
           <!-- CTA Buttons -->
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-            <RouterLink
-              to="/register"
-              class="group relative w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer"
-            >
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4" style="margin-top: 40px;">
+            <RouterLink to="/register" class="cta-button-primary group">
               Start Free
               <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </RouterLink>
-            <a
-              href="#how-it-works"
-              class="group w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white font-medium rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
-            >
+            <a href="#how-it-works" class="cta-button-secondary group">
               <Play class="w-5 h-5" />
               See How It Works
             </a>
           </div>
 
           <!-- Trust line -->
-          <p class="mt-8 text-sm text-gray-500">
+          <p class="trust-line">
             No credit card required. Free plan includes everything you need.
           </p>
         </div>
 
         <!-- Right: Timer Preview -->
-        <div class="relative">
-          <!-- Glow effect behind card -->
-          <div class="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 blur-3xl scale-110" />
-
+        <div class="relative flex justify-center lg:justify-end">
           <!-- Glass card -->
-          <div class="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-            <!-- Window controls -->
-            <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-              <div class="flex gap-2">
-                <div class="w-3 h-3 rounded-full bg-red-500/80" />
-                <div class="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div class="w-3 h-3 rounded-full bg-green-500/80" />
-              </div>
-              <span class="text-xs text-gray-500 font-mono">chronograph.pro</span>
-              <div class="w-16" />
-            </div>
+          <div class="timer-preview-card">
+            <!-- Glow effect behind -->
+            <div class="timer-glow"></div>
 
-            <!-- Timer display -->
-            <div class="p-8 sm:p-12 lg:p-16">
-              <div class="text-center">
-                <!-- Timer label -->
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-xs text-green-400 mb-6">
-                  <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <!-- Card content -->
+            <div class="relative z-10">
+              <!-- Window controls -->
+              <div class="timer-header">
+                <div class="flex gap-2">
+                  <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                  <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                  <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                </div>
+                <span class="text-xs text-gray-500 font-mono">chronograph.pro</span>
+                <div class="w-16"></div>
+              </div>
+
+              <!-- Timer display -->
+              <div class="timer-body">
+                <!-- Live badge -->
+                <div class="live-badge">
+                  <span class="live-dot"></span>
                   Live Session
                 </div>
 
                 <!-- Timer value -->
-                <div
-                  class="timer-font text-6xl sm:text-7xl lg:text-8xl font-bold text-green-400 mb-4"
-                  style="text-shadow: 0 0 60px rgba(34, 197, 94, 0.4), 0 0 120px rgba(34, 197, 94, 0.2);"
-                >
+                <div class="timer-value">
                   {{ timerValue }}
                 </div>
 
-                <!-- Session info -->
+                <!-- Viewers -->
                 <p class="text-gray-500 text-sm">
                   <span class="text-white font-medium">24 viewers</span> watching live
                 </p>
               </div>
-            </div>
 
-            <!-- Bottom controls preview -->
-            <div class="px-6 py-4 border-t border-white/5 flex items-center justify-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <div class="w-3 h-3 border-l-2 border-t-2 border-gray-500 -rotate-45 translate-x-0.5" />
-              </div>
-              <div class="w-14 h-14 rounded-2xl bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-                <div class="w-0 h-0 border-l-[10px] border-l-green-400 border-y-[6px] border-y-transparent translate-x-0.5" />
-              </div>
-              <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <div class="w-3 h-3 border-r-2 border-t-2 border-gray-500 rotate-45 -translate-x-0.5" />
+              <!-- Bottom controls -->
+              <div class="timer-controls">
+                <div class="control-btn">
+                  <div class="w-3 h-3 border-l-2 border-t-2 border-gray-500 -rotate-45 translate-x-0.5"></div>
+                </div>
+                <div class="control-btn-main">
+                  <div class="w-0 h-0 border-l-[10px] border-l-red-400 border-y-[6px] border-y-transparent translate-x-0.5"></div>
+                </div>
+                <div class="control-btn">
+                  <div class="w-3 h-3 border-r-2 border-t-2 border-gray-500 rotate-45 -translate-x-0.5"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -166,3 +128,201 @@ onUnmounted(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.tagline {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+
+.hero-title {
+  font-size: clamp(40px, 8vw, 72px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+
+.hero-subtitle {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #9ca3af;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .hero-subtitle {
+    margin: 0;
+  }
+}
+
+.cta-button-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 18px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(210, 70, 70, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(239, 68, 68, 0.4);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .cta-button-primary {
+    width: auto;
+  }
+}
+
+.cta-button-primary:hover {
+  background: rgba(230, 80, 80, 0.9);
+  box-shadow: 0 8px 40px rgba(239, 68, 68, 0.5);
+  transform: translateY(-2px);
+}
+
+.cta-button-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 18px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+@media (min-width: 640px) {
+  .cta-button-secondary {
+    width: auto;
+  }
+}
+
+.cta-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.trust-line {
+  margin-top: 24px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+/* Timer Preview Card */
+.timer-preview-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.timer-glow {
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(circle at center, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.timer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.timer-body {
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444;
+  margin-bottom: 24px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.timer-value {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  font-size: clamp(56px, 12vw, 80px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #ef4444;
+  text-shadow: 0 0 60px rgba(239, 68, 68, 0.5), 0 0 120px rgba(239, 68, 68, 0.25);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.timer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.control-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.control-btn-main {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 16px;
+}
+</style>

@@ -67,24 +67,21 @@ const plans = [
 </script>
 
 <template>
-  <section id="pricing" class="relative py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-    <!-- Background gradient -->
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/5 to-transparent" />
-
-    <div class="relative max-w-7xl mx-auto">
+  <section id="pricing" class="relative" style="padding: 100px 24px;">
+    <div class="w-full max-w-[1200px] mx-auto">
       <!-- Section Header -->
-      <div class="text-center max-w-2xl mx-auto mb-16">
-        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+      <div class="text-center" style="margin-bottom: 64px;">
+        <h2 class="section-title">
           <span class="text-white">Simple, Transparent</span>
-          <span class="text-gray-400"> Pricing</span>
+          <span class="text-red-500"> Pricing</span>
         </h2>
-        <p class="text-gray-400 text-lg">
+        <p class="section-subtitle">
           Start free. Upgrade when you need more power.
         </p>
       </div>
 
       <!-- Pricing Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
           v-for="plan in plans"
           :key="plan.name"
@@ -93,51 +90,49 @@ const plans = [
           <!-- Glow effect for highlighted plan -->
           <div
             v-if="plan.highlighted"
-            class="absolute -inset-px bg-gradient-to-r from-blue-500 to-purple-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition-opacity"
+            class="absolute -inset-1 bg-gradient-to-r from-red-500/30 to-red-600/30 rounded-3xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity"
           />
 
           <!-- Card -->
           <div
-            class="relative h-full p-8 rounded-3xl border transition-all duration-300 flex flex-col"
-            :class="plan.highlighted
-              ? 'bg-white/[0.03] border-white/10 hover:border-white/20'
-              : 'bg-white/[0.02] border-white/5 hover:border-white/10'"
+            class="pricing-card"
+            :class="{ 'pricing-card-highlighted': plan.highlighted }"
           >
             <!-- Badge -->
             <div
               v-if="plan.badge"
               class="absolute -top-4 left-1/2 -translate-x-1/2"
             >
-              <div class="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white text-xs font-medium">
+              <div class="badge">
                 <Sparkles class="w-3.5 h-3.5" />
                 {{ plan.badge }}
               </div>
             </div>
 
             <!-- Header -->
-            <div class="text-center mb-8" :class="plan.badge ? 'pt-4' : ''">
-              <h3 class="text-xl font-semibold text-white mb-2">{{ plan.name }}</h3>
-              <div class="flex items-baseline justify-center gap-1 mb-2">
-                <span class="text-5xl font-bold text-white">{{ plan.price }}</span>
-                <span v-if="plan.period" class="text-gray-500">{{ plan.period }}</span>
+            <div class="text-center" :style="plan.badge ? 'padding-top: 16px; margin-bottom: 32px;' : 'margin-bottom: 32px;'">
+              <h3 class="plan-name">{{ plan.name }}</h3>
+              <div class="flex items-baseline justify-center gap-1" style="margin-bottom: 8px;">
+                <span class="plan-price">{{ plan.price }}</span>
+                <span v-if="plan.period" class="plan-period">{{ plan.period }}</span>
               </div>
-              <p class="text-sm text-gray-500">{{ plan.description }}</p>
+              <p class="plan-description">{{ plan.description }}</p>
             </div>
 
             <!-- Features -->
-            <ul class="space-y-3 mb-8 flex-1">
+            <ul class="feature-list">
               <li
                 v-for="feature in plan.features"
                 :key="feature.text"
-                class="flex items-center gap-3"
+                class="feature-item"
               >
                 <div
-                  class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-                  :class="feature.included ? 'bg-green-500/10' : 'bg-white/5'"
+                  class="feature-check"
+                  :class="feature.included ? 'feature-check-included' : 'feature-check-excluded'"
                 >
                   <Check
                     v-if="feature.included"
-                    class="w-3 h-3 text-green-400"
+                    class="w-3 h-3 text-red-400"
                   />
                   <X
                     v-else
@@ -145,7 +140,7 @@ const plans = [
                   />
                 </div>
                 <span
-                  class="text-sm"
+                  class="feature-text"
                   :class="feature.included ? 'text-gray-300' : 'text-gray-600'"
                 >
                   {{ feature.text }}
@@ -157,17 +152,15 @@ const plans = [
             <RouterLink
               v-if="plan.ctaLink"
               :to="plan.ctaLink"
-              class="block w-full py-4 text-center font-medium rounded-xl transition-all duration-300 cursor-pointer"
-              :class="plan.highlighted
-                ? 'bg-blue-600 hover:bg-blue-500 text-white hover:shadow-lg hover:shadow-blue-500/25'
-                : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20'"
+              class="cta-button"
+              :class="plan.highlighted ? 'cta-primary' : 'cta-secondary'"
             >
               {{ plan.cta }}
             </RouterLink>
             <button
               v-else
               disabled
-              class="block w-full py-4 text-center font-medium rounded-xl bg-white/5 text-gray-500 border border-white/5 cursor-not-allowed"
+              class="cta-disabled"
             >
               {{ plan.cta }}
             </button>
@@ -176,7 +169,7 @@ const plans = [
       </div>
 
       <!-- Bottom note -->
-      <p class="text-center text-gray-500 text-sm mt-12">
+      <p class="bottom-note">
         All plans include unlimited viewers, sound alerts, and PWA support.
         <br class="hidden sm:block" />
         Pro and Enterprise plans coming soon. Join the waitlist by signing up.
@@ -184,3 +177,177 @@ const plans = [
     </div>
   </section>
 </template>
+
+<style scoped>
+.section-title {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-size: 18px;
+  color: #6b7280;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  position: relative;
+  height: 100%;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.pricing-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.pricing-card-highlighted {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.pricing-card-highlighted:hover {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  border-radius: 20px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+.plan-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.plan-price {
+  font-size: 48px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.plan-period {
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.plan-description {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex: 1;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.feature-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-check-included {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.feature-check-excluded {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.feature-text {
+  font-size: 14px;
+}
+
+.cta-button {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  font-weight: 500;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.cta-primary {
+  background: rgba(210, 70, 70, 0.8);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+}
+
+.cta-primary:hover {
+  background: rgba(220, 60, 60, 0.9);
+  box-shadow: 0 6px 30px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.cta-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.cta-disabled {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  font-weight: 500;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #6b7280;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: not-allowed;
+}
+
+.bottom-note {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 48px;
+  line-height: 1.6;
+}
+</style>

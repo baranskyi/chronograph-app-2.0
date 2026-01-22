@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Timer, Menu, X } from 'lucide-vue-next'
+import { Menu, X } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 
 const isScrolled = ref(false)
@@ -41,11 +41,11 @@ onUnmounted(() => {
     class="fixed top-4 left-4 right-4 z-50 transition-all duration-300 rounded-2xl"
     :class="[
       isScrolled
-        ? 'bg-[#0f1419]/90 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/20'
+        ? 'glass-nav-scrolled'
         : 'bg-transparent'
     ]"
   >
-    <div class="max-w-7xl mx-auto px-6">
+    <div class="max-w-[1200px] mx-auto" style="padding: 0 24px;">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <RouterLink
@@ -53,12 +53,10 @@ onUnmounted(() => {
           class="flex items-center gap-3 group cursor-pointer"
           @click="closeMobileMenu"
         >
-          <div class="relative">
-            <div class="absolute inset-0 bg-blue-500/20 blur-xl rounded-full group-hover:bg-blue-500/30 transition-all duration-300" />
-            <Timer class="relative w-8 h-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
-          </div>
-          <span class="text-xl font-semibold tracking-tight">
-            <span class="text-white">Chronograph</span><span class="text-blue-400">.pro</span>
+          <span class="logo-dot"></span>
+          <span class="text-xl font-bold tracking-tight">
+            <span class="text-white">Chronograph</span>
+            <span class="text-red-500"> Pro</span>
           </span>
         </RouterLink>
 
@@ -68,7 +66,7 @@ onUnmounted(() => {
             v-for="link in navLinks"
             :key="link.label"
             :href="link.href"
-            class="px-3 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200 cursor-pointer"
+            class="nav-link"
           >
             {{ link.label }}
           </a>
@@ -78,13 +76,13 @@ onUnmounted(() => {
         <div class="hidden md:flex items-center gap-3">
           <RouterLink
             to="/login"
-            class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors cursor-pointer"
+            class="nav-link"
           >
             Sign In
           </RouterLink>
           <RouterLink
             to="/register"
-            class="px-5 py-2.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 cursor-pointer"
+            class="cta-button"
           >
             Get Started Free
           </RouterLink>
@@ -92,12 +90,13 @@ onUnmounted(() => {
 
         <!-- Mobile Menu Button -->
         <button
-          class="md:hidden p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all cursor-pointer"
+          class="md:hidden glass-button-subtle rounded-lg cursor-pointer"
+          style="padding: 10px;"
           @click="toggleMobileMenu"
           aria-label="Toggle menu"
         >
-          <Menu v-if="!isMobileMenuOpen" class="w-6 h-6" />
-          <X v-else class="w-6 h-6" />
+          <Menu v-if="!isMobileMenuOpen" class="w-6 h-6 text-gray-400" />
+          <X v-else class="w-6 h-6 text-gray-400" />
         </button>
       </div>
 
@@ -111,7 +110,7 @@ onUnmounted(() => {
             v-for="link in navLinks"
             :key="link.label"
             :href="link.href"
-            class="px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+            class="mobile-nav-link"
             @click="closeMobileMenu"
           >
             {{ link.label }}
@@ -119,14 +118,14 @@ onUnmounted(() => {
           <div class="flex flex-col gap-2 mt-4 pt-4 border-t border-white/5">
             <RouterLink
               to="/login"
-              class="px-4 py-3 text-center text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
+              class="mobile-nav-link text-center"
               @click="closeMobileMenu"
             >
               Sign In
             </RouterLink>
             <RouterLink
               to="/register"
-              class="px-4 py-3 text-center font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all cursor-pointer"
+              class="cta-button text-center"
               @click="closeMobileMenu"
             >
               Get Started Free
@@ -137,3 +136,84 @@ onUnmounted(() => {
     </div>
   </nav>
 </template>
+
+<style scoped>
+.glass-nav-scrolled {
+  background: rgba(8, 8, 8, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.logo-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  animation: logo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.95); }
+}
+
+.nav-link {
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #9ca3af;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mobile-nav-link {
+  padding: 12px 16px;
+  color: #9ca3af;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.mobile-nav-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.cta-button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(210, 70, 70, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.cta-button:hover {
+  background: rgba(230, 80, 80, 0.9);
+  box-shadow: 0 6px 25px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.glass-button-subtle {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.glass-button-subtle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+</style>

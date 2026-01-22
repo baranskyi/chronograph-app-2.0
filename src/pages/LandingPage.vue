@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import OceanBackground from '@/components/landing/OceanBackground.vue'
 import LandingNav from '@/components/landing/LandingNav.vue'
 import HeroSection from '@/components/landing/HeroSection.vue'
 import FeaturesSection from '@/components/landing/FeaturesSection.vue'
@@ -11,10 +12,13 @@ import LandingFooter from '@/components/landing/LandingFooter.vue'
 </script>
 
 <template>
-  <div class="min-h-full flex flex-col">
+  <div class="landing-page">
+    <!-- Ocean of dots background -->
+    <OceanBackground />
+
     <LandingNav />
 
-    <main class="flex-1">
+    <main class="landing-content">
       <HeroSection />
       <FeaturesSection />
       <HowItWorks />
@@ -27,3 +31,19 @@ import LandingFooter from '@/components/landing/LandingFooter.vue'
     <LandingFooter />
   </div>
 </template>
+
+<style scoped>
+.landing-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #080808;
+  position: relative;
+}
+
+.landing-content {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+</style>
