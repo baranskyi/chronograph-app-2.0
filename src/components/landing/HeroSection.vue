@@ -1,18 +1,41 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ArrowRight, Play } from 'lucide-vue-next'
 
 // Animated timer display
 const timerValue = ref('05:00')
 const timerSeconds = ref(300)
+const totalSeconds = 300 // 5 minutes total
+const yellowThreshold = 60 // 1 minute
+const redThreshold = 30 // 30 seconds
 let timerInterval: ReturnType<typeof setInterval> | null = null
 
-function formatTime(totalSeconds: number): string {
-  const mins = Math.floor(totalSeconds / 60)
-  const secs = totalSeconds % 60
+function formatTime(totalSecs: number): string {
+  const mins = Math.floor(totalSecs / 60)
+  const secs = totalSecs % 60
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
+
+// Progress bar calculations
+const progress = computed(() => {
+  const elapsed = totalSeconds - timerSeconds.value
+  return Math.min(100, Math.max(0, (elapsed / totalSeconds) * 100))
+})
+
+const greenWidth = computed(() => {
+  const greenSeconds = Math.max(0, totalSeconds - yellowThreshold)
+  return (greenSeconds / totalSeconds) * 100
+})
+
+const yellowWidth = computed(() => {
+  const yellowSeconds = Math.max(0, yellowThreshold - redThreshold)
+  return (yellowSeconds / totalSeconds) * 100
+})
+
+const redWidth = computed(() => {
+  return (redThreshold / totalSeconds) * 100
+})
 
 function animateTimer() {
   timerInterval = setInterval(() => {
@@ -103,10 +126,37 @@ onUnmounted(() => {
                   {{ timerValue }}
                 </div>
 
-                <!-- Viewers -->
-                <p class="text-gray-500 text-sm">
-                  <span class="text-white font-medium">24 viewers</span> watching live
-                </p>
+                <!-- Progress Bar -->
+                <div class="preview-progress-container">
+                  <!-- Background zones -->
+                  <div class="preview-progress-track">
+                    <!-- Passed zone (dark) -->
+                    <div
+                      class="preview-progress-passed"
+                      :style="{ width: progress + '%' }"
+                    />
+                    <!-- Green zone -->
+                    <div
+                      class="preview-zone-green"
+                      :style="{ width: greenWidth + '%' }"
+                    />
+                    <!-- Yellow zone -->
+                    <div
+                      class="preview-zone-yellow"
+                      :style="{ width: yellowWidth + '%' }"
+                    />
+                    <!-- Red zone -->
+                    <div
+                      class="preview-zone-red"
+                      :style="{ width: redWidth + '%' }"
+                    />
+                  </div>
+                  <!-- Marker -->
+                  <div
+                    class="preview-progress-marker"
+                    :style="{ left: progress + '%' }"
+                  />
+                </div>
               </div>
 
               <!-- Bottom controls -->
@@ -369,7 +419,68 @@ onUnmounted(() => {
   color: #ef4444;
   text-shadow: 0 0 60px rgba(239, 68, 68, 0.5), 0 0 120px rgba(239, 68, 68, 0.25);
   letter-spacing: -0.02em;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+/* Preview Progress Bar */
+.preview-progress-container {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.preview-progress-track {
+  position: relative;
+  height: 10px;
+  display: flex;
+  border-radius: 5px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.preview-progress-passed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(20, 20, 20, 0.9) 0%,
+    rgba(20, 20, 20, 0.8) 100%
+  );
+  z-index: 2;
+  transition: width 0.3s ease;
+}
+
+.preview-zone-green {
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+  flex-shrink: 0;
+}
+
+.preview-zone-yellow {
+  background: linear-gradient(180deg, #eab308 0%, #ca8a04 100%);
+  flex-shrink: 0;
+}
+
+.preview-zone-red {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  flex-shrink: 0;
+}
+
+.preview-progress-marker {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, 0.8),
+    0 0 16px rgba(255, 255, 255, 0.5);
+  transition: left 0.3s ease;
+  z-index: 3;
 }
 
 .timer-controls {
