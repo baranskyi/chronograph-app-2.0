@@ -52,8 +52,9 @@ const dragOverTimerId = ref<string | null>(null)
 // Share button state - global toast at bottom center
 const showShareToast = ref(false)
 
-// Ocean animation toggle
-const oceanEnabled = ref(true)
+// Ocean animation toggle - persist to localStorage
+const OCEAN_STORAGE_KEY = 'chronograph-ocean-enabled'
+const oceanEnabled = ref(localStorage.getItem(OCEAN_STORAGE_KEY) !== 'false')
 
 // Q&A Feature state
 const showQRCode = ref(false)
@@ -134,6 +135,8 @@ function handleRightPanelMouseMove(e: MouseEvent) {
 
 function toggleOcean() {
   oceanEnabled.value = !oceanEnabled.value
+  // Save preference to localStorage
+  localStorage.setItem(OCEAN_STORAGE_KEY, String(oceanEnabled.value))
   if (oceanEnabled.value) {
     initCanvas()
   } else {
@@ -377,8 +380,10 @@ onMounted(async () => {
   measurePing()
   window.setInterval(measurePing, 5000)
 
-  // Initialize ocean animation
-  initCanvas()
+  // Initialize ocean animation only if enabled
+  if (oceanEnabled.value) {
+    initCanvas()
+  }
 })
 
 onUnmounted(() => {
