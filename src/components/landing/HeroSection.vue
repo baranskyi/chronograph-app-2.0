@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowRight, Play, Sparkles } from 'lucide-vue-next'
+import { ArrowRight, Play, CheckCircle } from 'lucide-vue-next'
 
 // Animated timer display
 const timerValue = ref('05:00')
 const timerSeconds = ref(300)
 let timerInterval: ReturnType<typeof setInterval> | null = null
+
+const benefits = [
+  'Real-time sync across all devices',
+  'QR code sharing for instant access',
+  'Remote control from anywhere'
+]
 
 function formatTime(totalSeconds: number): string {
   const mins = Math.floor(totalSeconds / 60)
@@ -50,25 +56,31 @@ onUnmounted(() => {
       <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         <!-- Left: Text Content -->
         <div class="text-center lg:text-left">
-          <!-- Badge -->
-          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-sm text-blue-400 mb-8">
-            <Sparkles class="w-4 h-4" />
-            <span>Free for coaches and trainers</span>
-          </div>
-
           <!-- Headline -->
           <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
-            <span class="text-white">Professional</span>
+            <span class="text-white">Control Time.</span>
             <br />
             <span class="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Timer System
+              Lead Sessions.
             </span>
           </h1>
 
           <!-- Subheadline -->
-          <p class="text-lg sm:text-xl text-gray-400 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            Create multiple timers, share with clients via QR code, and control everything remotely. Built for gyms, CrossFit boxes, and personal trainers.
+          <p class="text-lg sm:text-xl text-gray-400 mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            Professional timer system for events, conferences, presentations, and training sessions. Create, share, and control timers remotely from any device.
           </p>
+
+          <!-- Benefits list -->
+          <ul class="flex flex-col gap-3 mb-10 max-w-xl mx-auto lg:mx-0">
+            <li
+              v-for="benefit in benefits"
+              :key="benefit"
+              class="flex items-center gap-3 text-gray-300"
+            >
+              <CheckCircle class="w-5 h-5 text-green-400 flex-shrink-0" />
+              <span>{{ benefit }}</span>
+            </li>
+          </ul>
 
           <!-- CTA Buttons -->
           <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -76,21 +88,21 @@ onUnmounted(() => {
               to="/register"
               class="group relative w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer"
             >
-              Get Started Free
+              Start Free
               <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </RouterLink>
-            <RouterLink
-              to="/app"
+            <a
+              href="#how-it-works"
               class="group w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white font-medium rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Play class="w-5 h-5" />
-              Try Demo
-            </RouterLink>
+              See How It Works
+            </a>
           </div>
 
           <!-- Trust line -->
           <p class="mt-8 text-sm text-gray-500">
-            No credit card required
+            No credit card required. Free plan includes everything you need.
           </p>
         </div>
 
@@ -118,7 +130,7 @@ onUnmounted(() => {
                 <!-- Timer label -->
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-xs text-green-400 mb-6">
                   <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  EMOM Timer
+                  Live Session
                 </div>
 
                 <!-- Timer value -->
@@ -129,9 +141,9 @@ onUnmounted(() => {
                   {{ timerValue }}
                 </div>
 
-                <!-- Round indicator -->
+                <!-- Session info -->
                 <p class="text-gray-500 text-sm">
-                  Round <span class="text-white font-medium">1</span> of <span class="text-white font-medium">10</span>
+                  <span class="text-white font-medium">24 viewers</span> watching live
                 </p>
               </div>
             </div>

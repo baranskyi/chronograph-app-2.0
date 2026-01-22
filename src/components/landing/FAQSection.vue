@@ -4,28 +4,44 @@ import { ChevronDown } from 'lucide-vue-next'
 
 const faqs = [
   {
-    question: 'What is Chronograph.Pro?',
-    answer: 'Chronograph.Pro is a professional timer application for coaches, trainers, and fitness professionals. Create multiple timers, share them with clients via QR code, and control everything remotely from any device.'
+    question: 'What is Chronograph.pro?',
+    answer: 'Chronograph.pro is a professional timer application designed for events, conferences, presentations, and training sessions. It allows you to create multiple timers, share them with participants via QR code, and control everything remotely from any device.'
   },
   {
-    question: 'How do I share my timer with clients?',
-    answer: 'Create a room and add your timers. Click the share button to get a QR code or link. Clients scan the QR code or open the link to see your timers in real-time. No account required for viewers.'
+    question: 'How do I share my timer with participants?',
+    answer: 'Create a room and add your timers. Click the share button to generate a QR code or copy the link. Participants scan the QR code or open the link to see your timers in real-time. No account is required for viewers — they can join instantly.'
   },
   {
     question: 'Is it really free?',
-    answer: 'Yes! The free plan includes 1 room with up to 3 timers. All core features including real-time sync and QR sharing are included. The Pro plan (coming soon) will offer unlimited rooms and timers.'
+    answer: 'Yes! The free plan includes 1 room with up to 3 timers, all timer types (countdown, stopwatch, EMOM, Tabata), real-time sync, and unlimited viewers. The Pro plan (coming soon) will offer unlimited rooms and timers, plus custom branding.'
   },
   {
     question: 'What timer types are supported?',
-    answer: 'We support Countdown timers, Stopwatch (count up), EMOM (Every Minute on the Minute), Tabata intervals, and custom interval timers. Each can be configured with work/rest periods and rounds.'
+    answer: 'We support Countdown timers, Stopwatch (count up), EMOM (Every Minute on the Minute), Tabata intervals, and custom interval timers. Each can be configured with work/rest periods, custom rounds, and warning alerts at specific time thresholds.'
   },
   {
-    question: 'Can I use it on mobile?',
-    answer: 'Absolutely! Chronograph.Pro works on phones, tablets, and desktops. Use your phone as a remote control while clients view on a TV or projector.'
+    question: 'Can I use it on mobile devices?',
+    answer: 'Chronograph.pro is fully responsive and works on phones, tablets, and desktops. Use your phone as a remote control while participants view the timer on a TV, projector, or their own devices. It also works as a PWA (Progressive Web App) for a native-like experience.'
   },
   {
-    question: 'Do clients need to create an account?',
-    answer: 'No. Viewers can watch your timers without any account. Only you (the coach) need an account to create and control timers.'
+    question: 'Do participants need to create an account?',
+    answer: 'No. Viewers can watch your timers without any account — they simply scan the QR code or open the link. Only you (the organizer) need an account to create and control timers.'
+  },
+  {
+    question: 'How many people can view my timer simultaneously?',
+    answer: 'There is no limit on viewers. Whether you have 10 participants or 1,000, everyone can view your timer in real-time. Our infrastructure scales automatically to handle any audience size.'
+  },
+  {
+    question: 'Does it work offline?',
+    answer: 'Yes! Chronograph.pro is a Progressive Web App (PWA) that can be installed on any device. Once installed, basic timer functionality works even without an internet connection. Real-time sync requires connectivity, but local timers run independently.'
+  },
+  {
+    question: 'What are the visual alerts?',
+    answer: 'Timers change color based on remaining time: green when time is comfortable, yellow when approaching the warning threshold, and red when time is critical. You can customize these thresholds. Optional sound alerts can notify when the timer reaches zero.'
+  },
+  {
+    question: 'How is this different from other timer apps?',
+    answer: 'Most timer apps are single-device tools. Chronograph.pro is built for shared experiences — one person controls, everyone watches. Real-time sync, QR code sharing, and multi-timer rooms make it perfect for professional events where timing coordination is critical.'
   }
 ]
 
@@ -42,11 +58,11 @@ function toggle(index: number) {
       <!-- Section Header -->
       <div class="text-center mb-16">
         <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
-          <span class="text-white">Frequently asked</span>
-          <span class="text-gray-400"> questions</span>
+          <span class="text-white">Frequently Asked</span>
+          <span class="text-gray-400"> Questions</span>
         </h2>
         <p class="text-gray-400 text-lg">
-          Everything you need to know.
+          Everything you need to know about Chronograph.pro
         </p>
       </div>
 

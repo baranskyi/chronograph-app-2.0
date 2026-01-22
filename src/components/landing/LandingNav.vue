@@ -6,6 +6,15 @@ import { RouterLink } from 'vue-router'
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
 
+const navLinks = [
+  { label: 'Features', href: '#features' },
+  { label: 'How it works', href: '#how-it-works' },
+  { label: 'Use Cases', href: '#use-cases' },
+  { label: 'Testimonials', href: '#testimonials' },
+  { label: 'Pricing', href: '#pricing' },
+  { label: 'FAQ', href: '#faq' }
+]
+
 function handleScroll() {
   isScrolled.value = window.scrollY > 20
 }
@@ -32,7 +41,7 @@ onUnmounted(() => {
     class="fixed top-4 left-4 right-4 z-50 transition-all duration-300 rounded-2xl"
     :class="[
       isScrolled
-        ? 'bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/20'
+        ? 'bg-[#0f1419]/90 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/20'
         : 'bg-transparent'
     ]"
   >
@@ -49,35 +58,19 @@ onUnmounted(() => {
             <Timer class="relative w-8 h-8 text-blue-400 group-hover:text-blue-300 transition-colors" />
           </div>
           <span class="text-xl font-semibold tracking-tight">
-            <span class="text-white">Chrono</span><span class="text-blue-400">graph</span>
+            <span class="text-white">Chronograph</span><span class="text-blue-400">.pro</span>
           </span>
         </RouterLink>
 
         <!-- Desktop Nav Links -->
-        <div class="hidden md:flex items-center gap-1">
+        <div class="hidden lg:flex items-center gap-1">
           <a
-            href="#features"
-            class="px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200 cursor-pointer"
+            v-for="link in navLinks"
+            :key="link.label"
+            :href="link.href"
+            class="px-3 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200 cursor-pointer"
           >
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            class="px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200 cursor-pointer"
-          >
-            How it works
-          </a>
-          <a
-            href="#pricing"
-            class="px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200 cursor-pointer"
-          >
-            Pricing
-          </a>
-          <a
-            href="#faq"
-            class="px-4 py-2 text-sm text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200 cursor-pointer"
-          >
-            FAQ
+            {{ link.label }}
           </a>
         </div>
 
@@ -93,7 +86,7 @@ onUnmounted(() => {
             to="/register"
             class="px-5 py-2.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 cursor-pointer"
           >
-            Get Started
+            Get Started Free
           </RouterLink>
         </div>
 
@@ -115,32 +108,13 @@ onUnmounted(() => {
       >
         <div class="flex flex-col gap-1">
           <a
-            href="#features"
+            v-for="link in navLinks"
+            :key="link.label"
+            :href="link.href"
             class="px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
             @click="closeMobileMenu"
           >
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            class="px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
-            @click="closeMobileMenu"
-          >
-            How it works
-          </a>
-          <a
-            href="#pricing"
-            class="px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
-            @click="closeMobileMenu"
-          >
-            Pricing
-          </a>
-          <a
-            href="#faq"
-            class="px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all cursor-pointer"
-            @click="closeMobileMenu"
-          >
-            FAQ
+            {{ link.label }}
           </a>
           <div class="flex flex-col gap-2 mt-4 pt-4 border-t border-white/5">
             <RouterLink
@@ -155,7 +129,7 @@ onUnmounted(() => {
               class="px-4 py-3 text-center font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all cursor-pointer"
               @click="closeMobileMenu"
             >
-              Get Started
+              Get Started Free
             </RouterLink>
           </div>
         </div>
