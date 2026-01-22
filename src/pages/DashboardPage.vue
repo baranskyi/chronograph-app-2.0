@@ -858,9 +858,8 @@ const colorClass = (id: string) => {
 
         <!-- CENTER: Timers Panel -->
         <div class="flex-1 flex flex-col py-4" style="padding-left: 24px; padding-right: 24px;">
-          <!-- Timers Header - same style as left panel timer name -->
-          <!-- Timers Header with Ocean Toggle -->
-          <div class="flex items-center gap-3" style="margin-top: 24px; margin-bottom: 48px;">
+          <!-- Timers Header with Ocean Toggle and Action Buttons -->
+          <div class="flex items-center gap-4" style="margin-top: 24px; margin-bottom: 48px;">
             <h2 class="text-2xl font-bold text-gray-100">Timers</h2>
             <!-- Ocean toggle button -->
             <button
@@ -879,15 +878,12 @@ const colorClass = (id: string) => {
                 <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
               </svg>
             </button>
-          </div>
 
-          <!-- Blackout + Add Timer Buttons Row -->
-          <div class="flex items-center gap-3" style="margin-bottom: 48px;">
-            <!-- Blackout Button - Dark, less transparent -->
+            <!-- Blackout Button - Dark, fixed width -->
             <button
-              class="blackout-button flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
+              class="blackout-button flex items-center justify-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
               :class="{ 'blackout-active': roomStore.isBlackout }"
-              style="padding: 10px 20px;"
+              style="padding: 10px 20px; min-width: 120px;"
               @click="roomStore.toggleBlackout()"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -898,10 +894,10 @@ const colorClass = (id: string) => {
               <span>{{ roomStore.isBlackout ? 'Show' : 'Blackout' }}</span>
             </button>
 
-            <!-- Add Timer Button -->
+            <!-- Add Timer Button - same fixed width -->
             <button
-              class="glass-button-red flex items-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
-              style="padding: 10px 20px;"
+              class="glass-button-red flex items-center justify-center gap-2 text-sm font-medium rounded-xl transition-all cursor-pointer"
+              style="padding: 10px 20px; min-width: 120px;"
               @click="handleAddTimer"
             >
               <Plus class="w-4 h-4" />
