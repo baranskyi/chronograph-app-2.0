@@ -53,8 +53,8 @@ function toggle(index: number) {
 </script>
 
 <template>
-  <section id="faq" class="relative w-full" style="padding: 100px 24px;">
-    <div class="w-full max-w-[800px] mx-auto">
+  <section id="faq" class="section-wrapper">
+    <div class="section-container">
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">
         <h2 class="section-title">
@@ -101,6 +101,19 @@ function toggle(index: number) {
 </template>
 
 <style scoped>
+.section-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 100px 24px;
+}
+
+.section-container {
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .section-title {
   font-size: clamp(32px, 5vw, 48px);
   font-weight: 700;

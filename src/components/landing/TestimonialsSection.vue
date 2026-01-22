@@ -48,8 +48,8 @@ const testimonials = [
 </script>
 
 <template>
-  <section id="testimonials" class="relative w-full" style="padding: 100px 24px;">
-    <div class="w-full max-w-[1200px] mx-auto">
+  <section id="testimonials" class="section-wrapper">
+    <div class="section-container">
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">
         <h2 class="section-title">
@@ -62,7 +62,7 @@ const testimonials = [
       </div>
 
       <!-- Testimonials Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="testimonials-grid">
         <div
           v-for="testimonial in testimonials"
           :key="testimonial.name"
@@ -91,6 +91,37 @@ const testimonials = [
 </template>
 
 <style scoped>
+.section-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 100px 24px;
+}
+
+.section-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .testimonials-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .section-title {
   font-size: clamp(32px, 5vw, 48px);
   font-weight: 700;

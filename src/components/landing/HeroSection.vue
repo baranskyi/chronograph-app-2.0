@@ -31,11 +31,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="relative w-full min-h-screen flex items-center justify-center" style="padding: 140px 24px 80px;">
-    <div class="w-full max-w-[1200px] mx-auto">
-      <div class="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-grid">
         <!-- Left: Text Content -->
-        <div class="text-center lg:text-left">
+        <div class="hero-text">
           <!-- Tagline -->
           <p class="tagline">All eyes on you when you're in time</p>
 
@@ -53,7 +53,7 @@ onUnmounted(() => {
           </p>
 
           <!-- CTA Buttons -->
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4" style="margin-top: 40px;">
+          <div class="cta-buttons">
             <RouterLink to="/register" class="cta-button-primary group">
               Start Free
               <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -71,7 +71,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Right: Timer Preview -->
-        <div class="relative flex justify-center lg:justify-end">
+        <div class="timer-preview-wrapper">
           <!-- Glass card -->
           <div class="timer-preview-card">
             <!-- Glow effect behind -->
@@ -130,6 +130,80 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.hero-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 140px 24px 80px;
+}
+
+.hero-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .hero-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 96px;
+  }
+}
+
+.hero-text {
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .hero-text {
+    text-align: left;
+  }
+}
+
+.cta-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+@media (min-width: 640px) {
+  .cta-buttons {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cta-buttons {
+    justify-content: flex-start;
+  }
+}
+
+.timer-preview-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .timer-preview-wrapper {
+    justify-content: flex-end;
+  }
+}
+
 .tagline {
   font-size: 16px;
   color: #d1d5db;

@@ -30,8 +30,8 @@ const steps = [
 </script>
 
 <template>
-  <section id="how-it-works" class="relative w-full" style="padding: 100px 24px;">
-    <div class="w-full max-w-[1200px] mx-auto">
+  <section id="how-it-works" class="section-wrapper">
+    <div class="section-container">
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">
         <h2 class="section-title">
@@ -48,7 +48,7 @@ const steps = [
         <!-- Connection line (desktop) -->
         <div class="hidden lg:block absolute top-24 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+        <div class="steps-grid">
           <div
             v-for="item in steps"
             :key="item.step"
@@ -74,6 +74,19 @@ const steps = [
 </template>
 
 <style scoped>
+.section-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 100px 24px;
+}
+
+.section-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .section-title {
   font-size: clamp(32px, 5vw, 48px);
   font-weight: 700;
@@ -150,5 +163,24 @@ const steps = [
   color: #9ca3af;
   max-width: 260px;
   margin: 0 auto;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 32px;
+}
+
+@media (min-width: 640px) {
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .steps-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
 }
 </style>

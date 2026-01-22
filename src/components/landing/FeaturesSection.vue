@@ -60,10 +60,10 @@ function handleMouseMove(index: number, e: MouseEvent) {
 </script>
 
 <template>
-  <section id="features" class="relative w-full" style="padding: 100px 24px;">
-    <div class="w-full max-w-[1200px] mx-auto">
+  <section id="features" class="section-wrapper">
+    <div class="section-container">
       <!-- Section Header -->
-      <div class="text-center" style="margin-bottom: 64px;">
+      <div class="section-header">
         <h2 class="section-title">
           <span class="text-white">Powerful Features for</span>
           <br />
@@ -75,7 +75,7 @@ function handleMouseMove(index: number, e: MouseEvent) {
       </div>
 
       <!-- Features Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="features-grid">
         <div
           v-for="(feature, index) in features"
           :key="feature.title"
@@ -111,6 +111,24 @@ function handleMouseMove(index: number, e: MouseEvent) {
 </template>
 
 <style scoped>
+.section-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 100px 24px;
+}
+
+.section-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
 .section-title {
   font-size: clamp(32px, 5vw, 48px);
   font-weight: 700;
@@ -123,7 +141,26 @@ function handleMouseMove(index: number, e: MouseEvent) {
   font-size: 18px;
   color: #9ca3af;
   max-width: 500px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 20px;
+}
+
+@media (min-width: 640px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .feature-card {

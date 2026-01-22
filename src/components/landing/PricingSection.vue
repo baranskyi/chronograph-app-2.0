@@ -67,8 +67,8 @@ const plans = [
 </script>
 
 <template>
-  <section id="pricing" class="relative w-full" style="padding: 100px 24px;">
-    <div class="w-full max-w-[1200px] mx-auto">
+  <section id="pricing" class="section-wrapper">
+    <div class="section-container">
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">
         <h2 class="section-title">
@@ -81,7 +81,7 @@ const plans = [
       </div>
 
       <!-- Pricing Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="pricing-grid">
         <div
           v-for="plan in plans"
           :key="plan.name"
@@ -179,6 +179,31 @@ const plans = [
 </template>
 
 <style scoped>
+.section-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 100px 24px;
+}
+
+.section-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .section-title {
   font-size: clamp(32px, 5vw, 48px);
   font-weight: 700;

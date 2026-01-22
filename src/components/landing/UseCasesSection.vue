@@ -46,8 +46,8 @@ const useCases = [
 </script>
 
 <template>
-  <section id="use-cases" class="relative w-full" style="padding: 100px 24px;">
-    <div class="w-full max-w-[1200px] mx-auto">
+  <section id="use-cases" class="section-wrapper">
+    <div class="section-container">
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">
         <h2 class="section-title">
@@ -60,7 +60,7 @@ const useCases = [
       </div>
 
       <!-- Use Cases Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="usecases-grid">
         <div
           v-for="useCase in useCases"
           :key="useCase.title"
@@ -78,6 +78,31 @@ const useCases = [
 </template>
 
 <style scoped>
+.section-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 100px 24px;
+}
+
+.section-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.usecases-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .usecases-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .section-title {
   font-size: clamp(32px, 5vw, 48px);
   font-weight: 700;
