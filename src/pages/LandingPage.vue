@@ -45,9 +45,6 @@ import LandingFooter from '@/components/landing/LandingFooter.vue'
   flex: 1;
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
 }
 </style>
