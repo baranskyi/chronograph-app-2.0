@@ -1,5 +1,19 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Presentation, Users, Church, Dumbbell, GraduationCap, Video, Mic, Briefcase } from 'lucide-vue-next'
+
+// Glow effect
+const hoveredIndex = ref<number | null>(null)
+const glowPos = ref<{ [key: number]: { x: number; y: number } }>({})
+
+function handleMouseMove(index: number, e: MouseEvent) {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  glowPos.value[index] = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  }
+}
 
 const useCases = [
   {
@@ -62,15 +76,30 @@ const useCases = [
       <!-- Use Cases Grid -->
       <div class="usecases-grid">
         <div
-          v-for="useCase in useCases"
+          v-for="(useCase, index) in useCases"
           :key="useCase.title"
           class="usecase-card"
+          @mousemove="handleMouseMove(index, $event)"
+          @mouseenter="hoveredIndex = index"
+          @mouseleave="hoveredIndex = null"
         >
-          <div class="usecase-icon">
-            <component :is="useCase.icon" class="w-6 h-6" />
+          <!-- Glow effect -->
+          <div
+            class="card-glow"
+            :class="{ active: hoveredIndex === index }"
+            :style="{
+              '--glow-x': (glowPos[index]?.x || 0) + 'px',
+              '--glow-y': (glowPos[index]?.y || 0) + 'px'
+            }"
+          ></div>
+
+          <div class="relative z-10">
+            <div class="usecase-icon">
+              <component :is="useCase.icon" class="w-6 h-6" />
+            </div>
+            <h3 class="usecase-title">{{ useCase.title }}</h3>
+            <p class="usecase-description">{{ useCase.description }}</p>
           </div>
-          <h3 class="usecase-title">{{ useCase.title }}</h3>
-          <p class="usecase-description">{{ useCase.description }}</p>
         </div>
       </div>
     </div>
@@ -119,6 +148,8 @@ const useCases = [
 }
 
 .usecase-card {
+  position: relative;
+  overflow: hidden;
   padding: 24px;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px);
@@ -132,6 +163,23 @@ const useCases = [
 .usecase-card:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.12);
+}
+
+.card-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  background: radial-gradient(
+    300px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(239, 68, 68, 0.2),
+    transparent 40%
+  );
+}
+
+.card-glow.active {
+  opacity: 1;
 }
 
 .usecase-icon {

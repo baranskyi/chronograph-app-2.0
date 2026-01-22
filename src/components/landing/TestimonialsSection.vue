@@ -1,5 +1,19 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Star } from 'lucide-vue-next'
+
+// Glow effect
+const hoveredIndex = ref<number | null>(null)
+const glowPos = ref<{ [key: number]: { x: number; y: number } }>({})
+
+function handleMouseMove(index: number, e: MouseEvent) {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  glowPos.value[index] = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  }
+}
 
 const testimonials = [
   {
@@ -64,24 +78,39 @@ const testimonials = [
       <!-- Testimonials Grid -->
       <div class="testimonials-grid">
         <div
-          v-for="testimonial in testimonials"
+          v-for="(testimonial, index) in testimonials"
           :key="testimonial.name"
           class="testimonial-card"
+          @mousemove="handleMouseMove(index, $event)"
+          @mouseenter="hoveredIndex = index"
+          @mouseleave="hoveredIndex = null"
         >
-          <!-- Rating -->
-          <div class="testimonial-rating">
-            <Star v-for="i in 5" :key="i" class="w-4 h-4 text-red-400 fill-red-400" />
-          </div>
+          <!-- Glow effect -->
+          <div
+            class="card-glow"
+            :class="{ active: hoveredIndex === index }"
+            :style="{
+              '--glow-x': (glowPos[index]?.x || 0) + 'px',
+              '--glow-y': (glowPos[index]?.y || 0) + 'px'
+            }"
+          ></div>
 
-          <!-- Text -->
-          <p class="testimonial-text">"{{ testimonial.text }}"</p>
+          <div class="relative z-10">
+            <!-- Rating -->
+            <div class="testimonial-rating">
+              <Star v-for="i in 5" :key="i" class="w-4 h-4 text-red-400 fill-red-400" />
+            </div>
 
-          <!-- Author -->
-          <div class="testimonial-author">
-            <div class="testimonial-avatar">{{ testimonial.initials }}</div>
-            <div>
-              <p class="testimonial-name">{{ testimonial.name }}</p>
-              <p class="testimonial-role">{{ testimonial.role }}, {{ testimonial.company }}</p>
+            <!-- Text -->
+            <p class="testimonial-text">"{{ testimonial.text }}"</p>
+
+            <!-- Author -->
+            <div class="testimonial-author">
+              <div class="testimonial-avatar">{{ testimonial.initials }}</div>
+              <div>
+                <p class="testimonial-name">{{ testimonial.name }}</p>
+                <p class="testimonial-role">{{ testimonial.role }}, {{ testimonial.company }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -138,6 +167,8 @@ const testimonials = [
 }
 
 .testimonial-card {
+  position: relative;
+  overflow: hidden;
   padding: 28px;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(12px);
@@ -150,6 +181,23 @@ const testimonials = [
 .testimonial-card:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  background: radial-gradient(
+    400px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(239, 68, 68, 0.15),
+    transparent 40%
+  );
+}
+
+.card-glow.active {
+  opacity: 1;
 }
 
 .testimonial-rating {

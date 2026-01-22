@@ -1,6 +1,20 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Check, X, Sparkles } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
+
+// Glow effect
+const hoveredIndex = ref<number | null>(null)
+const glowPos = ref<{ [key: number]: { x: number; y: number } }>({})
+
+function handleMouseMove(index: number, e: MouseEvent) {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  glowPos.value[index] = {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  }
+}
 
 const plans = [
   {
@@ -83,9 +97,12 @@ const plans = [
       <!-- Pricing Cards -->
       <div class="pricing-grid">
         <div
-          v-for="plan in plans"
+          v-for="(plan, index) in plans"
           :key="plan.name"
           class="relative group"
+          @mousemove="handleMouseMove(index, $event)"
+          @mouseenter="hoveredIndex = index"
+          @mouseleave="hoveredIndex = null"
         >
           <!-- Glow effect for highlighted plan -->
           <div
@@ -98,6 +115,15 @@ const plans = [
             class="pricing-card"
             :class="{ 'pricing-card-highlighted': plan.highlighted }"
           >
+            <!-- Interactive glow effect -->
+            <div
+              class="card-glow"
+              :class="{ active: hoveredIndex === index }"
+              :style="{
+                '--glow-x': (glowPos[index]?.x || 0) + 'px',
+                '--glow-y': (glowPos[index]?.y || 0) + 'px'
+              }"
+            ></div>
             <!-- Badge -->
             <div
               v-if="plan.badge"
@@ -221,6 +247,7 @@ const plans = [
 
 .pricing-card {
   position: relative;
+  overflow: hidden;
   height: 100%;
   padding: 32px;
   background: rgba(255, 255, 255, 0.02);
@@ -236,6 +263,24 @@ const plans = [
 .pricing-card:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    500px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(239, 68, 68, 0.12),
+    transparent 40%
+  );
+}
+
+.card-glow.active {
+  opacity: 1;
 }
 
 .pricing-card-highlighted {

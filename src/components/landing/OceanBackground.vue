@@ -4,6 +4,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 // Canvas animation
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let animationId: number | null = null
+let cleanupFn: (() => void) | null = null
 
 // Wave animation constants - 30-degree tilt perspective
 const WAVE_FREQUENCY = 0.6
@@ -11,6 +12,11 @@ const WAVE_AMPLITUDE = 0.4
 const DOT_COLOR = { r: 239, g: 68, b: 68 } // Red accent #ef4444
 const GRID_COLS = 180
 const GRID_ROWS = 120
+
+// Mouse tracking for glow effect
+const mouseX = ref(0)
+const mouseY = ref(0)
+const MOUSE_GLOW_RADIUS = 200 // Radius of mouse glow effect in pixels
 
 interface Distortion {
   x: number
@@ -46,6 +52,13 @@ function initCanvas() {
 
   resizeCanvas()
   window.addEventListener('resize', resizeCanvas)
+
+  // Mouse tracking
+  const handleMouseMove = (e: MouseEvent) => {
+    mouseX.value = e.clientX
+    mouseY.value = e.clientY
+  }
+  window.addEventListener('mousemove', handleMouseMove)
 
   const distortions: Distortion[] = []
   let lastDistortionTime = 0
@@ -130,28 +143,46 @@ function initCanvas() {
 
         if (screenX < -30 || screenX > width + 30 || screenY < -30 || screenY > height + 30) continue
 
+        // Mouse glow effect - calculate distance from cursor to this dot
+        const mouseDistX = screenX - mouseX.value
+        const mouseDistY = screenY - mouseY.value
+        const mouseDist = Math.sqrt(mouseDistX * mouseDistX + mouseDistY * mouseDistY)
+        const mouseGlow = mouseDist < MOUSE_GLOW_RADIUS
+          ? Math.pow(1 - mouseDist / MOUSE_GLOW_RADIUS, 2)
+          : 0
+
         const depthFade = 0.15 + ny * 0.5
         const waveBonus = (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.2
-        const finalOpacity = Math.min(0.9, depthFade + waveBonus + distortionGlow * 0.4)
+        const finalOpacity = Math.min(0.95, depthFade + waveBonus + distortionGlow * 0.4 + mouseGlow * 0.6)
 
         const baseSize = (0.6 + ny * 1.4) * perspectiveScale * 0.7
         const waveSize = 1 + (waveOffset + WAVE_AMPLITUDE) / (2 * WAVE_AMPLITUDE) * 0.25
         const distortionSize = 1 + distortionGlow * 1.5
-        const dotSize = baseSize * waveSize * distortionSize
+        const mouseSize = 1 + mouseGlow * 1.2
+        const dotSize = baseSize * waveSize * distortionSize * mouseSize
 
         const r = DOT_COLOR.r
-        const g = DOT_COLOR.g + distortionGlow * 80
-        const b = DOT_COLOR.b + distortionGlow * 120
+        const g = DOT_COLOR.g + distortionGlow * 80 + mouseGlow * 100
+        const b = DOT_COLOR.b + distortionGlow * 120 + mouseGlow * 150
 
         ctx!.beginPath()
         ctx!.arc(screenX, screenY, Math.max(0.4, dotSize), 0, Math.PI * 2)
         ctx!.fillStyle = `rgba(${r}, ${g}, ${b}, ${finalOpacity})`
         ctx!.fill()
 
+        // Distortion glow halo
         if (distortionGlow > 0.1) {
           ctx!.beginPath()
           ctx!.arc(screenX, screenY, dotSize * 2.5, 0, Math.PI * 2)
           ctx!.fillStyle = `rgba(${r}, ${g + 40}, ${b + 80}, ${distortionGlow * 0.12})`
+          ctx!.fill()
+        }
+
+        // Mouse glow halo - soft glow around dots near cursor
+        if (mouseGlow > 0.15) {
+          ctx!.beginPath()
+          ctx!.arc(screenX, screenY, dotSize * 3, 0, Math.PI * 2)
+          ctx!.fillStyle = `rgba(255, 180, 180, ${mouseGlow * 0.15})`
           ctx!.fill()
         }
       }
@@ -161,6 +192,12 @@ function initCanvas() {
   }
 
   animationId = requestAnimationFrame(animate)
+
+  // Return cleanup function
+  cleanupFn = () => {
+    window.removeEventListener('resize', resizeCanvas)
+    window.removeEventListener('mousemove', handleMouseMove)
+  }
 }
 
 onMounted(() => {
@@ -170,6 +207,9 @@ onMounted(() => {
 onUnmounted(() => {
   if (animationId) {
     cancelAnimationFrame(animationId)
+  }
+  if (cleanupFn) {
+    cleanupFn()
   }
 })
 </script>
