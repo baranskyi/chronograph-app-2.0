@@ -781,7 +781,7 @@ const colorClass = (id: string) => {
             <!-- Section 3: Progress Bar with markers -->
             <div class="w-full" v-if="timerStore.selectedTimer">
               <!-- Start and End times ABOVE the bar -->
-              <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <div class="flex justify-between text-xs text-gray-500 mb-2">
                 <span>00:00</span>
                 <span>{{ formatDuration(timerStore.selectedTimer.settings.duration) }}</span>
               </div>
