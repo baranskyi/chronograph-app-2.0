@@ -30,7 +30,7 @@ const steps = [
 </script>
 
 <template>
-  <section id="how-it-works" class="relative" style="padding: 100px 24px;">
+  <section id="how-it-works" class="relative w-full" style="padding: 100px 24px;">
     <div class="w-full max-w-[1200px] mx-auto">
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">

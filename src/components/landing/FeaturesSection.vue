@@ -60,7 +60,7 @@ function handleMouseMove(index: number, e: MouseEvent) {
 </script>
 
 <template>
-  <section id="features" class="relative" style="padding: 100px 24px;">
+  <section id="features" class="relative w-full" style="padding: 100px 24px;">
     <div class="w-full max-w-[1200px] mx-auto">
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">
@@ -94,7 +94,7 @@ function handleMouseMove(index: number, e: MouseEvent) {
             }"
           ></div>
 
-          <div class="relative z-10 text-center flex flex-col items-center">
+          <div class="relative z-10">
             <!-- Icon -->
             <div class="feature-icon">
               <component :is="feature.icon" class="w-6 h-6 text-red-400" />
