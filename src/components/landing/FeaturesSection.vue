@@ -121,7 +121,7 @@ function handleMouseMove(index: number, e: MouseEvent) {
 
 .section-subtitle {
   font-size: 18px;
-  color: #6b7280;
+  color: #9ca3af;
   max-width: 500px;
   margin: 0 auto;
 }
@@ -183,6 +183,6 @@ function handleMouseMove(index: number, e: MouseEvent) {
 .feature-description {
   font-size: 14px;
   line-height: 1.6;
-  color: #6b7280;
+  color: #9ca3af;
 }
 </style>

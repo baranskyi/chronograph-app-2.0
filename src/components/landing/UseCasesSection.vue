@@ -88,23 +88,25 @@ const useCases = [
 
 .section-subtitle {
   font-size: 18px;
-  color: #6b7280;
+  color: #9ca3af;
   max-width: 500px;
   margin: 0 auto;
 }
 
 .usecase-card {
   padding: 24px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .usecase-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(239, 68, 68, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .usecase-icon {
@@ -137,6 +139,6 @@ const useCases = [
 .usecase-description {
   font-size: 13px;
   line-height: 1.5;
-  color: #6b7280;
+  color: #9ca3af;
 }
 </style>

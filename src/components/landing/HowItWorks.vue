@@ -84,7 +84,7 @@ const steps = [
 
 .section-subtitle {
   font-size: 18px;
-  color: #6b7280;
+  color: #9ca3af;
   max-width: 500px;
   margin: 0 auto;
 }
@@ -147,7 +147,7 @@ const steps = [
 .step-description {
   font-size: 14px;
   line-height: 1.6;
-  color: #6b7280;
+  color: #9ca3af;
   max-width: 260px;
   margin: 0 auto;
 }

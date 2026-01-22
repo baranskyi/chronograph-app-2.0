@@ -132,9 +132,10 @@ onUnmounted(() => {
 <style scoped>
 .tagline {
   font-size: 16px;
-  color: #6b7280;
+  color: #d1d5db;
   margin-bottom: 24px;
   letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .hero-title {
@@ -148,9 +149,10 @@ onUnmounted(() => {
 .hero-subtitle {
   font-size: 18px;
   line-height: 1.7;
-  color: #9ca3af;
+  color: #e5e7eb;
   max-width: 520px;
   margin: 0 auto;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 @media (min-width: 1024px) {
@@ -221,7 +223,8 @@ onUnmounted(() => {
 .trust-line {
   margin-top: 24px;
   font-size: 14px;
-  color: #4b5563;
+  color: #9ca3af;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* Timer Preview Card */

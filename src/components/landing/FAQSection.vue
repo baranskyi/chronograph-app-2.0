@@ -111,7 +111,7 @@ function toggle(index: number) {
 
 .section-subtitle {
   font-size: 18px;
-  color: #6b7280;
+  color: #9ca3af;
   max-width: 500px;
   margin: 0 auto;
 }
@@ -168,7 +168,7 @@ function toggle(index: number) {
 .chevron {
   width: 20px;
   height: 20px;
-  color: #6b7280;
+  color: #9ca3af;
   transition: all 0.3s ease;
   flex-shrink: 0;
 }

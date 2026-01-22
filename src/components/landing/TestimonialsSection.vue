@@ -101,7 +101,7 @@ const testimonials = [
 
 .section-subtitle {
   font-size: 18px;
-  color: #6b7280;
+  color: #9ca3af;
   max-width: 500px;
   margin: 0 auto;
 }
@@ -161,6 +161,6 @@ const testimonials = [
 
 .testimonial-role {
   font-size: 12px;
-  color: #6b7280;
+  color: #9ca3af;
 }
 </style>

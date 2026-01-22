@@ -189,7 +189,7 @@ const plans = [
 
 .section-subtitle {
   font-size: 18px;
-  color: #6b7280;
+  color: #9ca3af;
   max-width: 500px;
   margin: 0 auto;
 }
@@ -249,13 +249,13 @@ const plans = [
 }
 
 .plan-period {
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 16px;
 }
 
 .plan-description {
   font-size: 14px;
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .feature-list {
@@ -345,7 +345,7 @@ const plans = [
 
 .bottom-note {
   text-align: center;
-  color: #6b7280;
+  color: #9ca3af;
   font-size: 14px;
   margin-top: 48px;
   line-height: 1.6;
