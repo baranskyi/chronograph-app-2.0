@@ -133,6 +133,11 @@ function handleRightPanelMouseMove(e: MouseEvent) {
   rightGlowY.value = e.clientY - rect.top
 }
 
+// Refresh connection by reloading the page
+function refreshConnection() {
+  window.location.reload()
+}
+
 function toggleOcean() {
   oceanEnabled.value = !oceanEnabled.value
   // Save preference to localStorage
@@ -696,6 +701,26 @@ const colorClass = (id: string) => {
           <div class="font-medium text-sm leading-tight">{{ roomStore.roomName || 'Room' }}</div>
           <div class="text-xs text-gray-500 font-mono">{{ roomStore.roomId }}</div>
         </div>
+
+        <!-- Time Server Status -->
+        <div class="flex items-center gap-2 ml-4">
+          <div class="time-server-status" :class="{ connected: roomStore.isConnected, disconnected: !roomStore.isConnected }">
+            <span class="status-dot"></span>
+            <span class="status-label">Time Server:</span>
+            <span class="status-value">{{ roomStore.isConnected ? 'Connected' : 'Disconnected' }}</span>
+          </div>
+          <button
+            v-if="!roomStore.isConnected"
+            class="refresh-btn"
+            @click="refreshConnection"
+            title="Reconnect to server"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+
         <div class="flex-1" />
         <button class="p-2 glass-button-subtle rounded-lg hover:bg-white/10 cursor-pointer" @click="toggleFullscreen">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1258,6 +1283,94 @@ const colorClass = (id: string) => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Time Server Status */
+.time-server-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.time-server-status.connected {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.time-server-status.disconnected {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.time-server-status .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.time-server-status.connected .status-dot {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+}
+
+.time-server-status.disconnected .status-dot {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  animation: pulse-disconnect 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-disconnect {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.time-server-status .status-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.time-server-status.connected .status-value {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.time-server-status.disconnected .status-value {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.6);
+  transform: rotate(90deg);
+}
+
+.refresh-btn:active {
+  transform: rotate(180deg);
 }
 
 .glass-footer {
