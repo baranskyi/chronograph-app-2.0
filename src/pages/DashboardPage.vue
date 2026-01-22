@@ -702,25 +702,6 @@ const colorClass = (id: string) => {
           <div class="text-xs text-gray-500 font-mono">{{ roomStore.roomId }}</div>
         </div>
 
-        <!-- Time Server Status -->
-        <div class="flex items-center gap-2 ml-4">
-          <div class="time-server-status" :class="{ connected: roomStore.isConnected, disconnected: !roomStore.isConnected }">
-            <span class="status-dot"></span>
-            <span class="status-label">Time Server:</span>
-            <span class="status-value">{{ roomStore.isConnected ? 'Connected' : 'Disconnected' }}</span>
-          </div>
-          <button
-            v-if="!roomStore.isConnected"
-            class="refresh-btn"
-            @click="refreshConnection"
-            title="Reconnect to server"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-        </div>
-
         <div class="flex-1" />
         <button class="p-2 glass-button-subtle rounded-lg hover:bg-white/10 cursor-pointer" @click="toggleFullscreen">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1203,10 +1184,29 @@ const colorClass = (id: string) => {
       </div>
 
       <!-- Bottom Status Bar - Glassmorphism like my-rooms -->
-      <footer class="flex-shrink-0 glass-footer flex items-center justify-center relative" style="padding: 16px; z-index: 10;">
+      <footer class="flex-shrink-0 glass-footer flex items-center justify-between relative" style="padding: 12px 24px; z-index: 10;">
         <span class="text-xs text-gray-500">
           chronograph.pro · v{{ APP_VERSION }} · <span class="text-gray-600">&#10003;</span> {{ pingMs !== null ? pingMs + ' ms' : '...' }}
         </span>
+
+        <!-- Time Server Status -->
+        <div class="flex items-center gap-2">
+          <div class="time-server-status" :class="{ connected: roomStore.isConnected, disconnected: !roomStore.isConnected }">
+            <span class="status-dot"></span>
+            <span class="status-label">Time Server:</span>
+            <span class="status-value">{{ roomStore.isConnected ? 'Connected' : 'Disconnected' }}</span>
+          </div>
+          <button
+            v-if="!roomStore.isConnected"
+            class="refresh-btn"
+            @click="refreshConnection"
+            title="Reconnect to server"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
       </footer>
     </template>
 
