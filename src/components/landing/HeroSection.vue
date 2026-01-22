@@ -33,9 +33,9 @@ onUnmounted(() => {
 <template>
   <section class="relative min-h-screen flex items-center justify-center" style="padding: 140px 24px 80px;">
     <div class="w-full max-w-[1200px] mx-auto">
-      <div class="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-        <!-- Left: Text Content -->
-        <div class="text-center lg:text-left">
+      <div class="flex flex-col items-center gap-16">
+        <!-- Text Content -->
+        <div class="text-center max-w-[700px]">
           <!-- Tagline -->
           <p class="tagline">All eyes on you when you're in time</p>
 
@@ -53,7 +53,7 @@ onUnmounted(() => {
           </p>
 
           <!-- CTA Buttons -->
-          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4" style="margin-top: 40px;">
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4" style="margin-top: 40px;">
             <RouterLink to="/register" class="cta-button-primary group">
               Start Free
               <ArrowRight class="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -70,8 +70,8 @@ onUnmounted(() => {
           </p>
         </div>
 
-        <!-- Right: Timer Preview -->
-        <div class="relative flex justify-center lg:justify-end">
+        <!-- Timer Preview -->
+        <div class="relative flex justify-center">
           <!-- Glass card -->
           <div class="timer-preview-card">
             <!-- Glow effect behind -->
@@ -150,15 +150,9 @@ onUnmounted(() => {
   font-size: 18px;
   line-height: 1.7;
   color: #e5e7eb;
-  max-width: 520px;
+  max-width: 600px;
   margin: 0 auto;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-}
-
-@media (min-width: 1024px) {
-  .hero-subtitle {
-    margin: 0;
-  }
 }
 
 .cta-button-primary {

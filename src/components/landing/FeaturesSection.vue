@@ -94,7 +94,7 @@ function handleMouseMove(index: number, e: MouseEvent) {
             }"
           ></div>
 
-          <div class="relative z-10">
+          <div class="relative z-10 text-center flex flex-col items-center">
             <!-- Icon -->
             <div class="feature-icon">
               <component :is="feature.icon" class="w-6 h-6 text-red-400" />

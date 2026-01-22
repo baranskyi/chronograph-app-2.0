@@ -64,7 +64,7 @@ const useCases = [
         <div
           v-for="useCase in useCases"
           :key="useCase.title"
-          class="usecase-card"
+          class="usecase-card text-center flex flex-col items-center"
         >
           <div class="usecase-icon">
             <component :is="useCase.icon" class="w-6 h-6" />
