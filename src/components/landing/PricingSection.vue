@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, X, Sparkles, Zap } from 'lucide-vue-next'
+import { Check, X, Sparkles } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
 
 const plans = [

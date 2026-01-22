@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Timer, Zap, QrCode, Smartphone, Wifi, Clock, Bell, Palette, Users, Monitor } from 'lucide-vue-next'
+import { Timer, Zap, QrCode, Smartphone, Wifi, Bell, Users, Monitor } from 'lucide-vue-next'
 
 const features = [
   {
