@@ -3,7 +3,6 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import OceanBackground from '@/components/landing/OceanBackground.vue'
 import LandingNav from '@/components/landing/LandingNav.vue'
 import HeroSection from '@/components/landing/HeroSection.vue'
-import SocialProofSection from '@/components/landing/SocialProofSection.vue'
 import ShowcaseSection from '@/components/landing/ShowcaseSection.vue'
 import FeaturesSection from '@/components/landing/FeaturesSection.vue'
 import HowItWorks from '@/components/landing/HowItWorks.vue'
@@ -54,7 +53,6 @@ onUnmounted(() => {
       <HowItWorks />
       <UseCasesSection />
       <TestimonialsSection />
-      <SocialProofSection />
       <PricingSection />
       <FAQSection />
     </main>
