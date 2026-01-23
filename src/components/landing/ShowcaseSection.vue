@@ -1,22 +1,44 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 // Screenshots showcase section
 const screenshots = [
   {
     src: '/screenshots/dashboard.png',
     alt: 'Timer Dashboard - Control multiple timers in real-time',
-    title: 'Timer Dashboard'
+    title: 'Timer Dashboard',
+    description: 'Control time and timers, send messages to speakers, let people speak to a talent.'
   },
   {
     src: '/screenshots/rooms.png',
     alt: 'My Rooms - Manage all your timer rooms',
-    title: 'Room Management'
+    title: 'Room Management',
+    description: 'Add rooms for every speaking venue, see all timers from the heli view.'
   },
   {
     src: '/screenshots/settings.png',
     alt: 'Timer Settings - Customize countdown, warnings and more',
-    title: 'Timer Settings'
+    title: 'Timer Settings',
+    description: 'Set up countdown, countup timers or show a simple clocks. And much more...'
   }
 ]
+
+// Lightbox state
+const lightboxOpen = ref(false)
+const lightboxImage = ref('')
+const lightboxAlt = ref('')
+
+function openLightbox(screenshot: typeof screenshots[0]) {
+  lightboxImage.value = screenshot.src
+  lightboxAlt.value = screenshot.alt
+  lightboxOpen.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+function closeLightbox() {
+  lightboxOpen.value = false
+  document.body.style.overflow = ''
+}
 </script>
 
 <template>
@@ -36,6 +58,7 @@ const screenshots = [
           v-for="(screenshot, index) in screenshots"
           :key="index"
           class="screenshot-card"
+          @click="openLightbox(screenshot)"
         >
           <!-- Glow effect behind image -->
           <div class="screenshot-glow"></div>
@@ -51,10 +74,31 @@ const screenshots = [
           </div>
 
           <!-- Caption -->
-          <p class="screenshot-caption">{{ screenshot.title }}</p>
+          <div class="screenshot-caption">
+            <p class="caption-title">{{ screenshot.title }}</p>
+            <p class="caption-description">{{ screenshot.description }}</p>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Lightbox Modal -->
+    <Teleport to="body">
+      <div
+        v-if="lightboxOpen"
+        class="lightbox-overlay"
+        @click="closeLightbox"
+      >
+        <div class="lightbox-content" @click.stop="closeLightbox">
+          <img
+            :src="lightboxImage"
+            :alt="lightboxAlt"
+            class="lightbox-image"
+          />
+          <button class="lightbox-close" @click="closeLightbox">×</button>
+        </div>
+      </div>
+    </Teleport>
   </section>
 </template>
 
@@ -119,6 +163,7 @@ const screenshots = [
   display: flex;
   flex-direction: column;
   align-items: center;
+  cursor: pointer;
 }
 
 /* Glow effect */
@@ -197,12 +242,94 @@ const screenshots = [
 /* Caption */
 .screenshot-caption {
   margin-top: 20px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #e5e7eb;
   text-align: center;
   position: relative;
   z-index: 1;
+}
+
+.caption-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.caption-description {
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/* Lightbox */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: pointer;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 16px;
+  box-shadow:
+    0 0 60px rgba(239, 68, 68, 0.3),
+    0 25px 80px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lightbox-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Mobile adjustments */
