@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useFullscreen } from '@vueuse/core'
 import { useTimerStore } from '../stores/timerStore'
 import { useRoomStore } from '../stores/roomStore'
+import { useSubscriptionStore } from '../stores/subscriptionStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
 import { Play, Pause, Settings, MoreHorizontal, Plus, GripVertical, Link2, RotateCcw, ArrowLeft, X, Send, QrCode } from 'lucide-vue-next'
@@ -27,6 +28,50 @@ const route = useRoute()
 const timerStore = useTimerStore()
 const roomStore = useRoomStore()
 const authStore = useAuthStore()
+const subscriptionStore = useSubscriptionStore()
+
+// Trial countdown
+const trialTimeLeft = ref('')
+let trialCountdownInterval: ReturnType<typeof setInterval> | null = null
+
+function updateTrialCountdown() {
+  if (!subscriptionStore.isTrialing || !subscriptionStore.trialEndsAt) {
+    trialTimeLeft.value = ''
+    return
+  }
+
+  const now = new Date().getTime()
+  const end = subscriptionStore.trialEndsAt.getTime()
+  const diff = end - now
+
+  if (diff <= 0) {
+    trialTimeLeft.value = 'Expired'
+    return
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+  const parts = []
+  if (days > 0) parts.push(`${days}d`)
+  if (hours > 0) parts.push(`${hours}h`)
+  parts.push(`${minutes}m`)
+
+  trialTimeLeft.value = parts.join(' ') + ' left'
+}
+
+function startTrialCountdown() {
+  updateTrialCountdown()
+  trialCountdownInterval = setInterval(updateTrialCountdown, 60000) // Update every minute
+}
+
+function stopTrialCountdown() {
+  if (trialCountdownInterval) {
+    clearInterval(trialCountdownInterval)
+    trialCountdownInterval = null
+  }
+}
 
 // Get roomCode from route params
 const props = defineProps<{
@@ -389,6 +434,10 @@ onMounted(async () => {
   if (oceanEnabled.value) {
     initCanvas()
   }
+
+  // Load subscription and start trial countdown
+  await subscriptionStore.loadSubscription()
+  startTrialCountdown()
 })
 
 onUnmounted(() => {
@@ -397,6 +446,7 @@ onUnmounted(() => {
   roomStore.disconnect()
   if (clockInterval) clearInterval(clockInterval)
   if (animationId) cancelAnimationFrame(animationId)
+  stopTrialCountdown()
 })
 
 watch(() => timerStore.selectedTimer, () => {
@@ -700,6 +750,15 @@ const colorClass = (id: string) => {
         <div class="flex flex-col">
           <div class="font-medium text-sm leading-tight">{{ roomStore.roomName || 'Room' }}</div>
           <div class="text-xs text-gray-500 font-mono">{{ roomStore.roomId }}</div>
+        </div>
+
+        <!-- Trial Status Badge -->
+        <div
+          v-if="subscriptionStore.isTrialing && trialTimeLeft"
+          class="trial-badge"
+        >
+          <span class="trial-label">Trial:</span>
+          <span class="trial-time">{{ trialTimeLeft }}</span>
         </div>
 
         <div class="flex-1" />
@@ -1285,6 +1344,29 @@ const colorClass = (id: string) => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Trial Badge */
+.trial-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #fca5a5;
+}
+
+.trial-badge .trial-label {
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.trial-badge .trial-time {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Time Server Status */
