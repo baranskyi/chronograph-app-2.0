@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { X, Lock, Check, CreditCard } from 'lucide-vue-next'
+import { X, Lock, Check, CreditCard, Loader2 } from 'lucide-vue-next'
+import { useSubscriptionStore } from '@/stores/subscriptionStore'
 
 const emit = defineEmits<{
   close: []
-  selectPlan: [plan: string, billing: 'monthly' | 'yearly']
 }>()
 
 const props = defineProps<{
   showClose?: boolean
 }>()
 
+const subscriptionStore = useSubscriptionStore()
 const isYearly = ref(true)
+const processingPlan = ref<string | null>(null)
 
 const plans = computed(() => [
   {
@@ -42,8 +44,19 @@ function getPeriod() {
   return isYearly.value ? '/year' : '/month'
 }
 
-function handleSelectPlan(planId: string) {
-  emit('selectPlan', planId, isYearly.value ? 'yearly' : 'monthly')
+async function handleSelectPlan(planId: string) {
+  processingPlan.value = planId
+
+  const url = await subscriptionStore.createCheckoutSession(
+    planId as 'basic' | 'unlimited',
+    isYearly.value ? 'yearly' : 'monthly'
+  )
+
+  if (url) {
+    window.location.href = url
+  }
+
+  processingPlan.value = null
 }
 </script>
 
@@ -104,10 +117,17 @@ function handleSelectPlan(planId: string) {
 
             <button
               @click="handleSelectPlan(plan.id)"
+              :disabled="processingPlan !== null"
               :class="['select-btn', { primary: plan.highlighted }]"
             >
-              <CreditCard class="w-4 h-4" />
-              Select {{ plan.name }}
+              <template v-if="processingPlan === plan.id">
+                <Loader2 class="w-4 h-4 animate-spin" />
+                Processing...
+              </template>
+              <template v-else>
+                <CreditCard class="w-4 h-4" />
+                Select {{ plan.name }}
+              </template>
             </button>
           </div>
         </div>

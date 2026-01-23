@@ -5,6 +5,7 @@ import cors from '@fastify/cors'
 import fastifyStatic from '@fastify/static'
 import { Server } from 'socket.io'
 import { roomRoutes } from './routes/rooms.js'
+import { stripeRoutes } from './routes/stripe.js'
 import { initializeSocket } from './socket/handlers.js'
 import { config } from './config.js'
 
@@ -26,6 +27,7 @@ async function main() {
 
   // REST routes
   await fastify.register(roomRoutes, { prefix: '/api' })
+  await fastify.register(stripeRoutes, { prefix: '/api/stripe' })
 
   // Health check
   fastify.get('/health', async () => ({ status: 'ok', timestamp: Date.now() }))

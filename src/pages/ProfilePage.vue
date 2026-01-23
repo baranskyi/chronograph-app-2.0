@@ -71,9 +71,11 @@ function handleUpgrade() {
   router.push('/#pricing')
 }
 
-function handleManageSubscription() {
-  // TODO: Redirect to Stripe Customer Portal
-  console.log('Open Stripe Customer Portal')
+async function handleManageSubscription() {
+  const url = await subscriptionStore.openCustomerPortal()
+  if (url) {
+    window.location.href = url
+  }
 }
 
 function goBack() {

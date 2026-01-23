@@ -21,6 +21,13 @@ export function isSupabaseEnabled(): boolean {
   return supabase !== null
 }
 
+export function getServiceSupabase() {
+  if (!supabase) {
+    throw new Error('Supabase is not configured')
+  }
+  return supabase
+}
+
 // Verify JWT token and extract user ID
 export async function verifyToken(token: string): Promise<string | null> {
   if (!config.supabase.url || !config.supabase.anonKey) {

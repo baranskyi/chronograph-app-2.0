@@ -154,6 +154,67 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     error.value = null
   }
 
+  // Stripe checkout
+  async function createCheckoutSession(
+    plan: 'basic' | 'unlimited',
+    billing: 'monthly' | 'yearly'
+  ): Promise<string | null> {
+    if (!authStore.userId || !authStore.userEmail) {
+      error.value = 'Please log in first'
+      return null
+    }
+
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: authStore.userId,
+          email: authStore.userEmail,
+          plan,
+          billing
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      const { url } = await response.json()
+      return url
+    } catch (err) {
+      console.error('Checkout error:', err)
+      error.value = err instanceof Error ? err.message : 'Failed to start checkout'
+      return null
+    }
+  }
+
+  // Stripe customer portal
+  async function openCustomerPortal(): Promise<string | null> {
+    if (!authStore.userId) return null
+
+    try {
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: authStore.userId })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to open portal')
+      }
+
+      const { url } = await response.json()
+      return url
+    } catch (err) {
+      console.error('Portal error:', err)
+      error.value = err instanceof Error ? err.message : 'Failed to open portal'
+      return null
+    }
+  }
+
   return {
     // State
     subscription,
@@ -181,6 +242,8 @@ export const useSubscriptionStore = defineStore('subscription', () => {
     updateSubscriptionStatus,
     canCreateRoom,
     canCreateTimer,
-    reset
+    reset,
+    createCheckoutSession,
+    openCustomerPortal
   }
 })
