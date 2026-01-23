@@ -93,6 +93,56 @@ onUnmounted(() => {
           </p>
         </div>
 
+        <!-- Center: 3D Glass Speaker Figure -->
+        <div class="speaker-figure-wrapper">
+          <div class="speaker-figure">
+            <!-- Glow behind figure -->
+            <div class="speaker-glow"></div>
+
+            <!-- Head -->
+            <div class="speaker-head">
+              <div class="speaker-head-inner"></div>
+            </div>
+
+            <!-- Neck -->
+            <div class="speaker-neck"></div>
+
+            <!-- Torso -->
+            <div class="speaker-torso">
+              <div class="speaker-torso-inner"></div>
+              <!-- Suit details -->
+              <div class="speaker-lapel-left"></div>
+              <div class="speaker-lapel-right"></div>
+              <div class="speaker-tie"></div>
+            </div>
+
+            <!-- Raised Arm (passionate gesture) -->
+            <div class="speaker-arm-raised">
+              <div class="speaker-forearm-raised"></div>
+              <div class="speaker-hand-raised">
+                <div class="speaker-finger"></div>
+              </div>
+            </div>
+
+            <!-- Other Arm -->
+            <div class="speaker-arm-down">
+              <div class="speaker-forearm-down"></div>
+            </div>
+
+            <!-- Hips -->
+            <div class="speaker-hips"></div>
+
+            <!-- Legs -->
+            <div class="speaker-leg-left"></div>
+            <div class="speaker-leg-right"></div>
+
+            <!-- Base/Pedestal -->
+            <div class="speaker-base">
+              <div class="speaker-base-glow"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Right: Timer Preview -->
         <div class="timer-preview-wrapper">
           <!-- Glass card -->
@@ -200,14 +250,20 @@ onUnmounted(() => {
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 64px;
+  gap: 48px;
   align-items: center;
 }
 
 @media (min-width: 1024px) {
   .hero-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 96px;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 40px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .hero-grid {
+    gap: 60px;
   }
 }
 
@@ -512,5 +568,389 @@ onUnmounted(() => {
   background: rgba(239, 68, 68, 0.2);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 16px;
+}
+
+/* ============================================
+   3D Glass Speaker Figure
+   ============================================ */
+.speaker-figure-wrapper {
+  display: none;
+  justify-content: center;
+  align-items: flex-end;
+  height: 66vh;
+  perspective: 1200px;
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .speaker-figure-wrapper {
+    display: flex;
+  }
+}
+
+.speaker-figure {
+  position: relative;
+  width: 140px;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(-8deg) rotateX(2deg);
+  animation: speaker-float 6s ease-in-out infinite;
+}
+
+@keyframes speaker-float {
+  0%, 100% {
+    transform: rotateY(-8deg) rotateX(2deg) translateY(0);
+  }
+  50% {
+    transform: rotateY(-5deg) rotateX(2deg) translateY(-10px);
+  }
+}
+
+.speaker-glow {
+  position: absolute;
+  width: 200%;
+  height: 120%;
+  left: -50%;
+  top: -10%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(239, 68, 68, 0.2) 0%,
+    rgba(239, 68, 68, 0.1) 30%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  pointer-events: none;
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Glass material base */
+.speaker-head,
+.speaker-neck,
+.speaker-torso,
+.speaker-arm-raised,
+.speaker-forearm-raised,
+.speaker-hand-raised,
+.speaker-arm-down,
+.speaker-forearm-down,
+.speaker-hips,
+.speaker-leg-left,
+.speaker-leg-right,
+.speaker-base {
+  position: absolute;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.25) 0%,
+    rgba(239, 68, 68, 0.15) 50%,
+    rgba(239, 68, 68, 0.08) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow:
+    inset 0 0 30px rgba(239, 68, 68, 0.15),
+    0 0 20px rgba(239, 68, 68, 0.2),
+    0 10px 40px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Head */
+.speaker-head {
+  width: 50px;
+  height: 60px;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(
+    160deg,
+    rgba(239, 68, 68, 0.35) 0%,
+    rgba(239, 68, 68, 0.2) 40%,
+    rgba(239, 68, 68, 0.1) 100%
+  );
+}
+
+.speaker-head-inner {
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  left: 15%;
+  top: 15%;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 60%
+  );
+}
+
+/* Neck */
+.speaker-neck {
+  width: 22px;
+  height: 25px;
+  left: 50%;
+  top: 55px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.3) 0%,
+    rgba(239, 68, 68, 0.15) 100%
+  );
+}
+
+/* Torso */
+.speaker-torso {
+  width: 70px;
+  height: 110px;
+  left: 50%;
+  top: 75px;
+  transform: translateX(-50%);
+  border-radius: 8px 8px 4px 4px;
+  clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+  background: linear-gradient(
+    170deg,
+    rgba(239, 68, 68, 0.3) 0%,
+    rgba(239, 68, 68, 0.18) 50%,
+    rgba(239, 68, 68, 0.1) 100%
+  );
+}
+
+.speaker-torso-inner {
+  position: absolute;
+  width: 80%;
+  height: 85%;
+  left: 10%;
+  top: 8%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
+  border-radius: 6px;
+}
+
+/* Suit details */
+.speaker-lapel-left,
+.speaker-lapel-right {
+  position: absolute;
+  width: 18px;
+  height: 50px;
+  top: 5px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.speaker-lapel-left {
+  left: 12px;
+  transform: skewY(-15deg);
+  border-radius: 2px 0 0 2px;
+}
+
+.speaker-lapel-right {
+  right: 12px;
+  transform: skewY(15deg);
+  border-radius: 0 2px 2px 0;
+}
+
+.speaker-tie {
+  position: absolute;
+  width: 12px;
+  height: 55px;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.5) 0%,
+    rgba(239, 68, 68, 0.35) 100%
+  );
+  clip-path: polygon(30% 0%, 70% 0%, 100% 15%, 60% 100%, 40% 100%, 0% 15%);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+/* Raised arm (passionate gesture) */
+.speaker-arm-raised {
+  width: 18px;
+  height: 55px;
+  right: -5px;
+  top: 80px;
+  transform: rotate(-45deg);
+  transform-origin: top center;
+  border-radius: 10px;
+  animation: arm-gesture 3s ease-in-out infinite;
+}
+
+@keyframes arm-gesture {
+  0%, 100% {
+    transform: rotate(-45deg);
+  }
+  50% {
+    transform: rotate(-55deg);
+  }
+}
+
+.speaker-forearm-raised {
+  width: 16px;
+  height: 50px;
+  right: -2px;
+  top: 48px;
+  transform: rotate(-30deg);
+  transform-origin: top center;
+  border-radius: 8px;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.3) 0%,
+    rgba(239, 68, 68, 0.15) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow:
+    inset 0 0 20px rgba(239, 68, 68, 0.15),
+    0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+.speaker-hand-raised {
+  width: 22px;
+  height: 20px;
+  right: -8px;
+  top: 90px;
+  border-radius: 5px 5px 8px 8px;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.35) 0%,
+    rgba(239, 68, 68, 0.2) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow:
+    inset 0 0 15px rgba(239, 68, 68, 0.15),
+    0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.speaker-finger {
+  position: absolute;
+  width: 6px;
+  height: 18px;
+  right: 8px;
+  top: -14px;
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.4) 0%,
+    rgba(239, 68, 68, 0.25) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 3px;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  animation: finger-point 3s ease-in-out infinite;
+}
+
+@keyframes finger-point {
+  0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.7); }
+}
+
+/* Down arm */
+.speaker-arm-down {
+  width: 16px;
+  height: 50px;
+  left: -3px;
+  top: 85px;
+  transform: rotate(15deg);
+  transform-origin: top center;
+  border-radius: 8px;
+}
+
+.speaker-forearm-down {
+  width: 14px;
+  height: 45px;
+  left: -1px;
+  top: 45px;
+  transform: rotate(10deg);
+  transform-origin: top center;
+  border-radius: 7px;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.25) 0%,
+    rgba(239, 68, 68, 0.12) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow:
+    inset 0 0 20px rgba(239, 68, 68, 0.1),
+    0 0 12px rgba(239, 68, 68, 0.15);
+}
+
+/* Hips */
+.speaker-hips {
+  width: 55px;
+  height: 35px;
+  left: 50%;
+  top: 180px;
+  transform: translateX(-50%);
+  border-radius: 4px 4px 8px 8px;
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.22) 0%,
+    rgba(239, 68, 68, 0.12) 100%
+  );
+}
+
+/* Legs */
+.speaker-leg-left,
+.speaker-leg-right {
+  width: 22px;
+  height: 120px;
+  top: 210px;
+  border-radius: 6px 6px 4px 4px;
+}
+
+.speaker-leg-left {
+  left: 35px;
+  transform: rotate(-2deg);
+}
+
+.speaker-leg-right {
+  right: 35px;
+  transform: rotate(2deg);
+}
+
+/* Base/Pedestal */
+.speaker-base {
+  width: 80px;
+  height: 15px;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.35) 0%,
+    rgba(239, 68, 68, 0.2) 100%
+  );
+  box-shadow:
+    0 5px 30px rgba(239, 68, 68, 0.4),
+    0 10px 60px rgba(239, 68, 68, 0.2);
+}
+
+.speaker-base-glow {
+  position: absolute;
+  width: 150%;
+  height: 20px;
+  left: -25%;
+  bottom: -10px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(239, 68, 68, 0.4) 0%,
+    transparent 70%
+  );
+  filter: blur(10px);
+}
+
+/* Mobile: hide figure, show only on larger screens */
+@media (max-width: 1023px) {
+  .speaker-figure-wrapper {
+    display: none;
+  }
 }
 </style>
