@@ -45,12 +45,14 @@ const sizes: ChatBubble['size'][] = ['small', 'medium', 'large']
 
 function spawnBubble() {
   const id = bubbleId++
-  const message = chatMessages[currentMessageIndex]
+  const message: string = chatMessages[currentMessageIndex] || 'Great job!'
   currentMessageIndex = (currentMessageIndex + 1) % chatMessages.length
 
   // Random position and size
-  const position = positions[Math.floor(Math.random() * positions.length)]
-  const size = sizes[Math.floor(Math.random() * sizes.length)]
+  const posIndex = Math.floor(Math.random() * positions.length)
+  const sizeIndex = Math.floor(Math.random() * sizes.length)
+  const position: ChatBubble['position'] = positions[posIndex] || 'top-right'
+  const size: ChatBubble['size'] = sizes[sizeIndex] || 'medium'
 
   const bubble: ChatBubble = { id, message, position, size }
   activeBubbles.value.push(bubble)
