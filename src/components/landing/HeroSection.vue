@@ -625,19 +625,20 @@ onUnmounted(() => {
 .chat-bubble {
   position: absolute;
   background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 70% 80%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
-    rgba(25, 25, 30, 0.9);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(239, 68, 68, 0.08) 0%, transparent 50%),
+    rgba(20, 20, 25, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   padding: 14px 18px;
   max-width: 260px;
   z-index: 20;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-    0 0 20px rgba(255, 255, 255, 0.05);
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 30px rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   will-change: opacity;
 }
 
@@ -726,10 +727,53 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-/* Mobile adjustments - hide bubbles on small screens */
+/* Mobile adjustments - reposition bubbles for smaller screens */
 @media (max-width: 1023px) {
   .chat-bubble {
-    display: none;
+    max-width: 200px;
+    padding: 10px 14px;
+  }
+
+  .bubble-text {
+    font-size: 12px;
+  }
+
+  .bubble-small .bubble-text {
+    font-size: 11px;
+  }
+
+  .bubble-large .bubble-text {
+    font-size: 14px;
+  }
+
+  .bubble-top-left {
+    top: -30px;
+    left: -40px;
+  }
+
+  .bubble-top-right {
+    top: -30px;
+    right: -40px;
+  }
+
+  .bubble-bottom-left {
+    bottom: 30px;
+    left: -50px;
+  }
+
+  .bubble-bottom-right {
+    bottom: 30px;
+    right: -50px;
+  }
+
+  .bubble-left {
+    top: calc(50% - 20px);
+    left: -60px;
+  }
+
+  .bubble-right {
+    top: calc(40% - 20px);
+    right: -60px;
   }
 }
 
