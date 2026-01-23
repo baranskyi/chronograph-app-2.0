@@ -24,7 +24,7 @@ const screenshots = [
     <div class="showcase-container">
       <!-- Section Header -->
       <div class="showcase-header">
-        <h2 class="showcase-title">The Product You'll Love</h2>
+        <h2 class="showcase-title">The Product <span class="text-red-500">You'll Love</span></h2>
         <p class="showcase-subtitle">
           Beautiful, intuitive interface designed for professional speakers and event organizers
         </p>

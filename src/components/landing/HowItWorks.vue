@@ -35,8 +35,8 @@ const steps = [
       <!-- Section Header -->
       <div class="text-center" style="margin-bottom: 64px;">
         <h2 class="section-title">
-          <span class="text-white">How it</span>
-          <span class="text-red-500"> works</span>
+          <span class="text-white">How It</span>
+          <span class="text-red-500"> Works</span>
         </h2>
         <p class="section-subtitle">
           Get started in under a minute. No complex setup.
