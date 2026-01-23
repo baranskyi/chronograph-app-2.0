@@ -612,88 +612,141 @@ onUnmounted(() => {
   border-radius: 16px;
 }
 
-/* Chat Bubbles */
+/* Chat Bubbles - Comic style */
 .chat-bubble {
   position: absolute;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  padding: 12px 16px;
-  max-width: 200px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 16px 20px;
+  max-width: 280px;
   z-index: 20;
   animation: float 3s ease-in-out infinite;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Speech bubble tail */
+.chat-bubble::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 12px solid transparent;
 }
 
 .bubble-text {
-  color: #e5e7eb;
-  font-size: 13px;
-  line-height: 1.4;
-  font-weight: 500;
+  color: #f3f4f6;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
 }
 
 /* Bubble sizes */
 .bubble-small {
-  max-width: 160px;
-  padding: 10px 14px;
-}
-
-.bubble-small .bubble-text {
-  font-size: 12px;
-}
-
-.bubble-medium {
-  max-width: 200px;
-}
-
-.bubble-large {
   max-width: 240px;
   padding: 14px 18px;
 }
 
-.bubble-large .bubble-text {
-  font-size: 14px;
+.bubble-small .bubble-text {
+  font-size: 18px;
 }
 
-/* Bubble positions */
+.bubble-medium {
+  max-width: 280px;
+}
+
+.bubble-large {
+  max-width: 320px;
+  padding: 18px 24px;
+}
+
+.bubble-large .bubble-text {
+  font-size: 26px;
+}
+
+/* Bubble positions with tails pointing to timer */
 .bubble-top-left {
-  top: -20px;
-  left: -60px;
+  top: -40px;
+  left: -120px;
   animation-delay: 0s;
 }
 
+.bubble-top-left::after {
+  bottom: -20px;
+  right: 30px;
+  border-top-color: rgba(255, 255, 255, 0.2);
+  border-bottom: none;
+}
+
 .bubble-top-right {
-  top: -30px;
-  right: -50px;
+  top: -50px;
+  right: -100px;
   animation-delay: 0.5s;
 }
 
+.bubble-top-right::after {
+  bottom: -20px;
+  left: 30px;
+  border-top-color: rgba(255, 255, 255, 0.2);
+  border-bottom: none;
+}
+
 .bubble-bottom-left {
-  bottom: 40px;
-  left: -80px;
+  bottom: 60px;
+  left: -140px;
   animation-delay: 1s;
 }
 
+.bubble-bottom-left::after {
+  top: -20px;
+  right: 30px;
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+  border-top: none;
+}
+
 .bubble-bottom-right {
-  bottom: 20px;
-  right: -70px;
+  bottom: 40px;
+  right: -120px;
   animation-delay: 1.5s;
+}
+
+.bubble-bottom-right::after {
+  top: -20px;
+  left: 30px;
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+  border-top: none;
 }
 
 .bubble-left {
   top: 50%;
-  left: -100px;
+  left: -160px;
   transform: translateY(-50%);
   animation-delay: 0.3s;
 }
 
+.bubble-left::after {
+  top: 50%;
+  right: -20px;
+  transform: translateY(-50%);
+  border-left-color: rgba(255, 255, 255, 0.2);
+  border-right: none;
+}
+
 .bubble-right {
   top: 40%;
-  right: -90px;
+  right: -140px;
   transform: translateY(-50%);
   animation-delay: 0.8s;
+}
+
+.bubble-right::after {
+  top: 50%;
+  left: -20px;
+  transform: translateY(-50%);
+  border-right-color: rgba(255, 255, 255, 0.2);
+  border-left: none;
 }
 
 @keyframes float {
