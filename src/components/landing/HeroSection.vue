@@ -43,15 +43,24 @@ let currentMessageIndex = 0
 const positions: ChatBubble['position'][] = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'left', 'right']
 const sizes: ChatBubble['size'][] = ['small', 'medium', 'large']
 
+function getAvailablePositions(): ChatBubble['position'][] {
+  const occupiedPositions = activeBubbles.value.map(b => b.position)
+  return positions.filter(p => !occupiedPositions.includes(p))
+}
+
 function spawnBubble() {
+  // Get available positions (not occupied by current bubbles)
+  const available = getAvailablePositions()
+  if (available.length === 0) return // No free positions, skip this spawn
+
   const id = bubbleId++
   const message: string = chatMessages[currentMessageIndex] || 'Great job!'
   currentMessageIndex = (currentMessageIndex + 1) % chatMessages.length
 
-  // Random position and size
-  const posIndex = Math.floor(Math.random() * positions.length)
+  // Pick from available positions only
+  const posIndex = Math.floor(Math.random() * available.length)
   const sizeIndex = Math.floor(Math.random() * sizes.length)
-  const position: ChatBubble['position'] = positions[posIndex] || 'top-right'
+  const position: ChatBubble['position'] = available[posIndex] || 'top-right'
   const size: ChatBubble['size'] = sizes[sizeIndex] || 'medium'
 
   const bubble: ChatBubble = { id, message, position, size }
@@ -612,19 +621,18 @@ onUnmounted(() => {
   border-radius: 16px;
 }
 
-/* Chat Bubbles - Comic style */
+/* Chat Bubbles - Comic style - GPU optimized */
 .chat-bubble {
   position: absolute;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(30, 30, 35, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.25);
   border-radius: 20px;
   padding: 16px 20px;
   max-width: 280px;
   z-index: 20;
-  animation: float 3s ease-in-out infinite;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  will-change: transform, opacity;
+  transform: translateZ(0);
 }
 
 /* Speech bubble tail */
@@ -670,136 +678,122 @@ onUnmounted(() => {
 .bubble-top-left {
   top: -40px;
   left: -120px;
-  animation-delay: 0s;
 }
 
 .bubble-top-left::after {
   bottom: -20px;
   right: 30px;
-  border-top-color: rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.25);
   border-bottom: none;
 }
 
 .bubble-top-right {
   top: -50px;
   right: -100px;
-  animation-delay: 0.5s;
 }
 
 .bubble-top-right::after {
   bottom: -20px;
   left: 30px;
-  border-top-color: rgba(255, 255, 255, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.25);
   border-bottom: none;
 }
 
 .bubble-bottom-left {
   bottom: 60px;
   left: -140px;
-  animation-delay: 1s;
 }
 
 .bubble-bottom-left::after {
   top: -20px;
   right: 30px;
-  border-bottom-color: rgba(255, 255, 255, 0.2);
+  border-bottom-color: rgba(255, 255, 255, 0.25);
   border-top: none;
 }
 
 .bubble-bottom-right {
   bottom: 40px;
   right: -120px;
-  animation-delay: 1.5s;
 }
 
 .bubble-bottom-right::after {
   top: -20px;
   left: 30px;
-  border-bottom-color: rgba(255, 255, 255, 0.2);
+  border-bottom-color: rgba(255, 255, 255, 0.25);
   border-top: none;
 }
 
 .bubble-left {
   top: 50%;
   left: -160px;
-  transform: translateY(-50%);
-  animation-delay: 0.3s;
 }
 
 .bubble-left::after {
   top: 50%;
   right: -20px;
   transform: translateY(-50%);
-  border-left-color: rgba(255, 255, 255, 0.2);
+  border-left-color: rgba(255, 255, 255, 0.25);
   border-right: none;
 }
 
 .bubble-right {
   top: 40%;
   right: -140px;
-  transform: translateY(-50%);
-  animation-delay: 0.8s;
 }
 
 .bubble-right::after {
   top: 50%;
   left: -20px;
   transform: translateY(-50%);
-  border-right-color: rgba(255, 255, 255, 0.2);
+  border-right-color: rgba(255, 255, 255, 0.25);
   border-left: none;
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-.bubble-left, .bubble-right {
-  animation: float-side 3s ease-in-out infinite;
-}
-
-@keyframes float-side {
-  0%, 100% {
-    transform: translateY(-50%) translateX(0);
-  }
-  50% {
-    transform: translateY(-50%) translateX(-5px);
-  }
-}
-
-/* Bubble transitions */
+/* Bubble transitions - smooth GPU-accelerated */
 .bubble-enter-active {
-  animation: bubble-in 0.5s ease-out forwards;
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
 }
 
 .bubble-leave-active {
-  animation: bubble-out 0.5s ease-in forwards;
+  transition: opacity 0.4s ease-in, transform 0.4s ease-in;
 }
 
-@keyframes bubble-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.8) translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+.bubble-enter-from {
+  opacity: 0;
+  transform: scale(0.85) translateY(15px);
 }
 
-@keyframes bubble-out {
-  0% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.8) translateY(-20px);
-  }
+.bubble-enter-to {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.bubble-leave-from {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.bubble-leave-to {
+  opacity: 0;
+  transform: scale(0.85) translateY(-15px);
+}
+
+/* Adjust for side bubbles */
+.bubble-left.bubble-enter-from,
+.bubble-right.bubble-enter-from {
+  transform: scale(0.85) translateY(-50%);
+}
+
+.bubble-left.bubble-enter-to,
+.bubble-right.bubble-enter-to,
+.bubble-left.bubble-leave-from,
+.bubble-right.bubble-leave-from {
+  transform: scale(1) translateY(-50%);
+}
+
+.bubble-left.bubble-leave-to,
+.bubble-right.bubble-leave-to {
+  transform: scale(0.85) translateY(-50%);
 }
 
 /* Mobile adjustments - hide bubbles on small screens */
