@@ -727,53 +727,43 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-/* Mobile adjustments - reposition bubbles for smaller screens */
+/* Mobile adjustments - position bubbles inside the card area */
 @media (max-width: 1023px) {
   .chat-bubble {
-    max-width: 200px;
-    padding: 10px 14px;
+    max-width: 160px;
+    padding: 8px 12px;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
   }
 
   .bubble-text {
-    font-size: 12px;
-  }
-
-  .bubble-small .bubble-text {
     font-size: 11px;
   }
 
+  .bubble-small .bubble-text,
   .bubble-large .bubble-text {
-    font-size: 14px;
+    font-size: 11px;
   }
 
-  .bubble-top-left {
-    top: -30px;
-    left: -40px;
-  }
-
+  .bubble-top-left,
   .bubble-top-right {
-    top: -30px;
-    right: -40px;
+    top: -50px;
   }
 
-  .bubble-bottom-left {
-    bottom: 30px;
-    left: -50px;
-  }
-
+  .bubble-bottom-left,
   .bubble-bottom-right {
-    bottom: 30px;
-    right: -50px;
+    bottom: -50px;
+    top: auto;
   }
 
   .bubble-left {
-    top: calc(50% - 20px);
-    left: -60px;
+    top: -70px;
   }
 
   .bubble-right {
-    top: calc(40% - 20px);
-    right: -60px;
+    bottom: -70px;
+    top: auto;
   }
 }
 
