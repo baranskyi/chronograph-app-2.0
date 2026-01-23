@@ -116,17 +116,24 @@ onUnmounted(() => {
               <div class="speaker-tie"></div>
             </div>
 
-            <!-- Raised Arm (passionate gesture) -->
-            <div class="speaker-arm-raised">
-              <div class="speaker-forearm-raised"></div>
-              <div class="speaker-hand-raised">
-                <div class="speaker-finger"></div>
+            <!-- Left Arm with Microphone (near mouth) -->
+            <div class="speaker-arm-mic">
+              <div class="speaker-forearm-mic">
+                <div class="speaker-hand-mic">
+                  <!-- Microphone -->
+                  <div class="speaker-microphone">
+                    <div class="mic-head"></div>
+                    <div class="mic-body"></div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- Other Arm -->
-            <div class="speaker-arm-down">
-              <div class="speaker-forearm-down"></div>
+            <!-- Right Arm (gesturing) -->
+            <div class="speaker-arm-gesture">
+              <div class="speaker-forearm-gesture">
+                <div class="speaker-hand-gesture"></div>
+              </div>
             </div>
 
             <!-- Hips -->
@@ -571,7 +578,7 @@ onUnmounted(() => {
 }
 
 /* ============================================
-   3D Glass Speaker Figure
+   3D Glass Speaker Figure - Compact with Mic
    ============================================ */
 .speaker-figure-wrapper {
   display: none;
@@ -590,53 +597,53 @@ onUnmounted(() => {
 
 .speaker-figure {
   position: relative;
-  width: 140px;
+  width: 100px;
   height: 100%;
   transform-style: preserve-3d;
-  transform: rotateY(-8deg) rotateX(2deg);
-  animation: speaker-float 6s ease-in-out infinite;
+  animation: speaker-rotate 20s linear infinite;
 }
 
-@keyframes speaker-float {
-  0%, 100% {
-    transform: rotateY(-8deg) rotateX(2deg) translateY(0);
+@keyframes speaker-rotate {
+  0% {
+    transform: rotateY(0deg);
   }
-  50% {
-    transform: rotateY(-5deg) rotateX(2deg) translateY(-10px);
+  100% {
+    transform: rotateY(360deg);
   }
 }
 
 .speaker-glow {
   position: absolute;
-  width: 200%;
-  height: 120%;
-  left: -50%;
-  top: -10%;
+  width: 250%;
+  height: 130%;
+  left: -75%;
+  top: -15%;
   background: radial-gradient(
     ellipse at center,
-    rgba(239, 68, 68, 0.2) 0%,
-    rgba(239, 68, 68, 0.1) 30%,
-    transparent 70%
+    rgba(239, 68, 68, 0.25) 0%,
+    rgba(239, 68, 68, 0.12) 35%,
+    transparent 65%
   );
-  filter: blur(40px);
+  filter: blur(50px);
   pointer-events: none;
   animation: glow-pulse 4s ease-in-out infinite;
 }
 
 @keyframes glow-pulse {
-  0%, 100% { opacity: 0.8; }
+  0%, 100% { opacity: 0.9; }
   50% { opacity: 1; }
 }
 
-/* Glass material base */
+/* Glass material base - 20% more opaque */
 .speaker-head,
 .speaker-neck,
 .speaker-torso,
-.speaker-arm-raised,
-.speaker-forearm-raised,
-.speaker-hand-raised,
-.speaker-arm-down,
-.speaker-forearm-down,
+.speaker-arm-mic,
+.speaker-forearm-mic,
+.speaker-hand-mic,
+.speaker-arm-gesture,
+.speaker-forearm-gesture,
+.speaker-hand-gesture,
 .speaker-hips,
 .speaker-leg-left,
 .speaker-leg-right,
@@ -644,90 +651,90 @@ onUnmounted(() => {
   position: absolute;
   background: linear-gradient(
     135deg,
-    rgba(239, 68, 68, 0.25) 0%,
-    rgba(239, 68, 68, 0.15) 50%,
-    rgba(239, 68, 68, 0.08) 100%
+    rgba(239, 68, 68, 0.45) 0%,
+    rgba(239, 68, 68, 0.32) 50%,
+    rgba(239, 68, 68, 0.22) 100%
   );
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid rgba(239, 68, 68, 0.55);
   box-shadow:
-    inset 0 0 30px rgba(239, 68, 68, 0.15),
-    0 0 20px rgba(239, 68, 68, 0.2),
-    0 10px 40px rgba(0, 0, 0, 0.3);
+    inset 0 0 30px rgba(239, 68, 68, 0.25),
+    0 0 25px rgba(239, 68, 68, 0.3),
+    0 10px 40px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 /* Head */
 .speaker-head {
-  width: 50px;
-  height: 60px;
+  width: 44px;
+  height: 52px;
   left: 50%;
   top: 0;
   transform: translateX(-50%);
   border-radius: 50% 50% 45% 45%;
   background: linear-gradient(
     160deg,
-    rgba(239, 68, 68, 0.35) 0%,
-    rgba(239, 68, 68, 0.2) 40%,
-    rgba(239, 68, 68, 0.1) 100%
+    rgba(239, 68, 68, 0.55) 0%,
+    rgba(239, 68, 68, 0.38) 40%,
+    rgba(239, 68, 68, 0.25) 100%
   );
 }
 
 .speaker-head-inner {
   position: absolute;
-  width: 70%;
-  height: 70%;
-  left: 15%;
-  top: 15%;
+  width: 65%;
+  height: 65%;
+  left: 18%;
+  top: 18%;
   border-radius: 50%;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.2) 0%,
     transparent 60%
   );
 }
 
 /* Neck */
 .speaker-neck {
-  width: 22px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   left: 50%;
-  top: 55px;
+  top: 48px;
   transform: translateX(-50%);
   border-radius: 4px;
   background: linear-gradient(
     180deg,
-    rgba(239, 68, 68, 0.3) 0%,
-    rgba(239, 68, 68, 0.15) 100%
+    rgba(239, 68, 68, 0.48) 0%,
+    rgba(239, 68, 68, 0.32) 100%
   );
 }
 
-/* Torso */
+/* Torso - more compact */
 .speaker-torso {
-  width: 70px;
-  height: 110px;
+  width: 60px;
+  height: 95px;
   left: 50%;
-  top: 75px;
+  top: 64px;
   transform: translateX(-50%);
   border-radius: 8px 8px 4px 4px;
-  clip-path: polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+  clip-path: polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%);
   background: linear-gradient(
     170deg,
-    rgba(239, 68, 68, 0.3) 0%,
-    rgba(239, 68, 68, 0.18) 50%,
-    rgba(239, 68, 68, 0.1) 100%
+    rgba(239, 68, 68, 0.5) 0%,
+    rgba(239, 68, 68, 0.35) 50%,
+    rgba(239, 68, 68, 0.25) 100%
   );
 }
 
 .speaker-torso-inner {
   position: absolute;
-  width: 80%;
-  height: 85%;
-  left: 10%;
-  top: 8%;
+  width: 75%;
+  height: 80%;
+  left: 12%;
+  top: 10%;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.15) 0%,
     transparent 50%
   );
   border-radius: 6px;
@@ -737,217 +744,308 @@ onUnmounted(() => {
 .speaker-lapel-left,
 .speaker-lapel-right {
   position: absolute;
-  width: 18px;
-  height: 50px;
+  width: 14px;
+  height: 40px;
   top: 5px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 .speaker-lapel-left {
-  left: 12px;
-  transform: skewY(-15deg);
+  left: 10px;
+  transform: skewY(-12deg);
   border-radius: 2px 0 0 2px;
 }
 
 .speaker-lapel-right {
-  right: 12px;
-  transform: skewY(15deg);
+  right: 10px;
+  transform: skewY(12deg);
   border-radius: 0 2px 2px 0;
 }
 
 .speaker-tie {
   position: absolute;
-  width: 12px;
-  height: 55px;
+  width: 10px;
+  height: 45px;
   left: 50%;
   top: 8px;
   transform: translateX(-50%);
   background: linear-gradient(
     180deg,
-    rgba(239, 68, 68, 0.5) 0%,
-    rgba(239, 68, 68, 0.35) 100%
+    rgba(239, 68, 68, 0.65) 0%,
+    rgba(239, 68, 68, 0.45) 100%
   );
   clip-path: polygon(30% 0%, 70% 0%, 100% 15%, 60% 100%, 40% 100%, 0% 15%);
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  border: 1px solid rgba(239, 68, 68, 0.6);
 }
 
-/* Raised arm (passionate gesture) */
-.speaker-arm-raised {
-  width: 18px;
-  height: 55px;
-  right: -5px;
-  top: 80px;
-  transform: rotate(-45deg);
+/* Left Arm with Microphone - close to body, mic near mouth */
+.speaker-arm-mic {
+  width: 14px;
+  height: 38px;
+  left: 8px;
+  top: 70px;
+  transform: rotate(25deg);
   transform-origin: top center;
-  border-radius: 10px;
-  animation: arm-gesture 3s ease-in-out infinite;
+  border-radius: 7px;
+  animation: arm-mic-move 4s ease-in-out infinite;
 }
 
-@keyframes arm-gesture {
+@keyframes arm-mic-move {
   0%, 100% {
-    transform: rotate(-45deg);
+    transform: rotate(25deg);
+  }
+  30% {
+    transform: rotate(20deg);
+  }
+  60% {
+    transform: rotate(28deg);
+  }
+}
+
+.speaker-forearm-mic {
+  position: absolute;
+  width: 12px;
+  height: 35px;
+  left: 1px;
+  top: 34px;
+  transform: rotate(-85deg);
+  transform-origin: top center;
+  border-radius: 6px;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.48) 0%,
+    rgba(239, 68, 68, 0.32) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow:
+    inset 0 0 20px rgba(239, 68, 68, 0.2),
+    0 0 15px rgba(239, 68, 68, 0.25);
+  animation: forearm-mic-move 4s ease-in-out infinite;
+}
+
+@keyframes forearm-mic-move {
+  0%, 100% {
+    transform: rotate(-85deg);
+  }
+  30% {
+    transform: rotate(-80deg);
+  }
+  60% {
+    transform: rotate(-90deg);
+  }
+}
+
+.speaker-hand-mic {
+  position: absolute;
+  width: 16px;
+  height: 14px;
+  left: -4px;
+  top: 30px;
+  border-radius: 4px;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.52) 0%,
+    rgba(239, 68, 68, 0.35) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  box-shadow:
+    inset 0 0 12px rgba(239, 68, 68, 0.2),
+    0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+/* Microphone */
+.speaker-microphone {
+  position: absolute;
+  left: 50%;
+  top: -25px;
+  transform: translateX(-50%);
+}
+
+.mic-head {
+  width: 14px;
+  height: 18px;
+  border-radius: 7px 7px 4px 4px;
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.7) 0%,
+    rgba(239, 68, 68, 0.5) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.7);
+  box-shadow:
+    0 0 20px rgba(239, 68, 68, 0.5),
+    0 0 40px rgba(239, 68, 68, 0.3);
+  animation: mic-glow 2s ease-in-out infinite;
+}
+
+@keyframes mic-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5), 0 0 40px rgba(239, 68, 68, 0.3);
   }
   50% {
-    transform: rotate(-55deg);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.7), 0 0 60px rgba(239, 68, 68, 0.4);
   }
 }
 
-.speaker-forearm-raised {
-  width: 16px;
-  height: 50px;
-  right: -2px;
-  top: 48px;
-  transform: rotate(-30deg);
-  transform-origin: top center;
-  border-radius: 8px;
-  background: linear-gradient(
-    135deg,
-    rgba(239, 68, 68, 0.3) 0%,
-    rgba(239, 68, 68, 0.15) 100%
-  );
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  box-shadow:
-    inset 0 0 20px rgba(239, 68, 68, 0.15),
-    0 0 15px rgba(239, 68, 68, 0.2);
-}
-
-.speaker-hand-raised {
-  width: 22px;
+.mic-body {
+  width: 8px;
   height: 20px;
-  right: -8px;
-  top: 90px;
-  border-radius: 5px 5px 8px 8px;
+  margin: 0 auto;
   background: linear-gradient(
-    135deg,
-    rgba(239, 68, 68, 0.35) 0%,
-    rgba(239, 68, 68, 0.2) 100%
+    180deg,
+    rgba(239, 68, 68, 0.55) 0%,
+    rgba(239, 68, 68, 0.4) 100%
   );
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  box-shadow:
-    inset 0 0 15px rgba(239, 68, 68, 0.15),
-    0 0 20px rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 2px;
 }
 
-.speaker-finger {
-  position: absolute;
-  width: 6px;
-  height: 18px;
+/* Right Arm - gesturing, close to body */
+.speaker-arm-gesture {
+  width: 14px;
+  height: 38px;
   right: 8px;
-  top: -14px;
+  top: 70px;
+  transform: rotate(-20deg);
+  transform-origin: top center;
+  border-radius: 7px;
+  animation: arm-gesture-move 5s ease-in-out infinite;
+}
+
+@keyframes arm-gesture-move {
+  0%, 100% {
+    transform: rotate(-20deg);
+  }
+  25% {
+    transform: rotate(-35deg);
+  }
+  50% {
+    transform: rotate(-15deg);
+  }
+  75% {
+    transform: rotate(-30deg);
+  }
+}
+
+.speaker-forearm-gesture {
+  position: absolute;
+  width: 12px;
+  height: 32px;
+  right: 1px;
+  top: 34px;
+  transform: rotate(-25deg);
+  transform-origin: top center;
+  border-radius: 6px;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.45) 0%,
+    rgba(239, 68, 68, 0.3) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.48);
+  box-shadow:
+    inset 0 0 18px rgba(239, 68, 68, 0.18),
+    0 0 12px rgba(239, 68, 68, 0.2);
+  animation: forearm-gesture-move 5s ease-in-out infinite;
+}
+
+@keyframes forearm-gesture-move {
+  0%, 100% {
+    transform: rotate(-25deg);
+  }
+  25% {
+    transform: rotate(-40deg);
+  }
+  50% {
+    transform: rotate(-20deg);
+  }
+  75% {
+    transform: rotate(-35deg);
+  }
+}
+
+.speaker-hand-gesture {
+  position: absolute;
+  width: 14px;
+  height: 12px;
+  right: -2px;
+  top: 28px;
+  border-radius: 4px 4px 6px 6px;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.48) 0%,
+    rgba(239, 68, 68, 0.32) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow:
+    inset 0 0 10px rgba(239, 68, 68, 0.15),
+    0 0 12px rgba(239, 68, 68, 0.25);
+}
+
+/* Hips - more compact */
+.speaker-hips {
+  width: 48px;
+  height: 28px;
+  left: 50%;
+  top: 155px;
+  transform: translateX(-50%);
+  border-radius: 4px 4px 6px 6px;
   background: linear-gradient(
     180deg,
     rgba(239, 68, 68, 0.4) 0%,
-    rgba(239, 68, 68, 0.25) 100%
-  );
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 3px;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-  animation: finger-point 3s ease-in-out infinite;
-}
-
-@keyframes finger-point {
-  0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
-  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.7); }
-}
-
-/* Down arm */
-.speaker-arm-down {
-  width: 16px;
-  height: 50px;
-  left: -3px;
-  top: 85px;
-  transform: rotate(15deg);
-  transform-origin: top center;
-  border-radius: 8px;
-}
-
-.speaker-forearm-down {
-  width: 14px;
-  height: 45px;
-  left: -1px;
-  top: 45px;
-  transform: rotate(10deg);
-  transform-origin: top center;
-  border-radius: 7px;
-  background: linear-gradient(
-    135deg,
-    rgba(239, 68, 68, 0.25) 0%,
-    rgba(239, 68, 68, 0.12) 100%
-  );
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  box-shadow:
-    inset 0 0 20px rgba(239, 68, 68, 0.1),
-    0 0 12px rgba(239, 68, 68, 0.15);
-}
-
-/* Hips */
-.speaker-hips {
-  width: 55px;
-  height: 35px;
-  left: 50%;
-  top: 180px;
-  transform: translateX(-50%);
-  border-radius: 4px 4px 8px 8px;
-  background: linear-gradient(
-    180deg,
-    rgba(239, 68, 68, 0.22) 0%,
-    rgba(239, 68, 68, 0.12) 100%
+    rgba(239, 68, 68, 0.28) 100%
   );
 }
 
-/* Legs */
+/* Legs - closer together */
 .speaker-leg-left,
 .speaker-leg-right {
-  width: 22px;
-  height: 120px;
-  top: 210px;
-  border-radius: 6px 6px 4px 4px;
+  width: 18px;
+  height: 105px;
+  top: 180px;
+  border-radius: 5px 5px 3px 3px;
 }
 
 .speaker-leg-left {
-  left: 35px;
-  transform: rotate(-2deg);
+  left: 32px;
 }
 
 .speaker-leg-right {
-  right: 35px;
-  transform: rotate(2deg);
+  right: 32px;
 }
 
 /* Base/Pedestal */
 .speaker-base {
-  width: 80px;
-  height: 15px;
+  width: 70px;
+  height: 12px;
   left: 50%;
   bottom: 0;
   transform: translateX(-50%);
   border-radius: 4px;
   background: linear-gradient(
     180deg,
-    rgba(239, 68, 68, 0.35) 0%,
-    rgba(239, 68, 68, 0.2) 100%
+    rgba(239, 68, 68, 0.5) 0%,
+    rgba(239, 68, 68, 0.35) 100%
   );
   box-shadow:
-    0 5px 30px rgba(239, 68, 68, 0.4),
-    0 10px 60px rgba(239, 68, 68, 0.2);
+    0 5px 35px rgba(239, 68, 68, 0.5),
+    0 10px 70px rgba(239, 68, 68, 0.3);
 }
 
 .speaker-base-glow {
   position: absolute;
-  width: 150%;
-  height: 20px;
-  left: -25%;
-  bottom: -10px;
+  width: 180%;
+  height: 25px;
+  left: -40%;
+  bottom: -12px;
   background: radial-gradient(
     ellipse at center,
-    rgba(239, 68, 68, 0.4) 0%,
+    rgba(239, 68, 68, 0.5) 0%,
     transparent 70%
   );
-  filter: blur(10px);
+  filter: blur(12px);
 }
 
-/* Mobile: hide figure, show only on larger screens */
+/* Mobile: hide figure */
 @media (max-width: 1023px) {
   .speaker-figure-wrapper {
     display: none;
