@@ -10,7 +10,7 @@ interface RuntimeRoomState {
 
 // Plan limits
 const PLAN_LIMITS: Record<string, { maxRooms: number; maxTimersPerRoom: number }> = {
-  trial: { maxRooms: Infinity, maxTimersPerRoom: Infinity },
+  trial: { maxRooms: 1, maxTimersPerRoom: 1 },
   basic: { maxRooms: 1, maxTimersPerRoom: 1 },
   unlimited: { maxRooms: Infinity, maxTimersPerRoom: Infinity },
   enterprise: { maxRooms: Infinity, maxTimersPerRoom: Infinity }

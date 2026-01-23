@@ -102,7 +102,7 @@ CREATE POLICY "Anyone can submit contact request" ON contact_requests
 
 -- ============================================
 -- План лимитов по подпискам:
--- trial:      unlimited rooms, unlimited timers (3 дня)
+-- trial:      1 room, 1 timer (3 дня бесплатно)
 -- basic:      1 room, 1 timer
 -- unlimited:  unlimited rooms, unlimited timers
 -- enterprise: unlimited rooms, unlimited timers + customization

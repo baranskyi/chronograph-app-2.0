@@ -438,7 +438,7 @@ async function createRoom() {
   }
 
   if (!subscriptionStore.canCreateRoom(rooms.value.length)) {
-    error.value = `You've reached the limit of ${subscriptionStore.maxRooms} room(s) on your plan. Upgrade to create more.`
+    showSubscriptionModal.value = true
     return
   }
 
