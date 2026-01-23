@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
+import { useSubscriptionStore } from '../stores/subscriptionStore'
+import SubscriptionModal from '../components/SubscriptionModal.vue'
 import { supabase } from '../lib/supabase'
 import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, User } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
@@ -35,6 +37,10 @@ type RoomFilter = 'all' | 'active' | 'inactive' | 'with-messages'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const subscriptionStore = useSubscriptionStore()
+
+// Subscription modal
+const showSubscriptionModal = ref(false)
 
 const rooms = ref<Room[]>([])
 const loading = ref(true)
@@ -296,6 +302,14 @@ function stopTicking() {
 }
 
 onMounted(async () => {
+  // Load subscription status
+  await subscriptionStore.loadSubscription()
+
+  // Check if blocked (trial expired)
+  if (subscriptionStore.isBlocked) {
+    showSubscriptionModal.value = true
+  }
+
   await loadRooms()
   startTicking()
   document.addEventListener('click', closeMenu)
@@ -417,6 +431,17 @@ async function loadRooms() {
 }
 
 async function createRoom() {
+  // Check subscription limits
+  if (subscriptionStore.isBlocked) {
+    showSubscriptionModal.value = true
+    return
+  }
+
+  if (!subscriptionStore.canCreateRoom(rooms.value.length)) {
+    error.value = `You've reached the limit of ${subscriptionStore.maxRooms} room(s) on your plan. Upgrade to create more.`
+    return
+  }
+
   creating.value = true
   error.value = null
 
@@ -540,6 +565,13 @@ function openRoomWithTimer(roomCode: string, timerId: string) {
 async function handleSignOut() {
   await authStore.signOut()
   router.push('/')
+}
+
+function handleSelectPlan(plan: string, billing: 'monthly' | 'yearly') {
+  // TODO: Redirect to Stripe Checkout
+  console.log('Selected plan:', plan, billing)
+  // For now, redirect to pricing page
+  router.push('/#pricing')
 }
 
 function formatTime(seconds: number): string {
@@ -985,7 +1017,21 @@ function getDropdownStyle(roomId: string) {
           chronograph.pro · v{{ APP_VERSION }}
         </span>
       </footer>
+
+      <!-- Subscription blocked overlay -->
+      <div
+        v-if="subscriptionStore.isBlocked"
+        class="subscription-overlay"
+      ></div>
     </div>
+
+    <!-- Subscription Modal -->
+    <SubscriptionModal
+      v-if="showSubscriptionModal"
+      :show-close="!subscriptionStore.isBlocked"
+      @close="showSubscriptionModal = false"
+      @select-plan="handleSelectPlan"
+    />
   </div>
 </template>
 
@@ -1356,5 +1402,15 @@ function getDropdownStyle(roomId: string) {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* Subscription blocked overlay */
+.subscription-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  pointer-events: none;
 }
 </style>
