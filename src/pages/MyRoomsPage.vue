@@ -742,8 +742,8 @@ function getDropdownStyle(roomId: string) {
         </div>
 
         <!-- RIGHT: Rooms Content -->
-        <div class="flex-1 overflow-y-auto" style="padding: 40px 24px 40px 40px;">
-          <div>
+        <div class="flex-1 overflow-y-auto" style="padding: 40px 24px;">
+          <div class="max-w-5xl">
             <!-- Title Row -->
             <div class="flex items-center justify-between" style="margin-bottom: 40px;">
               <div>
