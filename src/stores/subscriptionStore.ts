@@ -72,6 +72,10 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
   // Check if service should be blocked (trial expired and no active subscription)
   const isBlocked = computed(() => {
+    // Don't block while loading
+    if (loading.value) return false
+    // Don't block if subscription doesn't exist yet (will be created)
+    if (!subscription.value) return false
     if (isActive.value) return false
     if (isTrialing.value && !isTrialExpired.value) return false
     return true
@@ -96,9 +100,19 @@ export const useSubscriptionStore = defineStore('subscription', () => {
         .single()
 
       if (fetchError) {
-        // No subscription found - might be a new user
+        // No subscription found - create trial subscription
         if (fetchError.code === 'PGRST116') {
-          subscription.value = null
+          console.log('No subscription found, creating trial...')
+          const created = await createTrialSubscription()
+          if (created) {
+            // Reload after creating
+            const { data: newData } = await supabase
+              .from('user_subscriptions')
+              .select('*')
+              .eq('user_id', authStore.userId)
+              .single()
+            subscription.value = newData
+          }
           return
         }
         throw fetchError
@@ -118,6 +132,36 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       error.value = 'Failed to load subscription'
     } finally {
       loading.value = false
+    }
+  }
+
+  async function createTrialSubscription(): Promise<boolean> {
+    if (!authStore.userId) return false
+
+    try {
+      // Calculate trial end date (3 days from now)
+      const trialEndsAt = new Date()
+      trialEndsAt.setDate(trialEndsAt.getDate() + 3)
+
+      const { error: insertError } = await supabase
+        .from('user_subscriptions')
+        .insert({
+          user_id: authStore.userId,
+          plan: 'trial',
+          status: 'trialing',
+          trial_ends_at: trialEndsAt.toISOString()
+        })
+
+      if (insertError) {
+        console.error('Failed to create trial subscription:', insertError)
+        return false
+      }
+
+      console.log('Trial subscription created successfully')
+      return true
+    } catch (err) {
+      console.error('Error creating trial subscription:', err)
+      return false
     }
   }
 
@@ -239,6 +283,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
 
     // Actions
     loadSubscription,
+    createTrialSubscription,
     updateSubscriptionStatus,
     canCreateRoom,
     canCreateTimer,
