@@ -618,12 +618,13 @@ function getDropdownStyle(roomId: string) {
     <div class="relative flex flex-col min-h-screen" style="z-index: 2;">
       <!-- Header - Glassmorphism -->
       <header class="flex-shrink-0 glass-header">
-        <div class="max-w-6xl mx-auto" style="padding: 16px 24px;">
-          <div class="flex items-center justify-between">
+        <div style="padding: 16px 24px;">
+          <div class="flex items-center gap-6">
             <h1 class="text-xl font-bold flex items-center gap-3">
               <span class="logo-pulse"></span>
               <span class="tracking-tight">Chronograph <span class="text-red-500">Pro</span></span>
             </h1>
+            <div class="header-divider"></div>
             <div class="flex items-center gap-4">
               <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
               <button
@@ -986,6 +987,12 @@ function getDropdownStyle(roomId: string) {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .glass-footer {
