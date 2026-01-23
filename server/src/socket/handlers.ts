@@ -79,7 +79,8 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
       callback({ roomId: room.roomId, timers: serializeTimers(timers) })
     } catch (error) {
       console.error('Error creating room:', error)
-      callback({ error: 'Failed to create room' })
+      const message = error instanceof Error ? error.message : 'Failed to create room'
+      callback({ error: message })
     }
   })
 
@@ -186,7 +187,8 @@ export function setupHandlers(io: Server, socket: AuthenticatedSocket): void {
       callback({ success: true, timer: { ...timer } })
     } catch (error) {
       console.error('Error creating timer:', error)
-      callback({ error: 'Failed to create timer' })
+      const message = error instanceof Error ? error.message : 'Failed to create timer'
+      callback({ error: message })
     }
   })
 

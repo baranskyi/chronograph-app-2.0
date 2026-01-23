@@ -8,6 +8,20 @@ interface RuntimeRoomState {
   lastActivity: number
 }
 
+// Plan limits
+const PLAN_LIMITS: Record<string, { maxRooms: number; maxTimersPerRoom: number }> = {
+  trial: { maxRooms: Infinity, maxTimersPerRoom: Infinity },
+  basic: { maxRooms: 1, maxTimersPerRoom: 1 },
+  unlimited: { maxRooms: Infinity, maxTimersPerRoom: Infinity },
+  enterprise: { maxRooms: Infinity, maxTimersPerRoom: Infinity }
+}
+
+interface SubscriptionInfo {
+  plan: string
+  status: string
+  trialEndsAt: Date | null
+}
+
 class RoomManager {
   // Runtime state only (socket connections, etc.) - not persisted
   private runtimeState = new Map<string, RuntimeRoomState>()
@@ -27,9 +41,164 @@ class RoomManager {
     return id
   }
 
+  // ============ SUBSCRIPTION CHECKS ============
+
+  private async getUserSubscription(userId: string): Promise<SubscriptionInfo | null> {
+    if (!isSupabaseEnabled() || !supabase) return null
+
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select('plan, status, trial_ends_at')
+      .eq('user_id', userId)
+      .single()
+
+    if (error || !data) {
+      console.log(`No subscription found for user ${userId}`)
+      return null
+    }
+
+    return {
+      plan: data.plan,
+      status: data.status,
+      trialEndsAt: data.trial_ends_at ? new Date(data.trial_ends_at) : null
+    }
+  }
+
+  private isSubscriptionActive(sub: SubscriptionInfo): boolean {
+    // Check if trial is still valid
+    if (sub.status === 'trialing' && sub.trialEndsAt) {
+      return new Date() < sub.trialEndsAt
+    }
+    // Check if subscription is active
+    return sub.status === 'active'
+  }
+
+  private getPlanLimits(plan: string): { maxRooms: number; maxTimersPerRoom: number } {
+    return PLAN_LIMITS[plan] || PLAN_LIMITS.basic
+  }
+
+  async canCreateRoom(userId: string): Promise<{ allowed: boolean; reason?: string }> {
+    if (!userId) {
+      return { allowed: false, reason: 'Authentication required' }
+    }
+
+    if (!isSupabaseEnabled() || !supabase) {
+      // No Supabase = no limits (development mode)
+      return { allowed: true }
+    }
+
+    const subscription = await this.getUserSubscription(userId)
+
+    if (!subscription) {
+      return { allowed: false, reason: 'No subscription found' }
+    }
+
+    if (!this.isSubscriptionActive(subscription)) {
+      return { allowed: false, reason: 'Subscription expired or inactive' }
+    }
+
+    const limits = this.getPlanLimits(subscription.plan)
+
+    if (limits.maxRooms === Infinity) {
+      return { allowed: true }
+    }
+
+    // Count user's existing rooms
+    const { count, error } = await supabase
+      .from('rooms')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_active', true)
+
+    if (error) {
+      console.error('Error counting rooms:', error)
+      return { allowed: false, reason: 'Failed to check room count' }
+    }
+
+    const currentRooms = count || 0
+
+    if (currentRooms >= limits.maxRooms) {
+      return {
+        allowed: false,
+        reason: `Room limit reached (${currentRooms}/${limits.maxRooms}). Upgrade to create more rooms.`
+      }
+    }
+
+    return { allowed: true }
+  }
+
+  async canCreateTimer(userId: string, roomId: string): Promise<{ allowed: boolean; reason?: string }> {
+    if (!isSupabaseEnabled() || !supabase) {
+      // No Supabase = no limits (development mode)
+      return { allowed: true }
+    }
+
+    // If no userId, check room ownership
+    if (!userId) {
+      return { allowed: true } // Anonymous rooms have no limits for now
+    }
+
+    const subscription = await this.getUserSubscription(userId)
+
+    if (!subscription) {
+      return { allowed: false, reason: 'No subscription found' }
+    }
+
+    if (!this.isSubscriptionActive(subscription)) {
+      return { allowed: false, reason: 'Subscription expired or inactive' }
+    }
+
+    const limits = this.getPlanLimits(subscription.plan)
+
+    if (limits.maxTimersPerRoom === Infinity) {
+      return { allowed: true }
+    }
+
+    // Get room's DB UUID
+    const { data: room } = await supabase
+      .from('rooms')
+      .select('id')
+      .eq('room_code', roomId.toUpperCase())
+      .single()
+
+    if (!room) {
+      return { allowed: false, reason: 'Room not found' }
+    }
+
+    // Count existing timers in this room
+    const { count, error } = await supabase
+      .from('timers')
+      .select('*', { count: 'exact', head: true })
+      .eq('room_id', room.id)
+
+    if (error) {
+      console.error('Error counting timers:', error)
+      return { allowed: false, reason: 'Failed to check timer count' }
+    }
+
+    const currentTimers = count || 0
+
+    if (currentTimers >= limits.maxTimersPerRoom) {
+      return {
+        allowed: false,
+        reason: `Timer limit reached (${currentTimers}/${limits.maxTimersPerRoom}). Upgrade to create more timers.`
+      }
+    }
+
+    return { allowed: true }
+  }
+
   // ============ ROOM OPERATIONS ============
 
   async createRoom(userId?: string): Promise<RoomState> {
+    // Check subscription limits
+    if (userId) {
+      const canCreate = await this.canCreateRoom(userId)
+      if (!canCreate.allowed) {
+        throw new Error(canCreate.reason || 'Cannot create room')
+      }
+    }
+
     const roomId = this.generateRoomId()
 
     if (isSupabaseEnabled() && supabase) {
@@ -174,10 +343,10 @@ class RoomManager {
     console.log(`createTimer called: roomId=${roomId}, normalizedId=${normalizedId}, name=${name}`)
 
     if (isSupabaseEnabled() && supabase) {
-      // Get room's DB UUID
+      // Get room's DB UUID and owner
       const { data: room, error: roomError } = await supabase
         .from('rooms')
-        .select('id')
+        .select('id, user_id')
         .eq('room_code', normalizedId)
         .single()
 
@@ -186,6 +355,15 @@ class RoomManager {
       if (!room) {
         console.error(`Room not found for code: ${normalizedId}`)
         return null
+      }
+
+      // Check subscription limits if room has an owner
+      if (room.user_id) {
+        const canCreate = await this.canCreateTimer(room.user_id, normalizedId)
+        if (!canCreate.allowed) {
+          console.error(`Timer limit reached for user ${room.user_id}: ${canCreate.reason}`)
+          throw new Error(canCreate.reason || 'Cannot create timer')
+        }
       }
 
       // Count existing timers
