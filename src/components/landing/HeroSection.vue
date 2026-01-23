@@ -621,18 +621,24 @@ onUnmounted(() => {
   border-radius: 16px;
 }
 
-/* Chat Bubbles - Comic style - GPU optimized */
+/* Chat Bubbles - Comic style with inner glow */
 .chat-bubble {
   position: absolute;
-  background: rgba(30, 30, 35, 0.85);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
+    rgba(25, 25, 30, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
-  padding: 16px 20px;
-  max-width: 280px;
+  padding: 14px 18px;
+  max-width: 260px;
   z-index: 20;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  will-change: transform, opacity;
-  transform: translateZ(0);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 0 20px rgba(255, 255, 255, 0.05);
+  will-change: opacity;
 }
 
 /* Speech bubble tail */
@@ -645,33 +651,34 @@ onUnmounted(() => {
 }
 
 .bubble-text {
-  color: #f3f4f6;
-  font-size: 22px;
-  line-height: 1.3;
+  color: #f5f5f5;
+  font-size: 15px;
+  line-height: 1.4;
   font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Bubble sizes */
 .bubble-small {
-  max-width: 240px;
-  padding: 14px 18px;
+  max-width: 220px;
+  padding: 12px 16px;
 }
 
 .bubble-small .bubble-text {
-  font-size: 18px;
+  font-size: 13px;
 }
 
 .bubble-medium {
-  max-width: 280px;
+  max-width: 260px;
 }
 
 .bubble-large {
-  max-width: 320px;
-  padding: 18px 24px;
+  max-width: 300px;
+  padding: 16px 20px;
 }
 
 .bubble-large .bubble-text {
-  font-size: 26px;
+  font-size: 18px;
 }
 
 /* Bubble positions with tails pointing to timer */
@@ -683,7 +690,7 @@ onUnmounted(() => {
 .bubble-top-left::after {
   bottom: -20px;
   right: 30px;
-  border-top-color: rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.3);
   border-bottom: none;
 }
 
@@ -695,7 +702,7 @@ onUnmounted(() => {
 .bubble-top-right::after {
   bottom: -20px;
   left: 30px;
-  border-top-color: rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.3);
   border-bottom: none;
 }
 
@@ -707,7 +714,7 @@ onUnmounted(() => {
 .bubble-bottom-left::after {
   top: -20px;
   right: 30px;
-  border-bottom-color: rgba(255, 255, 255, 0.25);
+  border-bottom-color: rgba(255, 255, 255, 0.3);
   border-top: none;
 }
 
@@ -719,81 +726,48 @@ onUnmounted(() => {
 .bubble-bottom-right::after {
   top: -20px;
   left: 30px;
-  border-bottom-color: rgba(255, 255, 255, 0.25);
+  border-bottom-color: rgba(255, 255, 255, 0.3);
   border-top: none;
 }
 
 .bubble-left {
-  top: 50%;
+  top: calc(50% - 30px);
   left: -160px;
 }
 
 .bubble-left::after {
-  top: 50%;
+  top: 30px;
   right: -20px;
-  transform: translateY(-50%);
-  border-left-color: rgba(255, 255, 255, 0.25);
+  border-left-color: rgba(255, 255, 255, 0.3);
   border-right: none;
 }
 
 .bubble-right {
-  top: 40%;
+  top: calc(40% - 30px);
   right: -140px;
 }
 
 .bubble-right::after {
-  top: 50%;
+  top: 30px;
   left: -20px;
-  transform: translateY(-50%);
-  border-right-color: rgba(255, 255, 255, 0.25);
+  border-right-color: rgba(255, 255, 255, 0.3);
   border-left: none;
 }
 
-/* Bubble transitions - smooth GPU-accelerated */
-.bubble-enter-active {
-  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-}
-
+/* Bubble transitions - opacity only, no jumping */
+.bubble-enter-active,
 .bubble-leave-active {
-  transition: opacity 0.4s ease-in, transform 0.4s ease-in;
+  transition: opacity 0.5s ease;
 }
 
-.bubble-enter-from {
-  opacity: 0;
-  transform: scale(0.85) translateY(15px);
-}
-
-.bubble-enter-to {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
-.bubble-leave-from {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
+.bubble-enter-from,
 .bubble-leave-to {
   opacity: 0;
-  transform: scale(0.85) translateY(-15px);
 }
 
-/* Adjust for side bubbles */
-.bubble-left.bubble-enter-from,
-.bubble-right.bubble-enter-from {
-  transform: scale(0.85) translateY(-50%);
-}
-
-.bubble-left.bubble-enter-to,
-.bubble-right.bubble-enter-to,
-.bubble-left.bubble-leave-from,
-.bubble-right.bubble-leave-from {
-  transform: scale(1) translateY(-50%);
-}
-
-.bubble-left.bubble-leave-to,
-.bubble-right.bubble-leave-to {
-  transform: scale(0.85) translateY(-50%);
+.bubble-enter-to,
+.bubble-leave-from {
+  opacity: 1;
 }
 
 /* Mobile adjustments - hide bubbles on small screens */
