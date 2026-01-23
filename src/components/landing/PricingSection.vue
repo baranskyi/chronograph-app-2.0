@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Check, X, Sparkles } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { Check, Sparkles, Zap } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
+import ContactModal from './ContactModal.vue'
+
+// Billing toggle
+const isYearly = ref(true)
+
+// Contact modal
+const showContactModal = ref(false)
 
 // Glow effect
 const hoveredIndex = ref<number | null>(null)
@@ -16,82 +23,132 @@ function handleMouseMove(index: number, e: MouseEvent) {
   }
 }
 
-const plans = [
+// All features that apply to all paid plans
+const allFeatures = [
+  'Speaker messages',
+  'Audience messages',
+  'Q&A sessions',
+  'Add/edit timers',
+  'Color zones (green/yellow/red)',
+  'Progress line',
+  'QR code sharing',
+  'Real-time sync',
+  'Unlimited viewers',
+  'Sound alerts',
+  'PWA support'
+]
+
+const plans = computed(() => [
   {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Perfect for getting started',
-    features: [
-      { text: '1 room', included: true },
-      { text: '3 timers per room', included: true },
-      { text: 'All timer types', included: true },
-      { text: 'QR code sharing', included: true },
-      { text: 'Real-time sync', included: true },
-      { text: 'Unlimited viewers', included: true },
-      { text: 'Custom branding', included: false },
-      { text: 'Priority support', included: false }
-    ],
-    cta: 'Get Started Free',
-    ctaLink: '/register',
+    name: 'Basic',
+    monthlyPrice: 9.95,
+    yearlyPrice: 59.95,
+    description: 'Perfect for individual speakers',
+    limits: {
+      rooms: '1 room',
+      timers: '1 timer per room'
+    },
+    features: allFeatures,
+    enterpriseFeatures: [],
+    cta: 'Start Free Trial',
+    ctaLink: '/register?plan=basic',
     highlighted: false,
     badge: null
   },
   {
-    name: 'Pro',
-    price: '$9',
-    period: '/month',
-    description: 'For professional coaches',
-    features: [
-      { text: 'Unlimited rooms', included: true },
-      { text: 'Unlimited timers', included: true },
-      { text: 'All timer types', included: true },
-      { text: 'QR code sharing', included: true },
-      { text: 'Real-time sync', included: true },
-      { text: 'Unlimited viewers', included: true },
-      { text: 'Custom branding', included: true },
-      { text: 'Priority support', included: true }
-    ],
-    cta: 'Coming Soon',
-    ctaLink: null,
+    name: 'Unlimited',
+    monthlyPrice: 24.95,
+    yearlyPrice: 149.95,
+    description: 'For professional speakers & events',
+    limits: {
+      rooms: 'Unlimited rooms',
+      timers: 'Unlimited timers'
+    },
+    features: allFeatures,
+    enterpriseFeatures: [],
+    cta: 'Start Free Trial',
+    ctaLink: '/register?plan=unlimited',
     highlighted: true,
     badge: 'Most Popular'
   },
   {
     name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    description: 'For large organizations',
-    features: [
-      { text: 'Everything in Pro', included: true },
-      { text: 'SSO integration', included: true },
-      { text: 'Dedicated support', included: true },
-      { text: 'Custom integrations', included: true },
-      { text: 'SLA guarantee', included: true },
-      { text: 'On-premise option', included: true },
-      { text: 'Training sessions', included: true },
-      { text: 'Volume discounts', included: true }
+    monthlyPrice: null,
+    yearlyPrice: null,
+    description: 'For organizations & conferences',
+    limits: {
+      rooms: 'Unlimited rooms',
+      timers: 'Unlimited timers'
+    },
+    features: allFeatures,
+    enterpriseFeatures: [
+      'Custom timer design',
+      'Custom logo/branding',
+      'Dedicated support',
+      'Custom integrations'
     ],
     cta: 'Contact Us',
     ctaLink: null,
     highlighted: false,
     badge: null
   }
-]
+])
+
+function getDisplayPrice(plan: typeof plans.value[0]) {
+  if (plan.monthlyPrice === null) return 'Custom'
+  return isYearly.value
+    ? `$${plan.yearlyPrice}`
+    : `$${plan.monthlyPrice}`
+}
+
+function getPeriod(plan: typeof plans.value[0]) {
+  if (plan.monthlyPrice === null) return ''
+  return isYearly.value ? '/year' : '/month'
+}
+
+function getSavings(plan: typeof plans.value[0]) {
+  if (plan.monthlyPrice === null || !isYearly.value) return null
+  const monthlyCost = plan.monthlyPrice * 12
+  const savings = Math.round(((monthlyCost - plan.yearlyPrice) / monthlyCost) * 100)
+  return savings
+}
+
+function handleCtaClick(plan: typeof plans.value[0]) {
+  if (plan.name === 'Enterprise') {
+    showContactModal.value = true
+  }
+}
 </script>
 
 <template>
   <section id="pricing" class="section-wrapper">
     <div class="section-container">
       <!-- Section Header -->
-      <div class="text-center" style="margin-bottom: 64px;">
+      <div class="text-center" style="margin-bottom: 48px;">
         <h2 class="section-title">
           <span class="text-white">Simple, Transparent</span>
           <span class="text-red-500"> Pricing</span>
         </h2>
         <p class="section-subtitle">
-          Start free. Upgrade when you need more power.
+          Try free for 3 days. No credit card required.
         </p>
+
+        <!-- Billing Toggle -->
+        <div class="billing-toggle">
+          <button
+            @click="isYearly = false"
+            :class="['toggle-btn', { active: !isYearly }]"
+          >
+            Monthly
+          </button>
+          <button
+            @click="isYearly = true"
+            :class="['toggle-btn', { active: isYearly }]"
+          >
+            Yearly
+            <span class="save-badge">Save 50%</span>
+          </button>
+        </div>
       </div>
 
       <!-- Pricing Cards -->
@@ -124,6 +181,7 @@ const plans = [
                 '--glow-y': (glowPos[index]?.y || 0) + 'px'
               }"
             ></div>
+
             <!-- Badge -->
             <div
               v-if="plan.badge"
@@ -136,43 +194,72 @@ const plans = [
             </div>
 
             <!-- Header -->
-            <div class="text-center" :style="plan.badge ? 'padding-top: 16px; margin-bottom: 32px;' : 'margin-bottom: 32px;'">
+            <div class="text-center" :style="plan.badge ? 'padding-top: 16px; margin-bottom: 24px;' : 'margin-bottom: 24px;'">
               <h3 class="plan-name">{{ plan.name }}</h3>
               <div class="flex items-baseline justify-center gap-1" style="margin-bottom: 8px;">
-                <span class="plan-price">{{ plan.price }}</span>
-                <span v-if="plan.period" class="plan-period">{{ plan.period }}</span>
+                <span class="plan-price">{{ getDisplayPrice(plan) }}</span>
+                <span v-if="getPeriod(plan)" class="plan-period">{{ getPeriod(plan) }}</span>
               </div>
               <p class="plan-description">{{ plan.description }}</p>
+
+              <!-- Savings badge -->
+              <div v-if="getSavings(plan)" class="savings-badge">
+                <Zap class="w-3.5 h-3.5" />
+                Save {{ getSavings(plan) }}% with yearly
+              </div>
+            </div>
+
+            <!-- Trial badge -->
+            <div v-if="plan.monthlyPrice !== null" class="trial-badge">
+              <span>3 days free trial</span>
+              <span class="trial-sub">No credit card required</span>
+            </div>
+
+            <!-- Limits -->
+            <div class="limits-section">
+              <div class="limit-item">
+                <Check class="w-4 h-4 text-red-400" />
+                <span>{{ plan.limits.rooms }}</span>
+              </div>
+              <div class="limit-item">
+                <Check class="w-4 h-4 text-red-400" />
+                <span>{{ plan.limits.timers }}</span>
+              </div>
             </div>
 
             <!-- Features -->
-            <ul class="feature-list">
-              <li
-                v-for="feature in plan.features"
-                :key="feature.text"
-                class="feature-item"
-              >
-                <div
-                  class="feature-check"
-                  :class="feature.included ? 'feature-check-included' : 'feature-check-excluded'"
+            <div class="features-section">
+              <p class="features-title">All features included:</p>
+              <ul class="feature-list">
+                <li
+                  v-for="feature in plan.features"
+                  :key="feature"
+                  class="feature-item"
                 >
-                  <Check
-                    v-if="feature.included"
-                    class="w-3 h-3 text-red-400"
-                  />
-                  <X
-                    v-else
-                    class="w-3 h-3 text-gray-600"
-                  />
-                </div>
-                <span
-                  class="feature-text"
-                  :class="feature.included ? 'text-gray-300' : 'text-gray-600'"
-                >
-                  {{ feature.text }}
-                </span>
-              </li>
-            </ul>
+                  <div class="feature-check feature-check-included">
+                    <Check class="w-3 h-3 text-red-400" />
+                  </div>
+                  <span class="feature-text text-gray-300">{{ feature }}</span>
+                </li>
+              </ul>
+
+              <!-- Enterprise features -->
+              <template v-if="plan.enterpriseFeatures.length > 0">
+                <p class="features-title" style="margin-top: 16px;">Enterprise extras:</p>
+                <ul class="feature-list">
+                  <li
+                    v-for="feature in plan.enterpriseFeatures"
+                    :key="feature"
+                    class="feature-item"
+                  >
+                    <div class="feature-check feature-check-included">
+                      <Sparkles class="w-3 h-3 text-yellow-400" />
+                    </div>
+                    <span class="feature-text text-gray-300">{{ feature }}</span>
+                  </li>
+                </ul>
+              </template>
+            </div>
 
             <!-- CTA -->
             <RouterLink
@@ -185,8 +272,8 @@ const plans = [
             </RouterLink>
             <button
               v-else
-              disabled
-              class="cta-disabled"
+              @click="handleCtaClick(plan)"
+              class="cta-button cta-secondary"
             >
               {{ plan.cta }}
             </button>
@@ -198,9 +285,15 @@ const plans = [
       <p class="bottom-note">
         All plans include unlimited viewers, sound alerts, and PWA support.
         <br class="hidden sm:block" />
-        Pro and Enterprise plans coming soon. Join the waitlist by signing up.
+        Cancel anytime. 14-day money-back guarantee.
       </p>
     </div>
+
+    <!-- Contact Modal -->
+    <ContactModal
+      v-if="showContactModal"
+      @close="showContactModal = false"
+    />
   </section>
 </template>
 
@@ -242,9 +335,53 @@ const plans = [
   font-size: 18px;
   color: #9ca3af;
   max-width: 500px;
-  margin: 0 auto;
+  margin: 0 auto 32px;
 }
 
+/* Billing Toggle */
+.billing-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: rgba(239, 68, 68, 0.2);
+  color: white;
+}
+
+.toggle-btn:hover:not(.active) {
+  color: white;
+}
+
+.save-badge {
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+}
+
+/* Cards */
 .pricing-card {
   position: relative;
   overflow: hidden;
@@ -328,24 +465,95 @@ const plans = [
   color: #9ca3af;
 }
 
+.savings-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 20px;
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Trial badge */
+.trial-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.trial-badge span:first-child {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.trial-sub {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* Limits */
+.limits-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.limit-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Features */
+.features-section {
+  flex: 1;
+  margin-bottom: 24px;
+}
+
+.features-title {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
 .feature-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 32px;
-  flex: 1;
+  gap: 8px;
 }
 
 .feature-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .feature-check {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -356,14 +564,11 @@ const plans = [
   background: rgba(239, 68, 68, 0.1);
 }
 
-.feature-check-excluded {
-  background: rgba(255, 255, 255, 0.05);
-}
-
 .feature-text {
-  font-size: 14px;
+  font-size: 13px;
 }
 
+/* CTA */
 .cta-button {
   display: block;
   width: 100%;
@@ -374,6 +579,7 @@ const plans = [
   transition: all 0.3s ease;
   cursor: pointer;
   text-decoration: none;
+  margin-top: auto;
 }
 
 .cta-primary {
@@ -398,19 +604,6 @@ const plans = [
 .cta-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(239, 68, 68, 0.3);
-}
-
-.cta-disabled {
-  display: block;
-  width: 100%;
-  padding: 16px;
-  text-align: center;
-  font-weight: 500;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #6b7280;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  cursor: not-allowed;
 }
 
 .bottom-note {
