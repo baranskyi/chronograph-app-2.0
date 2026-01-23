@@ -49,12 +49,12 @@ onUnmounted(() => {
 
     <main class="landing-content">
       <HeroSection />
-      <SocialProofSection />
       <ShowcaseSection />
       <FeaturesSection />
       <HowItWorks />
       <UseCasesSection />
       <TestimonialsSection />
+      <SocialProofSection />
       <PricingSection />
       <FAQSection />
     </main>
