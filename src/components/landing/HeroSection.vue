@@ -3,6 +3,22 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ArrowRight, Play } from 'lucide-vue-next'
 
+// Rotating headline phrases
+const phrases = ['Lead Sessions.', 'Engage People.', 'Control Discussion.']
+const currentPhraseIndex = ref(0)
+const isAnimating = ref(false)
+let phraseInterval: ReturnType<typeof setInterval> | null = null
+
+function rotatePhrase() {
+  isAnimating.value = true
+  setTimeout(() => {
+    currentPhraseIndex.value = (currentPhraseIndex.value + 1) % phrases.length
+    setTimeout(() => {
+      isAnimating.value = false
+    }, 50)
+  }, 400)
+}
+
 // Animated timer display
 const timerValue = ref('05:00')
 const timerSeconds = ref(300)
@@ -46,10 +62,13 @@ function animateTimer() {
 
 onMounted(() => {
   animateTimer()
+  // Start phrase rotation after 2 seconds, then every 2 seconds
+  phraseInterval = setInterval(rotatePhrase, 2000)
 })
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval)
+  if (phraseInterval) clearInterval(phraseInterval)
 })
 </script>
 
@@ -66,7 +85,9 @@ onUnmounted(() => {
           <h1 class="hero-title">
             <span class="text-white">Control Time.</span>
             <br />
-            <span class="text-red-500">Lead Sessions.</span>
+            <span class="rotating-phrase" :class="{ 'is-animating': isAnimating }">
+              {{ phrases[currentPhraseIndex] }}
+            </span>
           </h1>
 
           <!-- Subheadline -->
@@ -268,6 +289,22 @@ onUnmounted(() => {
   line-height: 1.1;
   letter-spacing: -0.02em;
   margin-bottom: 24px;
+}
+
+/* Rotating phrase animation */
+.rotating-phrase {
+  display: inline-block;
+  color: #ef4444;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+  opacity: 1;
+  filter: blur(0);
+}
+
+.rotating-phrase.is-animating {
+  transform: translateY(20px);
+  opacity: 0;
+  filter: blur(8px);
 }
 
 .hero-subtitle {
