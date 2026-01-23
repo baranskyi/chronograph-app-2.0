@@ -19,6 +19,48 @@ function rotatePhrase() {
   }, 400)
 }
 
+// Chat bubbles
+const chatMessages = [
+  'Wrap up, man, 30 seconds left!',
+  'What a speech! People are going crazy!!',
+  'Return to the red dot on the floor, camera working!',
+  'OMG! OMG!! OMFG!!!',
+  'Good luck with the speech, they\'ll love it!'
+]
+
+interface ChatBubble {
+  id: number
+  message: string
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'left' | 'right'
+  size: 'small' | 'medium' | 'large'
+}
+
+const activeBubbles = ref<ChatBubble[]>([])
+let bubbleId = 0
+let bubbleInterval: ReturnType<typeof setInterval> | null = null
+let currentMessageIndex = 0
+
+const positions: ChatBubble['position'][] = ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'left', 'right']
+const sizes: ChatBubble['size'][] = ['small', 'medium', 'large']
+
+function spawnBubble() {
+  const id = bubbleId++
+  const message = chatMessages[currentMessageIndex]
+  currentMessageIndex = (currentMessageIndex + 1) % chatMessages.length
+
+  // Random position and size
+  const position = positions[Math.floor(Math.random() * positions.length)]
+  const size = sizes[Math.floor(Math.random() * sizes.length)]
+
+  const bubble: ChatBubble = { id, message, position, size }
+  activeBubbles.value.push(bubble)
+
+  // Remove bubble after 4-5 seconds
+  setTimeout(() => {
+    activeBubbles.value = activeBubbles.value.filter(b => b.id !== id)
+  }, 4000 + Math.random() * 1000)
+}
+
 // Animated timer display
 const timerValue = ref('05:00')
 const timerSeconds = ref(300)
@@ -64,11 +106,15 @@ onMounted(() => {
   animateTimer()
   // Start phrase rotation after 2 seconds, then every 2 seconds
   phraseInterval = setInterval(rotatePhrase, 2000)
+  // Start bubble spawning - first one immediately, then every 3 seconds
+  spawnBubble()
+  bubbleInterval = setInterval(spawnBubble, 3000)
 })
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval)
   if (phraseInterval) clearInterval(phraseInterval)
+  if (bubbleInterval) clearInterval(bubbleInterval)
 })
 </script>
 
@@ -116,6 +162,18 @@ onUnmounted(() => {
 
         <!-- Right: Timer Preview -->
         <div class="timer-preview-wrapper">
+          <!-- Chat Bubbles -->
+          <TransitionGroup name="bubble">
+            <div
+              v-for="bubble in activeBubbles"
+              :key="bubble.id"
+              class="chat-bubble"
+              :class="[`bubble-${bubble.position}`, `bubble-${bubble.size}`]"
+            >
+              <span class="bubble-text">{{ bubble.message }}</span>
+            </div>
+          </TransitionGroup>
+
           <!-- Glass card -->
           <div class="timer-preview-card">
             <!-- Glow effect behind -->
@@ -550,6 +608,150 @@ onUnmounted(() => {
   background: rgba(239, 68, 68, 0.2);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 16px;
+}
+
+/* Chat Bubbles */
+.chat-bubble {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 12px 16px;
+  max-width: 200px;
+  z-index: 20;
+  animation: float 3s ease-in-out infinite;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.bubble-text {
+  color: #e5e7eb;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* Bubble sizes */
+.bubble-small {
+  max-width: 160px;
+  padding: 10px 14px;
+}
+
+.bubble-small .bubble-text {
+  font-size: 12px;
+}
+
+.bubble-medium {
+  max-width: 200px;
+}
+
+.bubble-large {
+  max-width: 240px;
+  padding: 14px 18px;
+}
+
+.bubble-large .bubble-text {
+  font-size: 14px;
+}
+
+/* Bubble positions */
+.bubble-top-left {
+  top: -20px;
+  left: -60px;
+  animation-delay: 0s;
+}
+
+.bubble-top-right {
+  top: -30px;
+  right: -50px;
+  animation-delay: 0.5s;
+}
+
+.bubble-bottom-left {
+  bottom: 40px;
+  left: -80px;
+  animation-delay: 1s;
+}
+
+.bubble-bottom-right {
+  bottom: 20px;
+  right: -70px;
+  animation-delay: 1.5s;
+}
+
+.bubble-left {
+  top: 50%;
+  left: -100px;
+  transform: translateY(-50%);
+  animation-delay: 0.3s;
+}
+
+.bubble-right {
+  top: 40%;
+  right: -90px;
+  transform: translateY(-50%);
+  animation-delay: 0.8s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.bubble-left, .bubble-right {
+  animation: float-side 3s ease-in-out infinite;
+}
+
+@keyframes float-side {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0);
+  }
+  50% {
+    transform: translateY(-50%) translateX(-5px);
+  }
+}
+
+/* Bubble transitions */
+.bubble-enter-active {
+  animation: bubble-in 0.5s ease-out forwards;
+}
+
+.bubble-leave-active {
+  animation: bubble-out 0.5s ease-in forwards;
+}
+
+@keyframes bubble-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes bubble-out {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+  }
+}
+
+/* Mobile adjustments - hide bubbles on small screens */
+@media (max-width: 1023px) {
+  .chat-bubble {
+    display: none;
+  }
 }
 
 </style>
