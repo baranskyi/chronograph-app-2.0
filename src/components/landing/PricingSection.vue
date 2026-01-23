@@ -156,15 +156,27 @@ function handleCtaClick(plan: typeof plans.value[0]) {
         <div
           v-for="(plan, index) in plans"
           :key="plan.name"
-          class="relative group"
+          :class="['plan-wrapper', { 'plan-wrapper-highlighted': plan.highlighted, 'plan-wrapper-side': !plan.highlighted }]"
           @mousemove="handleMouseMove(index, $event)"
           @mouseenter="hoveredIndex = index"
           @mouseleave="hoveredIndex = null"
         >
+          <!-- Badge (outside card for visibility) -->
+          <div
+            v-if="plan.badge"
+            class="badge-wrapper"
+          >
+            <div class="badge">
+              <Sparkles class="w-3.5 h-3.5" />
+              {{ plan.badge }}
+            </div>
+          </div>
+
           <!-- Glow effect for highlighted plan -->
           <div
             v-if="plan.highlighted"
             class="absolute -inset-1 bg-gradient-to-r from-red-500/30 to-red-600/30 rounded-3xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity"
+            style="top: 16px;"
           />
 
           <!-- Card -->
@@ -182,19 +194,8 @@ function handleCtaClick(plan: typeof plans.value[0]) {
               }"
             ></div>
 
-            <!-- Badge -->
-            <div
-              v-if="plan.badge"
-              class="absolute -top-4 left-1/2 -translate-x-1/2"
-            >
-              <div class="badge">
-                <Sparkles class="w-3.5 h-3.5" />
-                {{ plan.badge }}
-              </div>
-            </div>
-
             <!-- Header -->
-            <div class="text-center" :style="plan.badge ? 'padding-top: 16px; margin-bottom: 24px;' : 'margin-bottom: 24px;'">
+            <div class="text-center" style="margin-bottom: 24px;">
               <h3 class="plan-name">{{ plan.name }}</h3>
               <div class="flex items-baseline justify-center gap-1" style="margin-bottom: 8px;">
                 <span class="plan-price">{{ getDisplayPrice(plan) }}</span>
@@ -315,11 +316,42 @@ function handleCtaClick(plan: typeof plans.value[0]) {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
   gap: 24px;
+  align-items: center;
+  padding-top: 24px;
 }
 
 @media (min-width: 768px) {
   .pricing-grid {
     grid-template-columns: repeat(3, 1fr);
+    padding-top: 32px;
+  }
+}
+
+/* Plan wrappers for height difference */
+.plan-wrapper {
+  position: relative;
+}
+
+.plan-wrapper-highlighted {
+  z-index: 10;
+}
+
+.badge-wrapper {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+@media (min-width: 768px) {
+  .plan-wrapper-side {
+    margin-top: 32px;
+    margin-bottom: 32px;
+  }
+
+  .plan-wrapper-highlighted {
+    transform: scale(1.02);
   }
 }
 
