@@ -49,7 +49,10 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/my-rooms`
+        }
       })
 
       if (signUpError) throw signUpError

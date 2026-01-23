@@ -2,7 +2,9 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Menu, X } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
+const authStore = useAuthStore()
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
 
@@ -74,18 +76,30 @@ onUnmounted(() => {
 
         <!-- Desktop Auth Buttons -->
         <div class="hidden md:flex items-center gap-3">
-          <RouterLink
-            to="/login"
-            class="nav-link"
-          >
-            Sign In
-          </RouterLink>
-          <RouterLink
-            to="/register"
-            class="cta-button"
-          >
-            Get Started Free
-          </RouterLink>
+          <!-- Authenticated: Show Dashboard button -->
+          <template v-if="authStore.isAuthenticated">
+            <RouterLink
+              to="/my-rooms"
+              class="cta-button"
+            >
+              Go to Dashboard
+            </RouterLink>
+          </template>
+          <!-- Not authenticated: Show Sign In and Get Started -->
+          <template v-else>
+            <RouterLink
+              to="/login"
+              class="nav-link"
+            >
+              Sign In
+            </RouterLink>
+            <RouterLink
+              to="/register"
+              class="cta-button"
+            >
+              Get Started Free
+            </RouterLink>
+          </template>
         </div>
 
         <!-- Mobile Menu Button -->
@@ -116,20 +130,33 @@ onUnmounted(() => {
             {{ link.label }}
           </a>
           <div class="flex flex-col gap-2 mt-4 pt-4 border-t border-white/5">
-            <RouterLink
-              to="/login"
-              class="mobile-nav-link text-center"
-              @click="closeMobileMenu"
-            >
-              Sign In
-            </RouterLink>
-            <RouterLink
-              to="/register"
-              class="cta-button text-center"
-              @click="closeMobileMenu"
-            >
-              Get Started Free
-            </RouterLink>
+            <!-- Authenticated: Show Dashboard button -->
+            <template v-if="authStore.isAuthenticated">
+              <RouterLink
+                to="/my-rooms"
+                class="cta-button text-center"
+                @click="closeMobileMenu"
+              >
+                Go to Dashboard
+              </RouterLink>
+            </template>
+            <!-- Not authenticated: Show Sign In and Get Started -->
+            <template v-else>
+              <RouterLink
+                to="/login"
+                class="mobile-nav-link text-center"
+                @click="closeMobileMenu"
+              >
+                Sign In
+              </RouterLink>
+              <RouterLink
+                to="/register"
+                class="cta-button text-center"
+                @click="closeMobileMenu"
+              >
+                Get Started Free
+              </RouterLink>
+            </template>
           </div>
         </div>
       </div>
