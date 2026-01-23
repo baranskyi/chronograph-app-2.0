@@ -641,14 +641,6 @@ onUnmounted(() => {
   will-change: opacity;
 }
 
-/* Speech bubble tail */
-.chat-bubble::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border: 12px solid transparent;
-}
 
 .bubble-text {
   color: #f5f5f5;
@@ -687,72 +679,36 @@ onUnmounted(() => {
   left: -120px;
 }
 
-.bubble-top-left::after {
-  bottom: -20px;
-  right: 30px;
-  border-top-color: rgba(255, 255, 255, 0.3);
-  border-bottom: none;
-}
 
 .bubble-top-right {
   top: -50px;
   right: -100px;
 }
 
-.bubble-top-right::after {
-  bottom: -20px;
-  left: 30px;
-  border-top-color: rgba(255, 255, 255, 0.3);
-  border-bottom: none;
-}
 
 .bubble-bottom-left {
   bottom: 60px;
   left: -140px;
 }
 
-.bubble-bottom-left::after {
-  top: -20px;
-  right: 30px;
-  border-bottom-color: rgba(255, 255, 255, 0.3);
-  border-top: none;
-}
 
 .bubble-bottom-right {
   bottom: 40px;
   right: -120px;
 }
 
-.bubble-bottom-right::after {
-  top: -20px;
-  left: 30px;
-  border-bottom-color: rgba(255, 255, 255, 0.3);
-  border-top: none;
-}
 
 .bubble-left {
   top: calc(50% - 30px);
   left: -160px;
 }
 
-.bubble-left::after {
-  top: 30px;
-  right: -20px;
-  border-left-color: rgba(255, 255, 255, 0.3);
-  border-right: none;
-}
 
 .bubble-right {
   top: calc(40% - 30px);
   right: -140px;
 }
 
-.bubble-right::after {
-  top: 30px;
-  left: -20px;
-  border-right-color: rgba(255, 255, 255, 0.3);
-  border-left: none;
-}
 
 /* Bubble transitions - opacity only, no jumping */
 .bubble-enter-active,
