@@ -3,7 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { supabase } from '../lib/supabase'
-import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3 } from 'lucide-vue-next'
+import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, User } from 'lucide-vue-next'
+import { RouterLink } from 'vue-router'
 
 declare const __APP_VERSION__: string
 const APP_VERSION = __APP_VERSION__
@@ -625,8 +626,16 @@ function getDropdownStyle(roomId: string) {
               <span class="tracking-tight">Chronograph <span class="text-red-500">Pro</span></span>
             </h1>
             <div class="header-divider"></div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
               <span class="text-gray-400 text-sm hidden sm:block">{{ authStore.userEmail }}</span>
+              <RouterLink
+                to="/profile"
+                class="flex items-center gap-2 text-gray-400 hover:text-white glass-button-subtle rounded-lg transition-all duration-200"
+                style="padding: 8px 14px;"
+              >
+                <User class="w-4 h-4" />
+                <span class="text-sm hidden sm:inline">Account</span>
+              </RouterLink>
               <button
                 class="flex items-center gap-2 text-gray-400 hover:text-white glass-button-subtle rounded-lg transition-all duration-200 cursor-pointer"
                 style="padding: 8px 14px;"

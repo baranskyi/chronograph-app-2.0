@@ -33,6 +33,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../pages/ProfilePage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/room/:roomCode',
     name: 'room',
     component: () => import('../pages/DashboardPage.vue'),
