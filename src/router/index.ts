@@ -107,3 +107,15 @@ router.beforeEach(async (to, _from, next) => {
     next()
   }
 })
+
+// Google Analytics 4 - Track page views for SPA
+router.afterEach((to) => {
+  // @ts-ignore - gtag is defined in index.html
+  if (typeof window.gtag === 'function') {
+    // @ts-ignore
+    window.gtag('config', 'G-2XEP2TP5G8', {
+      page_path: to.fullPath,
+      page_title: to.name?.toString() || document.title
+    })
+  }
+})

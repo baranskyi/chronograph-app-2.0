@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { useSubscriptionStore } from '../stores/subscriptionStore'
+import { analytics } from '../lib/analytics'
 import SubscriptionModal from '../components/SubscriptionModal.vue'
 import { supabase } from '../lib/supabase'
 import { Plus, Clock, Trash2, LogOut, MoreVertical, Edit3, User } from 'lucide-vue-next'
@@ -489,6 +490,7 @@ async function createRoom() {
         .eq('id', data.id)
     }
 
+    analytics.createRoom()
     router.push(`/room/${data.room_code}`)
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to create room'
@@ -512,6 +514,7 @@ async function deleteRoom(roomId: string, event: Event) {
 
     if (deleteError) throw deleteError
     rooms.value = rooms.value.filter(r => r.id !== roomId)
+    analytics.deleteRoom()
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to delete room'
   }
@@ -554,6 +557,7 @@ function cancelEditing() {
 // toggleMenu moved to bottom with positioning logic
 
 function openRoom(roomCode: string) {
+  analytics.enterRoom(roomCode)
   router.push(`/room/${roomCode}`)
 }
 

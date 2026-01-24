@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { supabase } from '@/lib/supabase'
+import { analytics } from '@/lib/analytics'
 import { useAuthStore } from './authStore'
 
 export type SubscriptionPlan = 'trial' | 'basic' | 'unlimited' | 'enterprise'
@@ -158,6 +159,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       }
 
       console.log('Trial subscription created successfully')
+      analytics.trialStarted()
       return true
     } catch (err) {
       console.error('Error creating trial subscription:', err)
@@ -226,6 +228,7 @@ export const useSubscriptionStore = defineStore('subscription', () => {
       }
 
       const { url } = await response.json()
+      analytics.startCheckout(plan, billing)
       return url
     } catch (err) {
       console.error('Checkout error:', err)

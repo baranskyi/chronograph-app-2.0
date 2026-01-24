@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase'
+import { analytics } from '../lib/analytics'
 import type { User, Session } from '@supabase/supabase-js'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -60,11 +61,13 @@ export const useAuthStore = defineStore('auth', () => {
       // Check if email confirmation is required
       if (data.user && !data.session) {
         error.value = 'Please check your email to confirm your account'
+        analytics.signUp('email')
         return false
       }
 
       session.value = data.session
       user.value = data.user
+      analytics.signUp('email')
       return true
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Sign up failed'
@@ -89,6 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       session.value = data.session
       user.value = data.user
+      analytics.login('email')
       return true
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Sign in failed'
@@ -109,6 +113,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       session.value = null
       user.value = null
+      analytics.logout()
 
       // Clear room data from localStorage to prevent cross-account data leakage
       localStorage.removeItem('chronograph-roomId')
