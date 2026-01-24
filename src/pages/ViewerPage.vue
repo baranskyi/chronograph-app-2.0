@@ -284,6 +284,11 @@ function handleKeydown(e: KeyboardEvent) {
 </template>
 
 <style scoped>
+/* Hide scrollbar in fullscreen mode */
+.fullscreen-mode {
+  overflow: hidden;
+}
+
 .timer-font {
   font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
   font-variant-numeric: tabular-nums;
