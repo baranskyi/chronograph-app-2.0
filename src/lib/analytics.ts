@@ -12,8 +12,6 @@ declare global {
   }
 }
 
-const GA_MEASUREMENT_ID = 'G-2XEP2TP5G8'
-
 /**
  * Track a custom event in Google Analytics 4
  */
