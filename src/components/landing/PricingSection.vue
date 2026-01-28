@@ -46,7 +46,7 @@ const plans = computed(() => [
     description: 'Perfect for individual speakers',
     limits: {
       rooms: '1 room',
-      timers: '1 timer per room'
+      timers: '3 timers per room'
     },
     features: allFeatures,
     enterpriseFeatures: [],
