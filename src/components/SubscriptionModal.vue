@@ -24,7 +24,7 @@ const plans = computed(() => [
     name: 'Basic',
     monthlyPrice: 9.95,
     yearlyPrice: 59.95,
-    description: '1 room, 1 timer',
+    description: '1 room, 3 timers',
     highlighted: false
   },
   {

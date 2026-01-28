@@ -26,7 +26,7 @@ interface Subscription {
 // Plan limits
 const PLAN_LIMITS = {
   trial: { rooms: 1, timersPerRoom: 1 },
-  basic: { rooms: 1, timersPerRoom: 1 },
+  basic: { rooms: 1, timersPerRoom: 3 },
   unlimited: { rooms: Infinity, timersPerRoom: Infinity },
   enterprise: { rooms: Infinity, timersPerRoom: Infinity }
 }
