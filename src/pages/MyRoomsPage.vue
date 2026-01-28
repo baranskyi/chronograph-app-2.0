@@ -42,6 +42,7 @@ const subscriptionStore = useSubscriptionStore()
 
 // Subscription modal
 const showSubscriptionModal = ref(false)
+const subscriptionModalReason = ref<'trial_expired' | 'limit_reached'>('trial_expired')
 
 const rooms = ref<Room[]>([])
 const loading = ref(true)
@@ -308,6 +309,7 @@ onMounted(async () => {
 
   // Check if blocked (trial expired)
   if (subscriptionStore.isBlocked) {
+    subscriptionModalReason.value = 'trial_expired'
     showSubscriptionModal.value = true
   }
 
@@ -434,11 +436,13 @@ async function loadRooms() {
 async function createRoom() {
   // Check subscription limits
   if (subscriptionStore.isBlocked) {
+    subscriptionModalReason.value = 'trial_expired'
     showSubscriptionModal.value = true
     return
   }
 
   if (!subscriptionStore.canCreateRoom(rooms.value.length)) {
+    subscriptionModalReason.value = 'limit_reached'
     showSubscriptionModal.value = true
     return
   }
@@ -1033,6 +1037,7 @@ function getDropdownStyle(roomId: string) {
     <SubscriptionModal
       v-if="showSubscriptionModal"
       :show-close="!subscriptionStore.isBlocked"
+      :reason="subscriptionModalReason"
       @close="showSubscriptionModal = false"
       @select-plan="handleSelectPlan"
     />

@@ -7,8 +7,11 @@ const emit = defineEmits<{
   close: []
 }>()
 
+export type SubscriptionModalReason = 'trial_expired' | 'limit_reached'
+
 const props = defineProps<{
   showClose?: boolean
+  reason?: SubscriptionModalReason
 }>()
 
 const subscriptionStore = useSubscriptionStore()
@@ -44,6 +47,20 @@ function getPeriod() {
   return isYearly.value ? '/year' : '/month'
 }
 
+const modalTitle = computed(() => {
+  if (props.reason === 'limit_reached') {
+    return 'Upgrade Your Plan'
+  }
+  return 'Your Trial Has Ended'
+})
+
+const modalSubtitle = computed(() => {
+  if (props.reason === 'limit_reached') {
+    return 'To add more Rooms and Timers you need to subscribe to a plan'
+  }
+  return 'Choose a plan to continue using Chronograph'
+})
+
 async function handleSelectPlan(planId: string) {
   processingPlan.value = planId
 
@@ -78,8 +95,8 @@ async function handleSelectPlan(planId: string) {
           <div class="lock-icon">
             <Lock class="w-8 h-8 text-red-400" />
           </div>
-          <h2>Your Trial Has Ended</h2>
-          <p>Choose a plan to continue using Chronograph</p>
+          <h2>{{ modalTitle }}</h2>
+          <p>{{ modalSubtitle }}</p>
         </div>
 
         <!-- Billing Toggle -->

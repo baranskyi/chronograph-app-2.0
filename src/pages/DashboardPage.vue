@@ -6,6 +6,7 @@ import { useRoomStore } from '../stores/roomStore'
 import { useSubscriptionStore } from '../stores/subscriptionStore'
 import ProgressBar from '../components/ProgressBar.vue'
 import SettingsPanel from '../components/SettingsPanel.vue'
+import SubscriptionModal from '../components/SubscriptionModal.vue'
 import { Play, Pause, Settings, MoreHorizontal, Plus, GripVertical, Link2, RotateCcw, ArrowLeft, X, Send, QrCode } from 'lucide-vue-next'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
@@ -96,6 +97,9 @@ const dragOverTimerId = ref<string | null>(null)
 
 // Share button state - global toast at bottom center
 const showShareToast = ref(false)
+
+// Subscription modal state
+const showSubscriptionModal = ref(false)
 
 // Ocean animation toggle - persist to localStorage
 const OCEAN_STORAGE_KEY = 'chronograph-ocean-enabled'
@@ -473,6 +477,11 @@ function handleOpenSettings(timerId?: string) {
 }
 
 async function handleAddTimer() {
+  // Check subscription limits
+  if (!subscriptionStore.canCreateTimer(timerStore.timerList.length)) {
+    showSubscriptionModal.value = true
+    return
+  }
   await roomStore.createTimer(`Timer ${timerStore.timerList.length + 1}`)
 }
 
@@ -1334,6 +1343,14 @@ const colorClass = (id: string) => {
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Subscription Modal -->
+    <SubscriptionModal
+      v-if="showSubscriptionModal"
+      :show-close="true"
+      reason="limit_reached"
+      @close="showSubscriptionModal = false"
+    />
   </div>
 </template>
 
