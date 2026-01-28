@@ -17,5 +17,12 @@ export const config = {
       unlimitedMonthly: process.env.STRIPE_PRICE_UNLIMITED_MONTHLY || '',
       unlimitedYearly: process.env.STRIPE_PRICE_UNLIMITED_YEARLY || ''
     }
+  },
+  email: {
+    smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+    smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
+    smtpUser: process.env.SMTP_USER || '',
+    smtpPass: process.env.SMTP_PASS || '',
+    contactTo: process.env.CONTACT_EMAIL || 'woofer.ua@gmail.com'
   }
 }

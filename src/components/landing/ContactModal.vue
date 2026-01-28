@@ -30,17 +30,36 @@ async function handleSubmit() {
   errorMessage.value = ''
 
   try {
-    const { error } = await supabase
-      .from('contact_requests')
-      .insert({
-        name: form.value.name,
-        email: form.value.email,
-        company: form.value.company || null,
-        message: form.value.message,
-        plan_interest: 'enterprise'
+    // Save to Supabase and send email in parallel
+    const [dbResult, emailResult] = await Promise.allSettled([
+      supabase
+        .from('contact_requests')
+        .insert({
+          name: form.value.name,
+          email: form.value.email,
+          company: form.value.company || null,
+          message: form.value.message,
+          plan_interest: 'enterprise'
+        }),
+      fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.value.name,
+          email: form.value.email,
+          company: form.value.company || null,
+          message: form.value.message
+        })
       })
+    ])
 
-    if (error) throw error
+    // Check if at least one succeeded
+    const dbOk = dbResult.status === 'fulfilled' && !dbResult.value.error
+    const emailOk = emailResult.status === 'fulfilled' && emailResult.value.ok
+
+    if (!dbOk && !emailOk) {
+      throw new Error('Failed to submit')
+    }
 
     submitStatus.value = 'success'
 
