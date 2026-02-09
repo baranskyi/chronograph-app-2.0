@@ -76,6 +76,18 @@ const routes = [
     name: 'ask',
     component: () => import('../pages/AskPage.vue'),
     props: true
+  },
+  // Knowledge Base
+  {
+    path: '/knowledge-base',
+    name: 'knowledge-base',
+    component: () => import('../pages/KnowledgeBasePage.vue')
+  },
+  {
+    path: '/knowledge-base/:slug',
+    name: 'article',
+    component: () => import('../pages/ArticlePage.vue'),
+    props: true
   }
 ]
 

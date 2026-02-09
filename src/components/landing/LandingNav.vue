@@ -14,7 +14,8 @@ const navLinks = [
   { label: 'Use Cases', href: '#use-cases' },
   { label: 'Testimonials', href: '#testimonials' },
   { label: 'Pricing', href: '#pricing' },
-  { label: 'FAQ', href: '#faq' }
+  { label: 'FAQ', href: '#faq' },
+  { label: 'Knowledge Base', href: '/knowledge-base', isRoute: true }
 ]
 
 function handleScroll() {
@@ -64,14 +65,22 @@ onUnmounted(() => {
 
         <!-- Desktop Nav Links -->
         <div class="hidden lg:flex items-center gap-1">
-          <a
-            v-for="link in navLinks"
-            :key="link.label"
-            :href="link.href"
-            class="nav-link"
-          >
-            {{ link.label }}
-          </a>
+          <template v-for="link in navLinks" :key="link.label">
+            <RouterLink
+              v-if="link.isRoute"
+              :to="link.href"
+              class="nav-link"
+            >
+              {{ link.label }}
+            </RouterLink>
+            <a
+              v-else
+              :href="link.href"
+              class="nav-link"
+            >
+              {{ link.label }}
+            </a>
+          </template>
         </div>
 
         <!-- Desktop Auth Buttons -->
@@ -120,15 +129,24 @@ onUnmounted(() => {
         class="md:hidden pb-6 pt-2 border-t border-white/5 mt-2"
       >
         <div class="flex flex-col gap-1">
-          <a
-            v-for="link in navLinks"
-            :key="link.label"
-            :href="link.href"
-            class="mobile-nav-link"
-            @click="closeMobileMenu"
-          >
-            {{ link.label }}
-          </a>
+          <template v-for="link in navLinks" :key="link.label">
+            <RouterLink
+              v-if="link.isRoute"
+              :to="link.href"
+              class="mobile-nav-link"
+              @click="closeMobileMenu"
+            >
+              {{ link.label }}
+            </RouterLink>
+            <a
+              v-else
+              :href="link.href"
+              class="mobile-nav-link"
+              @click="closeMobileMenu"
+            >
+              {{ link.label }}
+            </a>
+          </template>
           <div class="flex flex-col gap-2 mt-4 pt-4 border-t border-white/5">
             <!-- Authenticated: Show Dashboard button -->
             <template v-if="authStore.isAuthenticated">

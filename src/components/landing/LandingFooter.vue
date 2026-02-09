@@ -23,6 +23,7 @@ const links = {
     { label: 'Cookie Policy', href: '#' }
   ],
   resources: [
+    { label: 'Knowledge Base', to: '/knowledge-base' },
     { label: 'Help Center', href: '#' },
     { label: 'Contact Us', href: '#' },
     { label: 'Status', href: '#' }
@@ -105,7 +106,10 @@ const links = {
           <h4 class="links-title">Resources</h4>
           <ul class="links-list">
             <li v-for="link in links.resources" :key="link.label">
-              <a :href="link.href" class="footer-link">
+              <RouterLink v-if="link.to" :to="link.to" class="footer-link">
+                {{ link.label }}
+              </RouterLink>
+              <a v-else :href="link.href" class="footer-link">
                 {{ link.label }}
               </a>
             </li>
