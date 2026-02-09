@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { ArrowLeft, Clock, Tag, Calendar } from 'lucide-vue-next'
+import { ArrowLeft, Clock, Calendar } from 'lucide-vue-next'
 import { getArticleBySlug, articles } from '@/data/articles'
 import LandingNav from '@/components/landing/LandingNav.vue'
 import LandingFooter from '@/components/landing/LandingFooter.vue'
