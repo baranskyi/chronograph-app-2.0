@@ -14,8 +14,7 @@ const navLinks = [
   { label: 'Use Cases', href: '#use-cases' },
   { label: 'Testimonials', href: '#testimonials' },
   { label: 'Pricing', href: '#pricing' },
-  { label: 'FAQ', href: '#faq' },
-  { label: 'Knowledge Base', href: '/knowledge-base', isRoute: true }
+  { label: 'FAQ', href: '#faq' }
 ]
 
 function handleScroll() {
