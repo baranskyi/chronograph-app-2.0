@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { ArrowLeft, Clock, Calendar } from 'lucide-vue-next'
-import { getArticleBySlug, articles } from '@/data/articles'
+import { ArrowLeft, Clock, Calendar, List } from 'lucide-vue-next'
+import { getArticleBySlug, articles, extractToc } from '@/data/articles'
 import LandingNav from '@/components/landing/LandingNav.vue'
 import LandingFooter from '@/components/landing/LandingFooter.vue'
 
 const route = useRoute()
 const mouseGlowRef = ref<HTMLDivElement | null>(null)
+const activeHeadingId = ref('')
+const mobileTocOpen = ref(false)
 
 const article = computed(() => {
   return getArticleBySlug(route.params.slug as string)
+})
+
+const toc = computed(() => {
+  if (!article.value) return []
+  return extractToc(article.value.content)
 })
 
 const relatedArticles = computed(() => {
@@ -35,13 +42,35 @@ function formatDate(dateStr: string) {
   })
 }
 
+function scrollToHeading(id: string) {
+  const el = document.getElementById(id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    mobileTocOpen.value = false
+  }
+}
+
+function updateActiveHeading() {
+  const headings = toc.value.map(t => document.getElementById(t.id)).filter(Boolean) as HTMLElement[]
+  let current = ''
+  for (const h of headings) {
+    if (h.getBoundingClientRect().top <= 120) {
+      current = h.id
+    }
+  }
+  activeHeadingId.value = current
+}
+
 onMounted(() => {
   window.addEventListener('mousemove', handleMouseMove)
+  window.addEventListener('scroll', updateActiveHeading, { passive: true })
   window.scrollTo(0, 0)
+  nextTick(() => updateActiveHeading())
 })
 
 onUnmounted(() => {
   window.removeEventListener('mousemove', handleMouseMove)
+  window.removeEventListener('scroll', updateActiveHeading)
 })
 </script>
 
@@ -88,10 +117,54 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <!-- Article Body -->
+      <!-- Mobile TOC -->
+      <section v-if="toc.length" class="toc-mobile-section">
+        <div class="toc-mobile-wrapper">
+          <button class="toc-mobile-toggle" @click="mobileTocOpen = !mobileTocOpen">
+            <List class="w-4 h-4" />
+            <span>Table of Contents</span>
+            <span class="toc-mobile-arrow" :class="{ open: mobileTocOpen }">&#9662;</span>
+          </button>
+          <div v-show="mobileTocOpen" class="toc-mobile-list">
+            <a
+              v-for="item in toc"
+              :key="item.id"
+              class="toc-mobile-item"
+              :class="{ 'toc-h3': item.level === 3, active: activeHeadingId === item.id }"
+              @click.prevent="scrollToHeading(item.id)"
+              :href="'#' + item.id"
+            >
+              {{ item.text }}
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Article Body + Desktop TOC -->
       <section class="body-section">
-        <div class="body-wrapper">
-          <div class="prose" v-html="article.content"></div>
+        <div class="body-with-toc">
+          <div class="body-wrapper">
+            <div class="prose" v-html="article.content"></div>
+          </div>
+
+          <!-- Desktop TOC sidebar -->
+          <aside v-if="toc.length" class="toc-sidebar">
+            <div class="toc-sidebar-inner">
+              <div class="toc-sidebar-title">Contents</div>
+              <nav class="toc-sidebar-nav">
+                <a
+                  v-for="item in toc"
+                  :key="item.id"
+                  class="toc-sidebar-link"
+                  :class="{ 'toc-h3': item.level === 3, active: activeHeadingId === item.id }"
+                  @click.prevent="scrollToHeading(item.id)"
+                  :href="'#' + item.id"
+                >
+                  {{ item.text }}
+                </a>
+              </nav>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -271,14 +344,173 @@ onUnmounted(() => {
   display: block;
 }
 
+/* Mobile TOC */
+.toc-mobile-section {
+  padding: 0 24px 24px;
+  display: block;
+}
+
+.toc-mobile-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.toc-mobile-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  color: #d1d5db;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.toc-mobile-toggle:hover {
+  color: #ffffff;
+}
+
+.toc-mobile-arrow {
+  margin-left: auto;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.toc-mobile-arrow.open {
+  transform: rotate(180deg);
+}
+
+.toc-mobile-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 14px;
+  gap: 2px;
+}
+
+.toc-mobile-item {
+  display: block;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #9ca3af;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.toc-mobile-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.toc-mobile-item.toc-h3 {
+  padding-left: 24px;
+  font-size: 12px;
+}
+
+.toc-mobile-item.active {
+  color: #ef4444;
+}
+
+@media (min-width: 1200px) {
+  .toc-mobile-section {
+    display: none;
+  }
+}
+
 /* Body */
 .body-section {
   padding: 0 24px 60px;
 }
 
+.body-with-toc {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+}
+
 .body-wrapper {
   max-width: 800px;
-  margin: 0 auto;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Desktop TOC Sidebar */
+.toc-sidebar {
+  display: none;
+  width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 100px;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+
+@media (min-width: 1200px) {
+  .toc-sidebar {
+    display: block;
+  }
+}
+
+.toc-sidebar-inner {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.toc-sidebar-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.toc-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toc-sidebar-link {
+  display: block;
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #9ca3af;
+  text-decoration: none;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.toc-sidebar-link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.toc-sidebar-link.toc-h3 {
+  padding-left: 20px;
+  font-size: 12px;
+}
+
+.toc-sidebar-link.active {
+  color: #ef4444;
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
 }
 
 /* Prose Styles */

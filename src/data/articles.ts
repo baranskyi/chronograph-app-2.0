@@ -1,4 +1,24 @@
-import { marked } from 'marked'
+import { marked, type Tokens } from 'marked'
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/<[^>]*>/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
+}
+
+const renderer = {
+  heading({ tokens, depth }: Tokens.Heading) {
+    const text = this.parser.parseInline(tokens)
+    const id = slugify(text)
+    return `<h${depth} id="${id}">${text}</h${depth}>\n`
+  }
+}
+
+marked.use({ renderer })
 
 import conferenceArticleMd from './articles/conference-multi-room-time-tracking.md?raw'
 import messagingArticleMd from './articles/sending-messages-to-speakers.md?raw'
@@ -82,4 +102,24 @@ export const articles: Article[] = [
 
 export function getArticleBySlug(slug: string): Article | undefined {
   return articles.find(a => a.slug === slug)
+}
+
+export interface TocItem {
+  id: string
+  text: string
+  level: number
+}
+
+export function extractToc(html: string): TocItem[] {
+  const items: TocItem[] = []
+  const regex = /<h([23])\s+id="([^"]*)">(.*?)<\/h[23]>/g
+  let match
+  while ((match = regex.exec(html)) !== null) {
+    items.push({
+      level: parseInt(match[1]),
+      id: match[2],
+      text: match[3].replace(/<[^>]*>/g, '')
+    })
+  }
+  return items
 }
