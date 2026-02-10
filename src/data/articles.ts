@@ -1,4 +1,4 @@
-import { marked, type Tokens } from 'marked'
+import { marked } from 'marked'
 
 function slugify(text: string): string {
   return text
@@ -10,15 +10,12 @@ function slugify(text: string): string {
     .trim()
 }
 
-const renderer = {
-  heading({ tokens, depth }: Tokens.Heading) {
-    const text = this.parser.parseInline(tokens)
-    const id = slugify(text)
-    return `<h${depth} id="${id}">${text}</h${depth}>\n`
-  }
+function addHeadingIds(html: string): string {
+  return html.replace(/<h([23456])>(.*?)<\/h[23456]>/g, (_match, level: string, content: string) => {
+    const id = slugify(content)
+    return `<h${level} id="${id}">${content}</h${level}>`
+  })
 }
-
-marked.use({ renderer })
 
 import conferenceArticleMd from './articles/conference-multi-room-time-tracking.md?raw'
 import messagingArticleMd from './articles/sending-messages-to-speakers.md?raw'
@@ -39,7 +36,8 @@ export interface Article {
 }
 
 function md(raw: string): string {
-  return marked.parse(raw, { async: false }) as string
+  const html = marked.parse(raw, { async: false }) as string
+  return addHeadingIds(html)
 }
 
 export const articles: Article[] = [
@@ -113,13 +111,18 @@ export interface TocItem {
 export function extractToc(html: string): TocItem[] {
   const items: TocItem[] = []
   const regex = /<h([23])\s+id="([^"]*)">(.*?)<\/h[23]>/g
-  let match
+  let match: RegExpExecArray | null
   while ((match = regex.exec(html)) !== null) {
-    items.push({
-      level: parseInt(match[1]),
-      id: match[2],
-      text: match[3].replace(/<[^>]*>/g, '')
-    })
+    const level = match[1]
+    const id = match[2]
+    const raw = match[3]
+    if (level && id && raw) {
+      items.push({
+        level: parseInt(level),
+        id,
+        text: raw.replace(/<[^>]*>/g, '')
+      })
+    }
   }
   return items
 }
