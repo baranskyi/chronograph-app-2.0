@@ -88,6 +88,12 @@ const routes = [
     name: 'article',
     component: () => import('../pages/ArticlePage.vue'),
     props: true
+  },
+  // Oil & Gas Production Map
+  {
+    path: '/oil-gas-map',
+    name: 'oil-gas-map',
+    component: () => import('../pages/OilGasMapPage.vue')
   }
 ]
 
